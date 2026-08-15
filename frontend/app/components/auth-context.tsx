@@ -21,11 +21,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const storedToken = localStorage.getItem('token');
-    const storedUser = localStorage.getItem('user');
-    if (storedToken && storedUser) {
-      setToken(storedToken);
-      setUser(JSON.parse(storedUser));
+    let storedToken = localStorage.getItem('token');
+    let storedUserStr = localStorage.getItem('user');
+
+    if (!storedToken || !storedUserStr) {
+      const authStorage = localStorage.getItem('auth-storage');
+      if (authStorage) {
+        try {
+          const parsed = JSON.parse(authStorage);
+          if (parsed?.state?.accessToken && parsed?.state?.user) {
+            storedToken = parsed.state.accessToken;
+            storedUserStr = JSON.stringify(parsed.state.user);
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    }
+
+    if (storedToken && storedUserStr) {
+      try {
+        setToken(storedToken);
+        const parsedUser = JSON.parse(storedUserStr);
+        setUser({
+          ...parsedUser,
+          permissions: parsedUser.permissions || [],
+        });
+      } catch (e) {
+        console.error('Error parsing stored user:', e);
+      }
     }
     setLoading(false);
   }, []);
@@ -42,12 +66,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null);
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    localStorage.removeItem('auth-storage');
+    document.cookie = 'refresh_token=; path=/; max-age=0; SameSite=Lax';
   };
 
   const hasPermission = (permission: string): boolean => {
     if (!user) return false;
     if (user.systemRole === 'Admin') return true;
-    return user.permissions.includes(permission);
+    return user.permissions ? user.permissions.includes(permission) : false;
   };
 
   const refreshStatus = async () => {
@@ -60,7 +86,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       if (res.ok) {
         const latestUser = await res.json();
-        // Since the GET /users/:id response contains a populated roleId, extract permissions
         const permissions = latestUser.roleId?.permissions || [];
         const updatedUser = {
           id: latestUser._id,

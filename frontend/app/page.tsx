@@ -90,6 +90,13 @@ export default function DashboardHome() {
   // Refresh status loop check
   const [refreshing, setRefreshing] = useState(false);
 
+  // Redirect to /login if unauthenticated
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/login');
+    }
+  }, [loading, user, router]);
+
   // Fetch initial productions
   useEffect(() => {
     if (user && token && user.status === 'Approved') {
@@ -495,72 +502,12 @@ export default function DashboardHome() {
     );
   }
 
-  // --- UNAUTHENTICATED: LOGIN SCREEN ---
+  // --- UNAUTHENTICATED REDIRECT ---
   if (!user) {
     return (
-      <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-900 via-purple-950 to-slate-950 text-slate-100 items-center justify-center p-4">
-        {/* Glow Blurs */}
-        <div className="absolute top-1/4 left-1/3 w-80 h-80 bg-purple-600/10 rounded-full blur-3xl -z-10"></div>
-        
-        <div className="w-full max-w-md bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-2xl shadow-2xl p-8 space-y-6">
-          <div className="text-center">
-            <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-300">
-              Film Production
-            </h1>
-            <p className="text-sm text-slate-400 mt-1">Management Platform</p>
-          </div>
-
-          {authError && (
-            <div className="p-3.5 bg-red-950/40 border border-red-800 text-red-300 rounded-lg text-xs font-medium">
-              {authError}
-            </div>
-          )}
-
-          <form onSubmit={handleLoginSubmit} className="space-y-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Email Address</label>
-              <input 
-                type="email" 
-                value={loginEmail} 
-                onChange={(e) => setLoginEmail(e.target.value)}
-                placeholder="admin@production.com"
-                required
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2.5 px-4 text-sm focus:outline-none focus:border-purple-500 text-slate-200"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Password</label>
-              <input 
-                type="password" 
-                value={loginPassword} 
-                onChange={(e) => setLoginPassword(e.target.value)}
-                placeholder="••••••••"
-                required
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2.5 px-4 text-sm focus:outline-none focus:border-purple-500 text-slate-200"
-              />
-            </div>
-            <button 
-              type="submit" 
-              disabled={authLoading}
-              className="w-full py-2.5 px-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 rounded-lg text-white font-semibold text-sm transition-all shadow-[0_0_15px_rgba(147,51,234,0.3)] cursor-pointer disabled:opacity-50"
-            >
-              {authLoading ? 'Signing In...' : 'Sign In'}
-            </button>
-          </form>
-
-          <div className="relative flex py-2 items-center">
-            <div className="flex-grow border-t border-slate-800"></div>
-            <span className="flex-shrink mx-4 text-[10px] text-slate-500 uppercase tracking-wider">New Actor / Contractor?</span>
-            <div className="flex-grow border-t border-slate-800"></div>
-          </div>
-
-          <button
-            onClick={() => router.push('/onboarding')}
-            className="w-full py-2.5 px-4 bg-slate-950 border border-slate-800 hover:bg-slate-900 rounded-lg text-slate-300 font-medium text-sm transition-colors cursor-pointer"
-          >
-            Complete Onboarding Wizard
-          </button>
-        </div>
+      <div className="flex flex-col flex-1 items-center justify-center min-h-screen bg-slate-950 text-slate-100">
+        <RefreshCw className="animate-spin text-purple-500 mb-4" size={40} />
+        <p className="text-sm font-medium text-slate-400">Redirecting to login...</p>
       </div>
     );
   }

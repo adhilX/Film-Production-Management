@@ -5,9 +5,10 @@ export function middleware(request: NextRequest) {
   const refreshToken = request.cookies.get('refresh_token')?.value;
   const { pathname } = request.nextUrl;
 
-  // Protected routes that require authentication
-  const isProtectedRoute = pathname === '/' || pathname.startsWith('/onboarding') || pathname.startsWith('/productions');
-  const isAuthRoute = pathname === '/login';
+  // Protected routes that require authentication (Dashboard, Productions, etc.)
+  const isProtectedRoute = pathname === '/' || pathname.startsWith('/productions');
+  // Public Auth / Onboarding routes (Login & Signup)
+  const isAuthRoute = pathname === '/login' || pathname === '/signup';
 
   // If trying to access a protected route without refresh token, redirect to login
   if (isProtectedRoute && !refreshToken) {

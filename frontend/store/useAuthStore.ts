@@ -16,6 +16,18 @@ interface AuthState {
   clearAuth: () => void;
 }
 
+const setAuthCookie = () => {
+  if (typeof document !== 'undefined') {
+    document.cookie = 'refresh_token=true; path=/; max-age=604800; SameSite=Lax';
+  }
+};
+
+const removeAuthCookie = () => {
+  if (typeof document !== 'undefined') {
+    document.cookie = 'refresh_token=; path=/; max-age=0; SameSite=Lax';
+  }
+};
+
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
@@ -29,6 +41,13 @@ export const useAuthStore = create<AuthState>()(
         try {
           const response = await authService.login(credentials);
           const { access_token, user } = response;
+          
+          setAuthCookie();
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('token', access_token);
+            localStorage.setItem('user', JSON.stringify(user));
+          }
+
           set({
             user,
             accessToken: access_token,
@@ -43,6 +62,11 @@ export const useAuthStore = create<AuthState>()(
       },
 
       setAuth: (user: UserProfile, accessToken: string) => {
+        setAuthCookie();
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('token', accessToken);
+          localStorage.setItem('user', JSON.stringify(user));
+        }
         set({
           user,
           accessToken,
@@ -52,10 +76,18 @@ export const useAuthStore = create<AuthState>()(
       },
 
       setAccessToken: (accessToken: string) => {
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('token', accessToken);
+        }
         set({ accessToken });
       },
 
       clearAuth: () => {
+        removeAuthCookie();
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+        }
         set({
           user: null,
           accessToken: null,
@@ -78,6 +110,10 @@ export const useAuthStore = create<AuthState>()(
         try {
           const data = await authService.refreshToken();
           const { access_token } = data;
+          setAuthCookie();
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('token', access_token);
+          }
           set({ accessToken: access_token, isAuthenticated: true });
           return access_token;
         } catch (error) {
