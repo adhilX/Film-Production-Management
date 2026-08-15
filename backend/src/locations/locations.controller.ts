@@ -13,7 +13,7 @@ import { CheckProduction } from '../auth/decorators/check-production.decorator';
 @UseGuards(AuthGuard)
 @CheckProduction()
 export class LocationsController {
-  constructor(private readonly locationsService: LocationsService) {}
+  constructor(private readonly locationsService: LocationsService) { }
 
   @Post()
   @Permissions('locations.book')

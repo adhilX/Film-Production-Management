@@ -10,7 +10,7 @@ import { Permissions } from '../auth/decorators/permissions.decorator';
 @Controller('users')
 @UseGuards(AuthGuard)
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(private readonly usersService: UsersService) { }
 
   @Get()
   @Permissions('users.approve')

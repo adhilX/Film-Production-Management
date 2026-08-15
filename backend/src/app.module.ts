@@ -7,11 +7,14 @@ import { LocationsModule } from './locations/locations.module';
 import { FundsModule } from './funds/funds.module';
 import { AuditLogsModule } from './audit-logs/audit-logs.module';
 
+import { JwtModule } from './common/jwt/jwt.module';
+
 @Module({
   imports: [
     MongooseModule.forRoot(
       process.env.MONGO_URI || 'mongodb://localhost:27017/film_production',
     ),
+    JwtModule,
     AuthModule,
     UsersModule,
     ProductionsModule,

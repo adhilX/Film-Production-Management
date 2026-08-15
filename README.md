@@ -17,6 +17,7 @@ Each domain feature module encapsulates its own Mongoose schemas, DTOs, controll
 - **`locations/`**: Conflict-free location booking with overlap queries (`startDate < newEnd` AND `endDate > newStart`) returning `422 Unprocessable Entity` on double-bookings with **`locations/schemas/location.schema.ts`**.
 - **`funds/`**: Budget & fund requests with gatekeeper approval controls with **`funds/schemas/fund-request.schema.ts`**.
 - **`audit-logs/`**: Transactional compliance logging capturing user action, state transitions, and timestamps with **`audit-logs/schemas/audit-log.schema.ts`**.
+- **`common/jwt/`**: Modular JWT package containing `interfaces/`, `payload/`, `jwt.module.ts`, and `jwt.service.ts` for global token generation and verification.
 - **`filters/`**: `AllExceptionsFilter` providing unified JSON error response signatures.
 
 ---

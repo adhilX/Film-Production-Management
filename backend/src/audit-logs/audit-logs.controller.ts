@@ -9,7 +9,7 @@ import { Permissions } from '../auth/decorators/permissions.decorator';
 @Controller('audit-logs')
 @UseGuards(AuthGuard)
 export class AuditLogsController {
-  constructor(private readonly auditLogsService: AuditLogsService) {}
+  constructor(private readonly auditLogsService: AuditLogsService) { }
 
   @Get()
   @Permissions('audit_logs.view')

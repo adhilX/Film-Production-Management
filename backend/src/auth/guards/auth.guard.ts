@@ -6,7 +6,6 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User, UserDocument } from '../../users/schemas/user.schema';
@@ -14,15 +13,17 @@ import { Role, RoleDocument } from '../schemas/role.schema';
 import { CastCrew, CastCrewDocument } from '../../productions/schemas/cast-crew.schema';
 import { PERMISSIONS_KEY } from '../decorators/permissions.decorator';
 import { CHECK_PRODUCTION_KEY } from '../decorators/check-production.decorator';
+import { JwtService } from '../../common/jwt/jwt.service';
+import { GENERAL_MESSAGES, USER_MESSAGES } from '../../common/constants/messages.constant';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
   constructor(
-    private reflector: Reflector,
-    private jwtService: JwtService,
-    @InjectModel(User.name) private userModel: Model<UserDocument>,
-    @InjectModel(Role.name) private roleModel: Model<RoleDocument>,
-    @InjectModel(CastCrew.name) private castCrewModel: Model<CastCrewDocument>,
+    private readonly _reflector: Reflector,
+    private readonly _jwtService: JwtService,
+    @InjectModel(User.name) private readonly _userModel: Model<UserDocument>,
+    @InjectModel(Role.name) private readonly _roleModel: Model<RoleDocument>,
+    @InjectModel(CastCrew.name) private readonly _castCrewModel: Model<CastCrewDocument>,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -34,47 +35,38 @@ export class AuthGuard implements CanActivate {
     }
 
     const token = authHeader.split(' ')[1];
-    let payload: any;
-    try {
-      payload = this.jwtService.verify(token);
-    } catch (err) {
-      throw new UnauthorizedException('Token verification failed');
-    }
+    const payload = await this._jwtService.verifyAccessToken(token);
 
-    // Load User and Role
-    const user = await this.userModel.findById(payload.sub).populate('roleId').exec();
+    const user = await this._userModel.findById(payload.sub).exec();
     if (!user) {
-      throw new UnauthorizedException('User no longer exists');
+      throw new UnauthorizedException(USER_MESSAGES.NOT_FOUND);
     }
 
     if (!user.isActive) {
-      throw new ForbiddenException('User account is inactive or pending onboarding approval');
+      throw new ForbiddenException(USER_MESSAGES.INACTIVE_ACCOUNT);
     }
 
-    // Attach user to request for use in controllers/services
     request.user = user;
 
-    // --- LEVEL 2: RBAC (Permissions Check) ---
-    const requiredPermissions = this.reflector.getAllAndOverride<string[]>(
+    const requiredPermissions = this._reflector.getAllAndOverride<string[]>(
       PERMISSIONS_KEY,
       [context.getHandler(), context.getClass()],
     );
 
     if (requiredPermissions && requiredPermissions.length > 0) {
       if (user.systemRole !== 'Admin') {
-        const userRole = user.roleId as any as Role;
+        const userRole = await this._roleModel.findById(user.roleId).exec();
         const userPermissions = userRole?.permissions || [];
         const hasAllPermissions = requiredPermissions.every((perm) =>
           userPermissions.includes(perm),
         );
         if (!hasAllPermissions) {
-          throw new ForbiddenException('Insufficient permissions to access this resource');
+          throw new ForbiddenException(GENERAL_MESSAGES.FORBIDDEN);
         }
       }
     }
 
-    // --- LEVEL 3: Resource Scope Check ---
-    const checkProduction = this.reflector.getAllAndOverride<boolean>(
+    const checkProduction = this._reflector.getAllAndOverride<boolean>(
       CHECK_PRODUCTION_KEY,
       [context.getHandler(), context.getClass()],
     );
@@ -86,7 +78,6 @@ export class AuthGuard implements CanActivate {
           request.body.productionId ||
           request.query.productionId;
 
-        // If it's a route parameterized by :id, it might represent a production ID itself
         if (!productionId && request.params.id && request.url.includes('/productions/')) {
           productionId = request.params.id;
         }
@@ -95,7 +86,7 @@ export class AuthGuard implements CanActivate {
           throw new ForbiddenException('Production ID is required for resource scope check');
         }
 
-        const isAssigned = await this.castCrewModel.findOne({
+        const isAssigned = await this._castCrewModel.findOne({
           userId: user._id,
           productionId,
         }).exec();

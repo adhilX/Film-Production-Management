@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { User, UserDocument } from './schemas/user.schema';
 import { Role, RoleDocument } from '../auth/schemas/role.schema';
 import { UpdateOnboardingDto } from './dto/update-onboarding.dto';
@@ -64,7 +64,7 @@ export class UsersService {
       const roleName = updateDto.systemRole === 'Admin' ? 'Admin' : updateDto.systemRole === 'Manager' ? 'Production Manager' : 'User';
       const dbRole = await this.roleModel.findOne({ name: roleName }).exec();
       if (dbRole) {
-        user.roleId = dbRole._id as any;
+        user.roleId = dbRole._id as Types.ObjectId;
       }
     }
 

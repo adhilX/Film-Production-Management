@@ -13,7 +13,7 @@ import { CheckProduction } from '../auth/decorators/check-production.decorator';
 @Controller('productions')
 @UseGuards(AuthGuard)
 export class ProductionsController {
-  constructor(private readonly productionsService: ProductionsService) {}
+  constructor(private readonly productionsService: ProductionsService) { }
 
   @Post()
   @Permissions('productions.create')

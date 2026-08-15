@@ -1,5 +1,4 @@
 import { Injectable, OnModuleInit, UnauthorizedException, ConflictException } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as bcrypt from 'bcryptjs';
@@ -7,14 +6,18 @@ import { User, UserDocument } from '../users/schemas/user.schema';
 import { Role, RoleDocument } from './schemas/role.schema';
 import { SignupDto } from './dto/signup.dto';
 import { LoginDto } from './dto/login.dto';
+import { JwtService } from '../common/jwt/jwt.service';
+import type { SignupResponse, LoginResponse, RefreshTokenResponse } from './interfaces/auth-response.interface';
+import type { IAuthService } from './interfaces/auth.service.interface';
+import { AUTH_MESSAGES, USER_MESSAGES } from '../common/constants/messages.constant';
 
 @Injectable()
-export class AuthService implements OnModuleInit {
+export class AuthService implements IAuthService, OnModuleInit {
   constructor(
-    @InjectModel(User.name) private userModel: Model<UserDocument>,
-    @InjectModel(Role.name) private roleModel: Model<RoleDocument>,
-    private jwtService: JwtService,
-  ) {}
+    @InjectModel(User.name) private readonly _userModel: Model<UserDocument>,
+    @InjectModel(Role.name) private readonly _roleModel: Model<RoleDocument>,
+    private readonly _jwtService: JwtService,
+  ) { }
 
   async onModuleInit() {
     await this.seedRolesAndAdmin();
@@ -41,27 +44,27 @@ export class AuthService implements OnModuleInit {
 
     const userPermissions = ['locations.book'];
 
-    let adminRole = await this.roleModel.findOne({ name: 'Admin' }).exec();
+    let adminRole = await this._roleModel.findOne({ name: 'Admin' }).exec();
     if (!adminRole) {
-      adminRole = new this.roleModel({ name: 'Admin', permissions: adminPermissions });
+      adminRole = new this._roleModel({ name: 'Admin', permissions: adminPermissions });
       await adminRole.save();
     } else {
       adminRole.permissions = adminPermissions;
       await adminRole.save();
     }
 
-    let managerRole = await this.roleModel.findOne({ name: 'Production Manager' }).exec();
+    let managerRole = await this._roleModel.findOne({ name: 'Production Manager' }).exec();
     if (!managerRole) {
-      managerRole = new this.roleModel({ name: 'Production Manager', permissions: managerPermissions });
+      managerRole = new this._roleModel({ name: 'Production Manager', permissions: managerPermissions });
       await managerRole.save();
     } else {
       managerRole.permissions = managerPermissions;
       await managerRole.save();
     }
 
-    let userRole = await this.roleModel.findOne({ name: 'User' }).exec();
+    let userRole = await this._roleModel.findOne({ name: 'User' }).exec();
     if (!userRole) {
-      userRole = new this.roleModel({ name: 'User', permissions: userPermissions });
+      userRole = new this._roleModel({ name: 'User', permissions: userPermissions });
       await userRole.save();
     } else {
       userRole.permissions = userPermissions;
@@ -70,10 +73,10 @@ export class AuthService implements OnModuleInit {
 
     // 2. Seed Default Admin
     const adminEmail = 'admin@production.com';
-    const existingAdmin = await this.userModel.findOne({ email: adminEmail }).exec();
+    const existingAdmin = await this._userModel.findOne({ email: adminEmail }).exec();
     if (!existingAdmin) {
       const passwordHash = await bcrypt.hash('AdminPassword123!', 10);
-      const admin = new this.userModel({
+      const admin = new this._userModel({
         email: adminEmail,
         passwordHash,
         name: 'Super Admin',
@@ -88,19 +91,17 @@ export class AuthService implements OnModuleInit {
     }
   }
 
-  async signup(signupDto: SignupDto): Promise<any> {
+  async signup(signupDto: SignupDto): Promise<SignupResponse> {
     const { email, password, name, contractorType } = signupDto;
-    const existingUser = await this.userModel.findOne({ email }).exec();
+    const existingUser = await this._userModel.findOne({ email }).exec();
     if (existingUser) {
-      throw new ConflictException('Email already registered');
+      throw new ConflictException(USER_MESSAGES.ALREADY_EXISTS);
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
+    const userRole = await this._roleModel.findOne({ name: 'User' }).exec();
 
-    // Default system role is User, and status is Pending onboarding approval
-    const userRole = await this.roleModel.findOne({ name: 'User' }).exec();
-
-    const user = new this.userModel({
+    const user = new this._userModel({
       email,
       passwordHash,
       name,
@@ -108,40 +109,45 @@ export class AuthService implements OnModuleInit {
       systemRole: 'User',
       status: 'Pending',
       roleId: userRole?._id,
-      isActive: false, // Inactive until onboarding approval
+      isActive: false,
     });
 
     await user.save();
     return {
-      message: 'Signup successful. Onboarding pending review.',
+      message: AUTH_MESSAGES.SIGNUP_SUCCESSFUL,
       userId: user._id,
       status: user.status,
     };
   }
 
-  async login(loginDto: LoginDto): Promise<any> {
+  async login(loginDto: LoginDto): Promise<LoginResponse> {
     const { email, password } = loginDto;
-    const user = await this.userModel.findOne({ email }).exec();
+    const user = await this._userModel.findOne({ email }).exec();
     if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException(AUTH_MESSAGES.INVALID_CREDENTIALS);
     }
 
     const isMatch = await bcrypt.compare(password, user.passwordHash);
     if (!isMatch) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException(AUTH_MESSAGES.INVALID_CREDENTIALS);
     }
 
     if (!user.isActive) {
-      throw new UnauthorizedException('Account is inactive. Pending onboarding approval.');
+      throw new UnauthorizedException(USER_MESSAGES.INACTIVE_ACCOUNT);
     }
 
-    const populatedUser = await this.userModel.findById(user._id).populate('roleId').exec();
-    const userRole = populatedUser?.roleId as any as Role;
+    const populatedUser = await this._userModel.findById(user._id).populate<{ roleId: Role }>('roleId').exec();
+    const userRole = populatedUser?.roleId;
     const permissions = userRole?.permissions || [];
 
-    const payload = { email: user.email, sub: user._id, role: user.systemRole };
+    const tokens = await this._jwtService.generateTokens({
+      sub: user._id.toString(),
+      email: user.email,
+      role: user.systemRole,
+    });
+
     return {
-      access_token: this.jwtService.sign(payload),
+      ...tokens,
       user: {
         id: user._id,
         email: user.email,
@@ -152,5 +158,24 @@ export class AuthService implements OnModuleInit {
         permissions,
       },
     };
+  }
+
+  async refreshToken(refreshToken: string): Promise<RefreshTokenResponse> {
+    const payload = await this._jwtService.verifyRefreshToken(refreshToken);
+
+    const user = await this._userModel.findById(payload.sub).exec();
+    if (!user || !user.isActive) {
+      throw new UnauthorizedException(USER_MESSAGES.INACTIVE_ACCOUNT);
+    }
+
+    return this._jwtService.generateTokens({
+      sub: user._id.toString(),
+      email: user.email,
+      role: user.systemRole,
+    });
+  }
+
+  async logout(userId: string): Promise<void> {
+    return;
   }
 }

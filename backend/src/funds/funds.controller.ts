@@ -13,7 +13,7 @@ import { CheckProduction } from '../auth/decorators/check-production.decorator';
 @UseGuards(AuthGuard)
 @CheckProduction()
 export class FundsController {
-  constructor(private readonly fundsService: FundsService) {}
+  constructor(private readonly fundsService: FundsService) { }
 
   @Post()
   @ApiOperation({ summary: 'Submit a budget / fund request for a production' })
