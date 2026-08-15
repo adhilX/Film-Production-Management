@@ -20,7 +20,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       status = exception.getStatus();
       const resContent = exception.getResponse();
       message = typeof resContent === 'object' && resContent !== null && 'message' in resContent
-        ? (resContent as any).message
+        ? String((resContent as Record<string, unknown>).message)
         : exception.message;
     } else if (exception instanceof Error) {
       message = exception.message;
