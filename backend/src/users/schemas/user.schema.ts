@@ -3,7 +3,11 @@ import { Document, Types } from 'mongoose';
 
 export type UserDocument = User & Document;
 
-@Schema({ timestamps: true })
+@Schema({
+  timestamps: true,
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true },
+})
 export class User {
   @Prop({ required: true, unique: true, lowercase: true, trim: true })
   email: string;
@@ -40,6 +44,16 @@ export class User {
 
   @Prop({ required: true, default: false })
   isActive: boolean;
+
+  // Virtual field
+  profile?: any;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
+
+UserSchema.virtual('profile', {
+  ref: 'UserProfile',
+  localField: '_id',
+  foreignField: 'userId',
+  justOne: true,
+});

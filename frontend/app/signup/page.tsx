@@ -3,7 +3,6 @@
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { z } from 'zod';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Clapperboard, 
@@ -24,26 +23,11 @@ import {
   BarChart3 
 } from 'lucide-react';
 import { authService } from '@/services/authService';
-import { useAuthStore } from '@/store/useAuthStore';
 import AuthSidebar from '../components/AuthSidebar';
-
-// Zod Validation Schema for Signup
-const signupSchema = z.object({
-  name: z.string().min(2, 'Full name must be at least 2 characters'),
-  email: z.string().min(1, 'Email address is required').email('Please enter a valid email address'),
-  phone: z.string().optional(),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-  confirmPassword: z.string().min(6, 'Confirm password must be at least 6 characters'),
-  role: z.string().min(1, 'Please select your role'),
-  agreeTerms: z.boolean().refine((val) => val === true, { message: 'You must agree to the Terms of Service & Privacy Policy' }),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: 'Passwords do not match',
-  path: ['confirmPassword'],
-});
+import { signupSchema } from '@/lib/validation';
 
 export default function SignupPage() {
   const router = useRouter();
-  const login = useAuthStore((state) => state.login);
 
   const features = [
     { title: 'Role Based Access', description: 'Secure dashboards for every team member.', icon: Users },
@@ -111,16 +95,10 @@ export default function SignupPage() {
         contractorType: formData.role as any,
       });
 
-      // Step 2: Auto-login
-      await login({
-        email: formData.email,
-        password: formData.password,
-      });
-
-      setSuccess('Account created successfully! Redirecting to workspace...');
+      setSuccess('Account created successfully! Redirecting to login...');
       setTimeout(() => {
-        window.location.href = '/';
-      }, 500);
+        router.push('/login');
+      }, 1500);
     } catch (err: unknown) {
       if (err && typeof err === 'object' && 'response' in err) {
         const axiosErr = err as { response?: { data?: { message?: string; error?: string } } };

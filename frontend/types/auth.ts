@@ -10,7 +10,6 @@ export interface UserProfile {
 
 export interface LoginResponse {
   access_token: string;
-  user: UserProfile;
 }
 
 export interface SignupResponse {

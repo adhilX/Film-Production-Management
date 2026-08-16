@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from './components/auth-context';
 import { PermissionGuard } from './components/permission-guard';
+import { useAuthStore } from '@/store/useAuthStore';
 import { 
   Production, 
   LocationBooking, 
@@ -34,7 +35,17 @@ import {
 
 export default function DashboardHome() {
   const router = useRouter();
-  const { user, token, loading, login, logout, refreshStatus, hasPermission } = useAuth();
+  const { token, loading, login } = useAuth();
+  const user = useAuthStore((state) => state.user);
+  const logout = useAuthStore((state) => state.logout);
+  const checkStatus = useAuthStore((state) => state.checkStatus);
+  const storeLogin = useAuthStore((state) => state.login);
+
+  const hasPermission = (permission: string): boolean => {
+    if (!user) return false;
+    if (user.systemRole === 'Admin') return true;
+    return user.permissions ? user.permissions.includes(permission) : false;
+  };
 
   // Authentication form state
   const [loginEmail, setLoginEmail] = useState('');
@@ -125,18 +136,10 @@ export default function DashboardHome() {
     setAuthError('');
     setAuthLoading(true);
     try {
-      const res = await fetch('http://localhost:3001/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: loginEmail, password: loginPassword }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Authentication failed');
-      }
-      login(data.access_token, data.user);
+      const res = await storeLogin({ email: loginEmail, password: loginPassword });
+      login(res.access_token);
     } catch (err: any) {
-      setAuthError(err.message);
+      setAuthError(err.response?.data?.message || err.message || 'Authentication failed');
     } finally {
       setAuthLoading(false);
     }
@@ -144,7 +147,7 @@ export default function DashboardHome() {
 
   const handleManualRefresh = async () => {
     setRefreshing(true);
-    await refreshStatus();
+    await checkStatus();
     setRefreshing(false);
   };
 

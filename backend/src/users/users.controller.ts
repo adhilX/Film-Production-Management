@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, Body, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Patch, Body, Param, UseGuards, Req } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { UpdateOnboardingDto } from './dto/update-onboarding.dto';
@@ -18,6 +18,18 @@ export class UsersController {
   @ApiResponse({ status: 200, description: 'Array of user documents.' })
   findAll() {
     return this.usersService.findAll();
+  }
+
+  @Get('me/status')
+  @ApiOperation({ summary: 'Get current user onboarding/system status' })
+  @ApiResponse({ status: 200, description: 'Onboarding and system status of current user.' })
+  getMeStatus(@Req() req: any) {
+    const user = req.user;
+    return {
+      status: user.status,
+      isActive: user.isActive,
+      systemRole: user.systemRole
+    };
   }
 
   @Get(':id')

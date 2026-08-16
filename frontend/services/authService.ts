@@ -1,5 +1,5 @@
 import { axiosClient } from '@/lib/axios';
-import type { LoginResponse, SignupResponse, RefreshResponse } from '@/types/auth';
+import type { LoginResponse, SignupResponse, RefreshResponse, UserProfile } from '@/types/auth';
 
 export interface LoginPayload {
   email: string;
@@ -19,6 +19,22 @@ export const authService = {
    */
   async login(payload: LoginPayload): Promise<LoginResponse> {
     const response = await axiosClient.post<LoginResponse>('/auth/login', payload);
+    return response.data;
+  },
+
+  /**
+   * Fetches user profile by user ID
+   */
+  async getProfile(userId: string): Promise<UserProfile> {
+    const response = await axiosClient.get<UserProfile>(`/users/${userId}`);
+    return response.data;
+  },
+
+  /**
+   * Fetches current user onboarding status and active status
+   */
+  async getStatus(): Promise<{ status: string; isActive: boolean; systemRole: string }> {
+    const response = await axiosClient.get<{ status: string; isActive: boolean; systemRole: string }>('/users/me/status');
     return response.data;
   },
 

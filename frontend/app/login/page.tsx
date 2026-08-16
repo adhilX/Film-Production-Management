@@ -3,22 +3,18 @@
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { z } from 'zod';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Clapperboard, AlertCircle, CheckCircle2, Shield, Users } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
+import { useAuth } from '../components/auth-context';
 import AuthSidebar from '../components/AuthSidebar';
 import LoginForm from './components/LoginForm';
-
-// Zod Validation Schema for Login
-const loginSchema = z.object({
-  email: z.string().min(1, 'Email address is required').email('Please enter a valid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-});
+import { loginSchema } from '@/lib/validation';
 
 export default function LoginPage() {
   const router = useRouter();
   const login = useAuthStore((state) => state.login);
+  const { login: contextLogin } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -66,8 +62,13 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const response = await login({ email, password });
-      setSuccess(`Welcome back, ${response.user.name}! Redirecting to workspace...`);
+      const res = await login({ email, password });
+      
+      // Sync the token with the AuthProvider context
+      contextLogin(res.access_token);
+
+      const loggedInUser = useAuthStore.getState().user;
+      setSuccess(`Welcome back, ${loggedInUser?.name || 'User'}! Redirecting to workspace...`);
 
       setTimeout(() => {
         window.location.href = '/';

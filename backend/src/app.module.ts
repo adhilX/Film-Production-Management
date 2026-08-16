@@ -1,4 +1,4 @@
-import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
@@ -7,7 +7,6 @@ import { LocationsModule } from './locations/locations.module';
 import { FundsModule } from './funds/funds.module';
 import { AuditLogsModule } from './audit-logs/audit-logs.module';
 import { JwtModule } from './common/jwt/jwt.module';
-import { TokenMiddleware } from './auth/middleware/token.middleware';
 
 @Module({
   imports: [
@@ -23,8 +22,4 @@ import { TokenMiddleware } from './auth/middleware/token.middleware';
     AuditLogsModule,
   ],
 })
-export class AppModule implements NestModule {
-  configure(consumer: MiddlewareConsumer) {
-    consumer.apply(TokenMiddleware).forRoutes('*');
-  }
-}
+export class AppModule {}

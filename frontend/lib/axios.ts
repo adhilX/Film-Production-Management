@@ -48,9 +48,17 @@ axiosClient.interceptors.response.use(
 
     // Check if error is 401 Unauthorized and request hasn't been retried yet
     if (error.response?.status === 401 && !originalRequest._retry) {
-      // Avoid looping if the failed request was the refresh endpoint itself
-      if (originalRequest.url?.includes('/auth/refresh')) {
-        useAuthStore.getState().logout();
+      // Avoid refreshing if it's any auth-related endpoint (login, signup, logout, refresh)
+      if (
+        originalRequest.url?.includes('/auth/login') ||
+        originalRequest.url?.includes('/auth/signup') ||
+        originalRequest.url?.includes('/auth/logout') ||
+        originalRequest.url?.includes('/auth/refresh')
+      ) {
+        // If a logout or token refresh request fails, clear local auth credentials immediately
+        if (originalRequest.url?.includes('/auth/refresh') || originalRequest.url?.includes('/auth/logout')) {
+          useAuthStore.getState().clearAuth();
+        }
         return Promise.reject(error);
       }
 
@@ -76,12 +84,12 @@ axiosClient.interceptors.response.use(
           return axiosClient(originalRequest);
         } else {
           processQueue(error, null);
-          useAuthStore.getState().logout();
+          useAuthStore.getState().clearAuth();
           return Promise.reject(error);
         }
       } catch (refreshErr) {
         processQueue(refreshErr, null);
-        useAuthStore.getState().logout();
+        useAuthStore.getState().clearAuth();
         return Promise.reject(refreshErr);
       } finally {
         isRefreshing = false;

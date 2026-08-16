@@ -132,14 +132,6 @@ export class AuthService implements IAuthService, OnModuleInit {
       throw new UnauthorizedException(AUTH_MESSAGES.INVALID_CREDENTIALS);
     }
 
-    if (!user.isActive) {
-      throw new UnauthorizedException(USER_MESSAGES.INACTIVE_ACCOUNT);
-    }
-
-    const populatedUser = await this._userModel.findById(user._id).populate<{ roleId: Role }>('roleId').exec();
-    const userRole = populatedUser?.roleId;
-    const permissions = userRole?.permissions || [];
-
     const tokens = await this._jwtService.generateTokens({
       userId: user._id.toString(),
       email: user.email,
@@ -148,15 +140,6 @@ export class AuthService implements IAuthService, OnModuleInit {
 
     return {
       ...tokens,
-      user: {
-        id: user._id,
-        email: user.email,
-        name: user.name,
-        contractorType: user.contractorType,
-        systemRole: user.systemRole,
-        status: user.status,
-        permissions,
-      },
     };
   }
 
@@ -164,8 +147,8 @@ export class AuthService implements IAuthService, OnModuleInit {
     const payload = await this._jwtService.verifyRefreshToken(refreshToken);
 
     const user = await this._userModel.findById(payload.userId).exec();
-    if (!user || !user.isActive) {
-      throw new UnauthorizedException(USER_MESSAGES.INACTIVE_ACCOUNT);
+    if (!user) {
+      throw new UnauthorizedException(USER_MESSAGES.NOT_FOUND);
     }
 
     return this._jwtService.generateTokens({

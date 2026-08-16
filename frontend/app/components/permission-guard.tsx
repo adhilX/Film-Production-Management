@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { useAuth } from './auth-context';
+import { useAuthStore } from '@/store/useAuthStore';
 
 interface PermissionGuardProps {
   permission: string;
@@ -14,7 +14,13 @@ export const PermissionGuard: React.FC<PermissionGuardProps> = ({
   fallback = null,
   children,
 }) => {
-  const { hasPermission } = useAuth();
+  const user = useAuthStore((state) => state.user);
+
+  const hasPermission = (perm: string): boolean => {
+    if (!user) return false;
+    if (user.systemRole === 'Admin') return true;
+    return user.permissions ? user.permissions.includes(perm) : false;
+  };
 
   if (!hasPermission(permission)) {
     return <>{fallback}</>;

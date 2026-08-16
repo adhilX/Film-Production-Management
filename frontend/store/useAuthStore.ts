@@ -14,6 +14,7 @@ interface AuthState {
   logout: () => Promise<void>;
   refreshToken: () => Promise<string | null>;
   clearAuth: () => void;
+  checkStatus: () => Promise<{ status: string; isActive: boolean; systemRole: string } | null>;
 }
 
 const setAuthCookie = () => {
@@ -25,6 +26,22 @@ const setAuthCookie = () => {
 const removeAuthCookie = () => {
   if (typeof document !== 'undefined') {
     document.cookie = 'refresh_token=; path=/; max-age=0; SameSite=Lax';
+  }
+};
+
+const decodeJwt = (token: string): any => {
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+    return JSON.parse(jsonPayload);
+  } catch (error) {
+    return null;
   }
 };
 
@@ -40,17 +57,26 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true });
         try {
           const response = await authService.login(credentials);
-          const { access_token, user } = response;
+          const { access_token } = response;
           
           setAuthCookie();
           if (typeof window !== 'undefined') {
             localStorage.setItem('token', access_token);
-            localStorage.setItem('user', JSON.stringify(user));
           }
 
+          const decoded = decodeJwt(access_token);
+          const userId = decoded?.userId;
+          if (!userId) {
+            throw new Error('Authentication token is missing user identity details');
+          }
+
+          // Set the token first so the Axios request interceptor attaches it
+          set({ accessToken: access_token });
+
+          const userProfile = await authService.getProfile(userId);
+
           set({
-            user,
-            accessToken: access_token,
+            user: userProfile,
             isAuthenticated: true,
             isLoading: false,
           });
@@ -65,7 +91,6 @@ export const useAuthStore = create<AuthState>()(
         setAuthCookie();
         if (typeof window !== 'undefined') {
           localStorage.setItem('token', accessToken);
-          localStorage.setItem('user', JSON.stringify(user));
         }
         set({
           user,
@@ -86,7 +111,6 @@ export const useAuthStore = create<AuthState>()(
         removeAuthCookie();
         if (typeof window !== 'undefined') {
           localStorage.removeItem('token');
-          localStorage.removeItem('user');
         }
         set({
           user: null,
@@ -97,13 +121,15 @@ export const useAuthStore = create<AuthState>()(
       },
 
       logout: async () => {
-        try {
-          await authService.logout();
-        } catch (error) {
-          console.error('Logout error:', error);
-        } finally {
-          get().clearAuth();
+        const token = get().accessToken;
+        if (token) {
+          try {
+            await authService.logout();
+          } catch (error) {
+            console.error('Logout error:', error);
+          }
         }
+        get().clearAuth();
       },
 
       refreshToken: async () => {
@@ -121,12 +147,31 @@ export const useAuthStore = create<AuthState>()(
           return null;
         }
       },
+
+      checkStatus: async () => {
+        try {
+          const statusData = await authService.getStatus();
+          const currentUser = get().user;
+          if (currentUser) {
+            const updatedUser = {
+              ...currentUser,
+              status: statusData.status,
+              isActive: statusData.isActive,
+              systemRole: statusData.systemRole,
+            };
+            set({ user: updatedUser });
+          }
+          return statusData;
+        } catch (error) {
+          console.error('Failed to check user status:', error);
+          return null;
+        }
+      },
     }),
     {
       name: 'auth-storage',
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
-        user: state.user,
         accessToken: state.accessToken,
         isAuthenticated: state.isAuthenticated,
       }),

@@ -21,9 +21,7 @@ export interface AuthTokens {
   refresh_token: string;
 }
 
-export interface LoginResponse extends AuthTokens {
-  user: AuthUserProfile;
-}
+export interface LoginResponse extends AuthTokens {}
 
 export interface RefreshTokenResponse {
   access_token: string;

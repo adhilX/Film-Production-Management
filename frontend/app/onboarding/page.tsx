@@ -2,9 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { z } from 'zod';
 import { authService } from '@/services/authService';
-import { useAuthStore } from '@/store/useAuthStore';
 import { 
   Sparkles, 
   User, 
@@ -25,43 +23,15 @@ import Step3Financial from './components/Step3Financial';
 import Step4Identity from './components/Step4Identity';
 import Step5Contracts from './components/Step5Contracts';
 import Step6Review from './components/Step6Review';
-
-// Zod Schemas for the 6 Steps
-const step2Schema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters'),
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-  confirmPassword: z.string().min(6, 'Confirm password must be at least 6 characters'),
-  contractorType: z.enum(['Freelancer', 'Cast', 'Crew', 'Supplier', 'Agent', 'Production Company']),
-  bio: z.string().min(10, 'Bio must be at least 10 characters'),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: 'Passwords do not match',
-  path: ['confirmPassword'],
-});
-
-const step3Schema = z.object({
-  dailyRate: z.number().min(1, 'Daily rate must be greater than 0'),
-  bankAccount: z.string().min(6, 'Bank account / IBAN must be at least 6 characters'),
-});
-
-const step4Schema = z.object({
-  documentType: z.string().min(2, 'Document type is required'),
-  nationalId: z.string().min(5, 'National ID / Serial number must be at least 5 characters'),
-});
-
-const step5Schema = z.object({
-  agreeNda: z.boolean().refine((val) => val === true, { message: 'You must agree to the NDA' }),
-  agreeSafety: z.boolean().refine((val) => val === true, { message: 'You must agree to the Safety Policy' }),
-  agreeTerms: z.boolean().refine((val) => val === true, { message: 'You must agree to the Terms of Service' }),
-});
+import { step2Schema, step3Schema, step4Schema, step5Schema } from '@/lib/validation';
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const login = useAuthStore((state) => state.login);
 
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [success, setSuccess] = useState<string | null>(null);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -147,6 +117,7 @@ export default function OnboardingPage() {
   const handleSubmit = async () => {
     setLoading(true);
     setErrors({});
+    setSuccess(null);
     try {
       // Identity Creation (Signup)
       await authService.signup({
@@ -156,13 +127,10 @@ export default function OnboardingPage() {
         contractorType: formData.contractorType,
       });
 
-      // Login to capture token & transition to Pending Review state
-      await login({
-        email: formData.email,
-        password: formData.password,
-      });
-
-      router.push('/');
+      setSuccess('Application submitted successfully! Redirecting to login page...');
+      setTimeout(() => {
+        router.push('/login');
+      }, 1500);
     } catch (e: unknown) {
       if (e && typeof e === 'object' && 'response' in e) {
         const axiosErr = e as { response?: { data?: { error?: string; message?: string } } };
@@ -215,6 +183,14 @@ export default function OnboardingPage() {
           <div className="mb-6 p-4 bg-red-950/60 border border-red-800/60 text-red-300 rounded-xl text-sm flex items-start gap-3">
             <AlertCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
             <span>{errors.api}</span>
+          </div>
+        )}
+
+        {/* Global Success Banner */}
+        {success && (
+          <div className="mb-6 p-4 bg-emerald-950/60 border border-emerald-800/60 text-emerald-300 rounded-xl text-sm flex items-start gap-3">
+            <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
+            <span>{success}</span>
           </div>
         )}
 
