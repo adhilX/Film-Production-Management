@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { authService } from '@/services/authService';
 import { 
@@ -32,27 +32,74 @@ export default function OnboardingPage() {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [success, setSuccess] = useState<string | null>(null);
+  const [adminFeedback, setAdminFeedback] = useState<string | null>(null);
 
   // Form State
   const [formData, setFormData] = useState({
     name: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-    contractorType: 'Freelancer' as const,
-    bio: '',
-    dailyRate: 450,
-    bankAccount: '',
-    documentType: 'Passport',
-    nationalId: '',
+    photoUrl: '',
+    phoneNumber: '',
+    secondaryEmail: '',
+    department: '',
+    position: '',
+    experience: '',
+    bankName: '',
+    accountNumber: '',
+    routingNumber: '',
+    taxFormUrl: '',
+    governmentIdType: '',
+    identityDocs: [] as string[],
     agreeNda: false,
-    agreeSafety: false,
     agreeTerms: false,
+    signatureData: '',
   });
+
+  useEffect(() => {
+    const loadProgress = async () => {
+      try {
+        const me = await authService.getMe();
+        if (me) {
+          setAdminFeedback(me.adminFeedback || null);
+          if (me.currentStep && me.currentStep >= 1 && me.currentStep <= 6) {
+            setStep(me.currentStep);
+          }
+          if (me.name) {
+            setFormData(prev => ({ ...prev, name: me.name }));
+          }
+          if (me.profile) {
+            const prof = me.profile;
+            setFormData(prev => ({
+              ...prev,
+              name: me.name || prev.name,
+              photoUrl: prof.photoUrl || '',
+              phoneNumber: prof.phoneNumber || '',
+              secondaryEmail: prof.secondaryEmail || '',
+              department: prof.department || '',
+              position: prof.position || '',
+              experience: prof.experience?.join('\n') || '',
+              bankName: prof.bankDetails?.bankName || '',
+              accountNumber: prof.bankDetails?.accountNumber || '',
+              routingNumber: prof.bankDetails?.routingNumber || '',
+              taxFormUrl: prof.taxFormUrl || '',
+              governmentIdType: prof.governmentIdType || '',
+              identityDocs: prof.identityDocs || [],
+              agreeNda: prof.signedNda || false,
+              agreeTerms: prof.signedTerms || false,
+              signatureData: prof.signatureData || '',
+            }));
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load user progress:', err);
+      }
+    };
+
+    loadProgress();
+  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
-    const val = type === 'checkbox' ? (e.target as HTMLInputElement).checked : (name === 'dailyRate' ? Number(value) : value);
+    const val = type === 'checkbox' ? (e.target as HTMLInputElement).checked : value;
     setFormData(prev => ({
       ...prev,
       [name]: val
@@ -67,32 +114,84 @@ export default function OnboardingPage() {
     }
   };
 
-  const handleNext = () => {
+  const handleFieldChange = (name: string, value: any) => {
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+
+    if (errors[name]) {
+      setErrors(prev => {
+        const updated = { ...prev };
+        delete updated[name];
+        return updated;
+      });
+    }
+  };
+
+  const saveProgress = async (nextStep: number) => {
+    setLoading(true);
+    setErrors({});
+    try {
+      await authService.updateOnboarding({
+        currentStep: nextStep,
+        profileData: {
+          name: formData.name,
+          photoUrl: formData.photoUrl,
+          phoneNumber: formData.phoneNumber,
+          secondaryEmail: formData.secondaryEmail,
+          department: formData.department,
+          position: formData.position,
+          experience: formData.experience,
+          bankDetails: {
+            bankName: formData.bankName,
+            accountNumber: formData.accountNumber,
+            routingNumber: formData.routingNumber,
+          },
+          taxFormUrl: formData.taxFormUrl,
+          governmentIdType: formData.governmentIdType,
+          identityDocs: formData.identityDocs,
+          agreeNda: formData.agreeNda,
+          agreeTerms: formData.agreeTerms,
+          signatureData: formData.signatureData,
+        }
+      });
+      setStep(nextStep);
+    } catch (e: any) {
+      setErrors({ api: e.response?.data?.message || 'Failed to save progress step.' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleNext = async () => {
     let result;
     if (step === 2) {
       result = step2Schema.safeParse({
         name: formData.name,
-        email: formData.email,
-        password: formData.password,
-        confirmPassword: formData.confirmPassword,
-        contractorType: formData.contractorType,
-        bio: formData.bio,
+        photoUrl: formData.photoUrl,
+        phoneNumber: formData.phoneNumber,
+        department: formData.department,
+        position: formData.position,
+        experience: formData.experience,
       });
     } else if (step === 3) {
       result = step3Schema.safeParse({
-        dailyRate: formData.dailyRate,
-        bankAccount: formData.bankAccount,
+        bankName: formData.bankName,
+        accountNumber: formData.accountNumber,
+        routingNumber: formData.routingNumber,
+        taxFormUrl: formData.taxFormUrl,
       });
     } else if (step === 4) {
       result = step4Schema.safeParse({
-        documentType: formData.documentType,
-        nationalId: formData.nationalId,
+        governmentIdType: formData.governmentIdType,
+        identityDocs: formData.identityDocs,
       });
     } else if (step === 5) {
       result = step5Schema.safeParse({
         agreeNda: formData.agreeNda,
-        agreeSafety: formData.agreeSafety,
         agreeTerms: formData.agreeTerms,
+        signatureData: formData.signatureData,
       });
     }
 
@@ -107,7 +206,7 @@ export default function OnboardingPage() {
       return;
     }
 
-    setStep(prev => prev + 1);
+    await saveProgress(step + 1);
   };
 
   const handleBack = () => {
@@ -119,25 +218,37 @@ export default function OnboardingPage() {
     setErrors({});
     setSuccess(null);
     try {
-      // Identity Creation (Signup)
-      await authService.signup({
-        email: formData.email,
-        password: formData.password,
-        name: formData.name,
-        contractorType: formData.contractorType,
+      // Step 6 submit resets onboardingStatus to pending-review and updates progress to 6
+      await authService.updateOnboarding({
+        currentStep: 6,
+        profileData: {
+          name: formData.name,
+          photoUrl: formData.photoUrl,
+          phoneNumber: formData.phoneNumber,
+          secondaryEmail: formData.secondaryEmail,
+          department: formData.department,
+          position: formData.position,
+          experience: formData.experience,
+          bankDetails: {
+            bankName: formData.bankName,
+            accountNumber: formData.accountNumber,
+            routingNumber: formData.routingNumber,
+          },
+          taxFormUrl: formData.taxFormUrl,
+          governmentIdType: formData.governmentIdType,
+          identityDocs: formData.identityDocs,
+          agreeNda: formData.agreeNda,
+          agreeTerms: formData.agreeTerms,
+          signatureData: formData.signatureData,
+        }
       });
 
-      setSuccess('Application submitted successfully! Redirecting to login page...');
+      setSuccess('Application submitted successfully! Redirecting...');
       setTimeout(() => {
-        router.push('/login');
+        router.push('/onboarding/status');
       }, 1500);
-    } catch (e: unknown) {
-      if (e && typeof e === 'object' && 'response' in e) {
-        const axiosErr = e as { response?: { data?: { error?: string; message?: string } } };
-        setErrors({ api: axiosErr.response?.data?.error || axiosErr.response?.data?.message || 'Failed to submit contractor application.' });
-      } else {
-        setErrors({ api: (e as Error).message || 'An error occurred during onboarding.' });
-      }
+    } catch (e: any) {
+      setErrors({ api: e.response?.data?.message || 'An error occurred during onboarding submission.' });
     } finally {
       setLoading(false);
     }
@@ -155,28 +266,39 @@ export default function OnboardingPage() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col items-center justify-center p-4 relative overflow-hidden">
       {/* Background ambient lighting */}
-      <div className="absolute top-1/4 -left-20 w-96 h-96 bg-purple-600/20 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-1/4 -left-20 w-96 h-96 bg-amber-600/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-amber-900/10 rounded-full blur-3xl pointer-events-none" />
 
       <div className="w-full max-w-2xl bg-slate-900/80 backdrop-blur-xl border border-slate-800/80 rounded-2xl shadow-2xl p-8 relative z-10">
         
         {/* Header & Stepper */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-2">
-            <h1 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-purple-400 via-indigo-200 to-slate-200 bg-clip-text text-transparent">
+            <h1 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-amber-400 via-amber-200 to-slate-200 bg-clip-text text-transparent">
               Contractor Registration & Onboarding
             </h1>
-            <span className="text-xs font-semibold px-3 py-1 bg-purple-950/80 border border-purple-800/80 text-purple-300 rounded-full">
+            <span className="text-xs font-semibold px-3 py-1 bg-amber-950/80 border border-amber-800/80 text-amber-300 rounded-full">
               Step {step} of 6
             </span>
           </div>
-          <p className="text-slate-400 text-xs mb-6">
-            Document 1 & 3 Specification: Complete all six steps to submit your contractor application for manager approval.
+          <p className="text-slate-400 text-xs mb-6 font-mono">
+            CINE-FACTORY LOGISTICS: Complete all six steps to submit your contractor application for approval.
           </p>
 
           {/* Stepper Navigation Indicator */}
           <Stepper step={step} stepsList={stepsList} />
         </div>
+
+        {/* Changes Requested Banner */}
+        {adminFeedback && (
+          <div className="mb-6 p-4 bg-red-950/40 border border-red-800/60 text-red-300 rounded-xl text-xs flex flex-col gap-1.5 animate-pulse">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 text-red-400 shrink-0" />
+              <span className="font-semibold uppercase tracking-wider">Changes Requested by Administrator</span>
+            </div>
+            <p className="pl-7 text-slate-300 font-mono">{adminFeedback}</p>
+          </div>
+        )}
 
         {/* Global Error Banner */}
         {errors.api && (
@@ -197,10 +319,42 @@ export default function OnboardingPage() {
         {/* Step Contents */}
         <div className="min-h-[300px]">
           {step === 1 && <Step1Welcome />}
-          {step === 2 && <Step2Information formData={formData} errors={errors} onChange={handleInputChange} />}
-          {step === 3 && <Step3Financial formData={formData} errors={errors} onChange={handleInputChange} />}
-          {step === 4 && <Step4Identity formData={formData} errors={errors} onChange={handleInputChange} />}
-          {step === 5 && <Step5Contracts formData={formData} errors={errors} onChange={handleInputChange} />}
+          {step === 2 && (
+            <Step2Information 
+              formData={formData} 
+              errors={errors} 
+              onChange={handleInputChange} 
+              onFieldChange={handleFieldChange}
+              adminFeedback={adminFeedback}
+            />
+          )}
+          {step === 3 && (
+            <Step3Financial 
+              formData={formData} 
+              errors={errors} 
+              onChange={handleInputChange} 
+              onFieldChange={handleFieldChange}
+              adminFeedback={adminFeedback}
+            />
+          )}
+          {step === 4 && (
+            <Step4Identity 
+              formData={formData} 
+              errors={errors} 
+              onChange={handleInputChange} 
+              onFieldChange={handleFieldChange}
+              adminFeedback={adminFeedback}
+            />
+          )}
+          {step === 5 && (
+            <Step5Contracts 
+              formData={formData} 
+              errors={errors} 
+              onChange={handleInputChange} 
+              onFieldChange={handleFieldChange}
+              adminFeedback={adminFeedback}
+            />
+          )}
           {step === 6 && <Step6Review formData={formData} />}
         </div>
 
@@ -223,9 +377,19 @@ export default function OnboardingPage() {
             <button 
               type="button"
               onClick={handleNext}
-              className="flex items-center gap-2 py-2.5 px-6 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 rounded-xl text-white text-xs font-semibold shadow-lg shadow-purple-500/20 transition"
+              disabled={loading}
+              className="flex items-center gap-2 py-2.5 px-6 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 text-xs font-semibold shadow-lg shadow-amber-500/20 transition disabled:opacity-50 font-bold"
             >
-              Next Step <ArrowRight className="w-4 h-4" />
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin text-slate-950" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  Next Step <ArrowRight className="w-4 h-4" />
+                </>
+              )}
             </button>
           ) : (
             <button 

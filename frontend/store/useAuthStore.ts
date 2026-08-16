@@ -14,7 +14,7 @@ interface AuthState {
   logout: () => Promise<void>;
   refreshToken: () => Promise<string | null>;
   clearAuth: () => void;
-  checkStatus: () => Promise<{ status: string; isActive: boolean; systemRole: string } | null>;
+  checkStatus: () => Promise<{ status: string; isActive: boolean; systemRole: string; onboardingStatus?: string } | null>;
 }
 
 const setAuthCookie = () => {
@@ -153,17 +153,24 @@ export const useAuthStore = create<AuthState>()(
           const statusData = await authService.getStatus();
           const currentUser = get().user;
           if (currentUser) {
-            const updatedUser = {
-              ...currentUser,
-              status: statusData.status,
-              isActive: statusData.isActive,
-              systemRole: statusData.systemRole,
-            };
-            set({ user: updatedUser });
+            if (
+              currentUser.status !== statusData.status ||
+              currentUser.isActive !== statusData.isActive ||
+              currentUser.systemRole !== statusData.systemRole ||
+              currentUser.onboardingStatus !== statusData.onboardingStatus
+            ) {
+              const updatedUser = {
+                ...currentUser,
+                status: statusData.status,
+                isActive: statusData.isActive,
+                systemRole: statusData.systemRole,
+                onboardingStatus: statusData.onboardingStatus,
+              };
+              set({ user: updatedUser });
+            }
           }
           return statusData;
         } catch (error) {
-          console.error('Failed to check user status:', error);
           return null;
         }
       },

@@ -10,4 +10,9 @@ export class UpdateOnboardingDto {
   @IsOptional()
   @IsEnum(['Admin', 'Manager', 'User'])
   systemRole?: string;
+
+  @ApiProperty({ example: 'Please upload a clearer ID copy.', required: false, description: 'Notes when changes are requested' })
+  @IsOptional()
+  @IsString()
+  adminFeedback?: string;
 }

@@ -33,8 +33,39 @@ export const authService = {
   /**
    * Fetches current user onboarding status and active status
    */
-  async getStatus(): Promise<{ status: string; isActive: boolean; systemRole: string }> {
-    const response = await axiosClient.get<{ status: string; isActive: boolean; systemRole: string }>('/users/me/status');
+  async getStatus(): Promise<{ status: string; isActive: boolean; systemRole: string; onboardingStatus?: string }> {
+    const response = await axiosClient.get<{ status: string; isActive: boolean; systemRole: string; onboardingStatus?: string }>('/users/me/status');
+    return response.data;
+  },
+
+  /**
+   * Fetches full details for the logged-in user (including onboarding details & profile data)
+   */
+  async getMe(): Promise<any> {
+    const response = await axiosClient.get<any>('/users/me');
+    return response.data;
+  },
+
+  /**
+   * Updates current user's onboarding progress step or profile data
+   */
+  async updateOnboarding(payload: { currentStep?: number; profileData?: any }): Promise<any> {
+    const response = await axiosClient.patch<any>('/users/onboarding', payload);
+    return response.data;
+  },
+
+  /**
+   * Uploads a file for onboarding (e.g. photo, ID docs, tax forms)
+   */
+  async uploadOnboardingFile(file: File, documentType: string): Promise<{ fileUrl: string }> {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('documentType', documentType);
+    const response = await axiosClient.post<{ fileUrl: string }>('/users/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
     return response.data;
   },
 

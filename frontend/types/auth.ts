@@ -6,6 +6,10 @@ export interface UserProfile {
   systemRole: string;
   status: string;
   permissions: string[];
+  onboardingStatus?: string;
+  currentStep?: number;
+  adminFeedback?: string;
+  isActive?: boolean;
 }
 
 export interface LoginResponse {

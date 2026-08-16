@@ -45,8 +45,9 @@ export class AuthGuard implements CanActivate {
     // Allow inactive users to retrieve their own user profile or check their onboarding status
     const isSelfProfileRequest = request.url.includes(`/users/${user._id.toString()}`);
     const isStatusRequest = request.url.endsWith('/users/me/status');
+    const isOnboardingRequest = request.url.endsWith('/users/me') || request.url.includes('/users/onboarding') || request.url.includes('/users/upload');
 
-    if (!user.isActive && !isSelfProfileRequest && !isStatusRequest) {
+    if (!user.isActive && !isSelfProfileRequest && !isStatusRequest && !isOnboardingRequest) {
       throw new ForbiddenException(USER_MESSAGES.INACTIVE_ACCOUNT);
     }
 

@@ -35,6 +35,22 @@ export class AuditLogsService {
     }
   }
 
+  async create(
+    actorId: string,
+    targetId: string,
+    action: string,
+    metadata: { oldStatus?: string; newStatus?: string },
+  ): Promise<AuditLog> {
+    return this.log(
+      actorId,
+      action,
+      targetId,
+      'User',
+      metadata.oldStatus || '',
+      metadata.newStatus || '',
+    );
+  }
+
   async findAll(): Promise<AuditLog[]> {
     return this.auditLogModel
       .find()

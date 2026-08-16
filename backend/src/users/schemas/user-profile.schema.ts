@@ -5,11 +5,14 @@ export type UserProfileDocument = UserProfile & Document;
 
 @Schema({ _id: false })
 export class BankDetails {
-  @Prop({ required: true })
-  bankName: string;
+  @Prop()
+  bankName?: string;
 
-  @Prop({ required: true })
-  accountNumber: string;
+  @Prop()
+  accountNumber?: string;
+
+  @Prop({ required: false })
+  routingNumber?: string;
 }
 
 const BankDetailsSchema = SchemaFactory.createForClass(BankDetails);
@@ -47,8 +50,21 @@ export class UserProfile {
   taxFormUrl?: string;
 
   // Identity
+  @Prop({ type: String })
+  governmentIdType?: string;
+
   @Prop({ type: [String], default: [] })
   identityDocs: string[];
+
+  // Contracts
+  @Prop({ type: Boolean, default: false })
+  signedNda: boolean;
+
+  @Prop({ type: Boolean, default: false })
+  signedTerms: boolean;
+
+  @Prop({ type: String })
+  signatureData?: string;
 }
 
 export const UserProfileSchema = SchemaFactory.createForClass(UserProfile);

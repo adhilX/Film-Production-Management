@@ -85,6 +85,8 @@ export class AuthService implements IAuthService, OnModuleInit {
         status: 'Approved',
         roleId: adminRole._id,
         isActive: true,
+        onboardingStatus: 'approved',
+        currentStep: 6,
       });
       await admin.save();
       console.log('Seeded default admin user: admin@production.com / AdminPassword123!');

@@ -39,11 +39,24 @@ export class User {
   })
   status: string;
 
-  @Prop({ type: Types.ObjectId, ref: 'Role' })
-  roleId: Types.ObjectId;
+  @Prop({ type: Types.ObjectId, ref: 'Role', default: null })
+  roleId: Types.ObjectId | null;
 
   @Prop({ required: true, default: false })
   isActive: boolean;
+
+  @Prop({
+    required: true,
+    enum: ['in-progress', 'pending-review', 'approved', 'changes-requested'],
+    default: 'in-progress',
+  })
+  onboardingStatus: string;
+
+  @Prop({ required: true, default: 1 })
+  currentStep: number;
+
+  @Prop({ required: false })
+  adminFeedback?: string;
 
   // Virtual field
   profile?: any;

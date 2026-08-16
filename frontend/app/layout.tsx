@@ -19,6 +19,7 @@ export const metadata: Metadata = {
 
 import { AuthProvider } from "./components/auth-context";
 import AuthInitializer from "./components/auth-initializer";
+import OnboardingGuard from "./components/onboarding-guard";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -29,7 +30,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-full flex flex-col">
         <AuthProvider>
           <AuthInitializer>
-            {children}
+            <OnboardingGuard>
+              {children}
+            </OnboardingGuard>
           </AuthInitializer>
         </AuthProvider>
       </body>
