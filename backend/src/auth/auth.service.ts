@@ -80,7 +80,7 @@ export class AuthService implements IAuthService, OnModuleInit {
         email: adminEmail,
         passwordHash,
         name: 'Super Admin',
-        contractorType: 'TCS Team',
+        contractorType: 'Production Company',
         systemRole: 'Admin',
         status: 'Approved',
         roleId: adminRole._id,
@@ -141,7 +141,7 @@ export class AuthService implements IAuthService, OnModuleInit {
     const permissions = userRole?.permissions || [];
 
     const tokens = await this._jwtService.generateTokens({
-      sub: user._id.toString(),
+      userId: user._id.toString(),
       email: user.email,
       role: user.systemRole,
     });
@@ -163,13 +163,13 @@ export class AuthService implements IAuthService, OnModuleInit {
   async refreshToken(refreshToken: string): Promise<RefreshTokenResponse> {
     const payload = await this._jwtService.verifyRefreshToken(refreshToken);
 
-    const user = await this._userModel.findById(payload.sub).exec();
+    const user = await this._userModel.findById(payload.userId).exec();
     if (!user || !user.isActive) {
       throw new UnauthorizedException(USER_MESSAGES.INACTIVE_ACCOUNT);
     }
 
     return this._jwtService.generateTokens({
-      sub: user._id.toString(),
+      userId: user._id.toString(),
       email: user.email,
       role: user.systemRole,
     });

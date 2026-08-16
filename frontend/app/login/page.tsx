@@ -3,11 +3,12 @@
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Image from 'next/image';
 import { z } from 'zod';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Clapperboard, Lock, Mail, Eye, EyeOff, Loader2, AlertCircle, CheckCircle2, Shield, Users } from 'lucide-react';
+import { Clapperboard, AlertCircle, CheckCircle2, Shield, Users } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
+import AuthSidebar from '../components/AuthSidebar';
+import LoginForm from './components/LoginForm';
 
 // Zod Validation Schema for Login
 const loginSchema = z.object({
@@ -90,97 +91,19 @@ export default function LoginPage() {
     setFieldErrors({});
   };
 
+  const features = [
+    { title: 'Role Based Access', description: 'Secure dashboards for every team member.', icon: Users },
+    { title: 'Secure & Reliable', description: 'Enterprise grade security and data protection.', icon: Shield },
+    { title: 'Built for Film Industry', description: 'Designed specifically for modern production houses.', icon: Clapperboard }
+  ];
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between selection:bg-purple-500 selection:text-white">
       {/* Main Container - Split Screen */}
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 min-h-[calc(100vh-60px)]">
         
-        {/* Left Side: Cinematic Atmospheric Background & Value Proposition (7 cols) */}
-        <div className="lg:col-span-7 relative flex flex-col justify-between p-8 lg:p-14 overflow-hidden min-h-[450px] lg:min-h-full">
-          {/* Background Image with Dark Vignette Overlay */}
-          <div className="absolute inset-0 z-0">
-            <Image 
-              src="/images/film_set_bg.png" 
-              alt="Film Production Set" 
-              fill 
-              priority 
-              className="object-cover object-center transform scale-105"
-            />
-            {/* Gradient Overlays for contrast */}
-            <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-slate-950/80 to-slate-950/60" />
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-slate-950/40" />
-          </div>
-
-          {/* Left Side Content Container */}
-          <motion.div 
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-            className="relative z-10 space-y-12 max-w-xl"
-          >
-            {/* Header Branding Logo */}
-            <div className="flex items-center gap-3">
-              <div className="w-11 h-11 bg-amber-500 rounded-xl flex items-center justify-center shadow-lg shadow-amber-500/20">
-                <Clapperboard className="w-6 h-6 text-slate-950 fill-slate-950" />
-              </div>
-              <div>
-                <h2 className="text-xl font-extrabold tracking-wider text-white leading-none">TENDAGON</h2>
-                <p className="text-[10px] font-bold tracking-widest text-amber-400 uppercase mt-0.5">FILM PRODUCTION MANAGEMENT</p>
-              </div>
-            </div>
-
-            {/* Main Headline */}
-            <div className="space-y-2">
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-none text-white">
-                Streamline.
-              </h1>
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-none text-white">
-                Collaborate.
-              </h1>
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-none text-amber-400">
-                Create Magic.
-              </h1>
-              <p className="text-slate-300 text-sm sm:text-base pt-4 leading-relaxed font-normal max-w-lg">
-                Manage your productions, people, locations, funds, costumes and more — all in one powerful platform built for the film industry.
-              </p>
-            </div>
-
-            {/* Feature Highlights Badges */}
-            <div className="space-y-5 pt-4">
-              <div className="flex items-start gap-4">
-                <div className="w-10 h-10 rounded-full bg-slate-900/90 border border-slate-700/60 flex items-center justify-center shrink-0 shadow-md">
-                  <Users className="w-5 h-5 text-amber-400" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-sm text-slate-100">Role Based Access</h3>
-                  <p className="text-xs text-slate-400">Secure dashboards for every team member.</p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-4">
-                <div className="w-10 h-10 rounded-full bg-slate-900/90 border border-slate-700/60 flex items-center justify-center shrink-0 shadow-md">
-                  <Shield className="w-5 h-5 text-amber-400" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-sm text-slate-100">Secure & Reliable</h3>
-                  <p className="text-xs text-slate-400">Enterprise grade security and data protection.</p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-4">
-                <div className="w-10 h-10 rounded-full bg-slate-900/90 border border-slate-700/60 flex items-center justify-center shrink-0 shadow-md">
-                  <Clapperboard className="w-5 h-5 text-amber-400" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-sm text-slate-100">Built for Film Industry</h3>
-                  <p className="text-xs text-slate-400">Designed specifically for modern production houses.</p>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-
-          <div className="relative z-10 pt-8 hidden lg:block" />
-        </div>
+        {/* Left Side: Cinematic Atmospheric Background & Value Proposition */}
+        <AuthSidebar features={features} className="lg:col-span-7" />
 
         {/* Right Side: Clean White Login Card (5 cols) */}
         <div className="lg:col-span-5 bg-white text-slate-900 p-8 sm:p-12 lg:p-16 flex flex-col justify-center relative overflow-hidden">
@@ -227,97 +150,19 @@ export default function LoginPage() {
             </AnimatePresence>
 
             {/* Sign In Form */}
-            <form onSubmit={handleSubmit} noValidate className="space-y-6">
-              {/* Email Address */}
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-                  Email Address
-                </label>
-                <div className="relative">
-                  <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => handleEmailChange(e.target.value)}
-                    placeholder="Enter your email"
-                    className={`w-full bg-white border ${fieldErrors.email ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : 'border-slate-300 focus:border-purple-600 focus:ring-purple-600/20'} rounded-xl pl-10 pr-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 transition duration-200`}
-                  />
-                </div>
-                {fieldErrors.email && (
-                  <motion.span 
-                    initial={{ opacity: 0, y: -4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="text-red-500 text-xs mt-1.5 block font-semibold"
-                  >
-                    {fieldErrors.email}
-                  </motion.span>
-                )}
-              </div>
-
-              {/* Password */}
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-                  Password
-                </label>
-                <div className="relative">
-                  <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    value={password}
-                    onChange={(e) => handlePasswordChange(e.target.value)}
-                    placeholder="Enter your password"
-                    className={`w-full bg-white border ${fieldErrors.password ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : 'border-slate-300 focus:border-purple-600 focus:ring-purple-600/20'} rounded-xl pl-10 pr-10 py-3 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 transition duration-200`}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition"
-                  >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-                {fieldErrors.password && (
-                  <motion.span 
-                    initial={{ opacity: 0, y: -4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="text-red-500 text-xs mt-1.5 block font-semibold"
-                  >
-                    {fieldErrors.password}
-                  </motion.span>
-                )}
-              </div>
-
-              {/* Remember Me Row */}
-              <div className="flex items-center justify-between text-xs">
-                <label className="flex items-center gap-2 cursor-pointer text-slate-600 font-medium">
-                  <input
-                    type="checkbox"
-                    checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
-                    className="w-4 h-4 rounded border-slate-300 text-purple-600 focus:ring-purple-500"
-                  />
-                  Remember me
-                </label>
-              </div>
-
-              {/* Sign In Primary Button */}
-              <motion.button
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.98 }}
-                type="submit"
-                disabled={isLoading}
-                className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3.5 rounded-xl shadow-lg shadow-purple-600/20 hover:shadow-purple-600/30 transition duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    Signing in...
-                  </>
-                ) : (
-                  'Sign In'
-                )}
-              </motion.button>
-            </form>
+            <LoginForm
+              email={email}
+              password={password}
+              rememberMe={rememberMe}
+              showPassword={showPassword}
+              isLoading={isLoading}
+              errors={fieldErrors}
+              onEmailChange={handleEmailChange}
+              onPasswordChange={handlePasswordChange}
+              onRememberMeChange={setRememberMe}
+              onShowPasswordChange={setShowPassword}
+              onSubmit={handleSubmit}
+            />
 
             {/* Bottom Signup Link & Quick Admin Demo Helper */}
             <div className="pt-6 border-t border-slate-100 text-center space-y-4 text-xs">

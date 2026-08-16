@@ -3,7 +3,6 @@
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Image from 'next/image';
 import { z } from 'zod';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -26,6 +25,7 @@ import {
 } from 'lucide-react';
 import { authService } from '@/services/authService';
 import { useAuthStore } from '@/store/useAuthStore';
+import AuthSidebar from '../components/AuthSidebar';
 
 // Zod Validation Schema for Signup
 const signupSchema = z.object({
@@ -44,6 +44,13 @@ const signupSchema = z.object({
 export default function SignupPage() {
   const router = useRouter();
   const login = useAuthStore((state) => state.login);
+
+  const features = [
+    { title: 'Role Based Access', description: 'Secure dashboards for every team member.', icon: Users },
+    { title: 'Secure & Reliable', description: 'Enterprise grade security and data protection.', icon: Shield },
+    { title: 'Built for Film Industry', description: 'Designed specifically for modern production houses.', icon: Clapperboard },
+    { title: 'Smart & Organized', description: 'Track, manage and grow your productions.', icon: BarChart3 }
+  ];
 
   const [formData, setFormData] = useState({
     name: '',
@@ -132,100 +139,7 @@ export default function SignupPage() {
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 min-h-[calc(100vh-60px)]">
         
         {/* Left Side: Dark Atmospheric Background */}
-        <div className="lg:col-span-6 relative flex flex-col justify-between p-8 lg:p-14 overflow-hidden min-h-[450px] lg:min-h-full">
-          {/* Background Image with Dark Overlay */}
-          <div className="absolute inset-0 z-0">
-            <Image 
-              src="/images/film_set_bg.png" 
-              alt="Film Production Set" 
-              fill 
-              priority 
-              className="object-cover object-center transform scale-105"
-            />
-            <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-slate-950/85 to-slate-950/70" />
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-slate-950/40" />
-          </div>
-
-          {/* Left Side Content */}
-          <motion.div 
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-            className="relative z-10 space-y-10 max-w-xl"
-          >
-            {/* Header Branding Logo */}
-            <div className="flex items-center gap-3">
-              <div className="w-11 h-11 bg-amber-500 rounded-xl flex items-center justify-center shadow-lg shadow-amber-500/20">
-                <Clapperboard className="w-6 h-6 text-slate-950 fill-slate-950" />
-              </div>
-              <div>
-                <h2 className="text-xl font-extrabold tracking-wider text-white leading-none">TENDAGON</h2>
-                <p className="text-[10px] font-bold tracking-widest text-amber-400 uppercase mt-0.5">FILM PRODUCTION MANAGEMENT</p>
-              </div>
-            </div>
-
-            {/* Main Headline */}
-            <div className="space-y-2">
-              <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight leading-none text-white">
-                Streamline.
-              </h1>
-              <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight leading-none text-white">
-                Collaborate.
-              </h1>
-              <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight leading-none text-amber-400">
-                Create Magic.
-              </h1>
-              <p className="text-slate-300 text-sm pt-3 leading-relaxed font-normal max-w-md">
-                Tendagon helps you manage productions, people, locations, funds, costumes and more — all in one powerful platform built for the film industry.
-              </p>
-            </div>
-
-            {/* Feature Container Box */}
-            <div className="bg-slate-900/80 border border-slate-800/90 backdrop-blur-md rounded-2xl p-6 space-y-4">
-              <div className="flex items-start gap-4">
-                <div className="w-9 h-9 rounded-full bg-slate-950/80 border border-slate-800 flex items-center justify-center shrink-0">
-                  <Users className="w-4 h-4 text-amber-400" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-xs text-slate-100">Role Based Access</h3>
-                  <p className="text-[11px] text-slate-400">Secure dashboards for every team member.</p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-4 border-t border-slate-800/60 pt-3">
-                <div className="w-9 h-9 rounded-full bg-slate-950/80 border border-slate-800 flex items-center justify-center shrink-0">
-                  <Shield className="w-4 h-4 text-amber-400" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-xs text-slate-100">Secure & Reliable</h3>
-                  <p className="text-[11px] text-slate-400">Enterprise grade security and data protection.</p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-4 border-t border-slate-800/60 pt-3">
-                <div className="w-9 h-9 rounded-full bg-slate-950/80 border border-slate-800 flex items-center justify-center shrink-0">
-                  <Clapperboard className="w-4 h-4 text-amber-400" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-xs text-slate-100">Built for Film Industry</h3>
-                  <p className="text-[11px] text-slate-400">Designed specifically for modern production houses.</p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-4 border-t border-slate-800/60 pt-3">
-                <div className="w-9 h-9 rounded-full bg-slate-950/80 border border-slate-800 flex items-center justify-center shrink-0">
-                  <BarChart3 className="w-4 h-4 text-amber-400" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-xs text-slate-100">Smart & Organized</h3>
-                  <p className="text-[11px] text-slate-400">Track, manage and grow your productions.</p>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-
-          <div className="relative z-10 pt-4 hidden lg:block" />
-        </div>
+        <AuthSidebar features={features} className="lg:col-span-6" />
 
         {/* Right Side: Clean White Signup Form (6 cols) */}
         <div className="lg:col-span-6 bg-white text-slate-900 p-8 sm:p-12 flex flex-col justify-center relative overflow-hidden">
@@ -443,11 +357,12 @@ export default function SignupPage() {
                     onChange={(e) => handleInputChange('role', e.target.value)}
                     className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-600/20 transition duration-200"
                   >
-                    <option value="Freelancer">Freelancer (Technical Crew, Camera, Sound)</option>
-                    <option value="Cast">Cast (Actor, Performer, Extras)</option>
-                    <option value="Supplier">Supplier (Equipment, Transport, Costume)</option>
-                    <option value="Cast-Crew Agent">Cast-Crew Agent</option>
-                    <option value="TCS Team">TCS Team (Production Accountant)</option>
+                    <option value="Freelancer">Freelancer</option>
+                    <option value="Cast">Cast</option>
+                    <option value="Crew">Crew</option>
+                    <option value="Supplier">Supplier</option>
+                    <option value="Agent">Agent</option>
+                    <option value="Production Company">Production Company</option>
                   </select>
                 </div>
               </div>

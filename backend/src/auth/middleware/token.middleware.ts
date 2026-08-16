@@ -26,7 +26,7 @@ export class TokenMiddleware implements NestMiddleware {
       const token = authHeader.split(' ')[1];
       try {
         const payload = await this._jwtService.verifyAccessToken(token);
-        const user = await this._userModel.findById(payload.sub).exec();
+        const user = await this._userModel.findById(payload.userId).exec();
         if (user && user.isActive) {
           req.user = user;
         }

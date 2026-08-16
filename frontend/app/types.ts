@@ -9,7 +9,7 @@ export interface User {
   _id?: string;
   email: string;
   name: string;
-  contractorType: 'Freelancer' | 'Cast' | 'Supplier' | 'Cast-Crew Agent' | 'TCS Team' | 'None';
+  contractorType: 'Freelancer' | 'Cast' | 'Crew' | 'Supplier' | 'Agent' | 'Production Company' | 'None';
   systemRole: 'Admin' | 'Manager' | 'User';
   status: 'Draft' | 'Pending' | 'UnderReview' | 'Approved' | 'Rejected';
   isActive: boolean;

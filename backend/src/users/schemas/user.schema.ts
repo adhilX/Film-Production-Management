@@ -16,7 +16,7 @@ export class User {
 
   @Prop({
     required: true,
-    enum: ['Freelancer', 'Cast', 'Supplier', 'Cast-Crew Agent', 'TCS Team', 'None'],
+    enum: ['Freelancer', 'Cast', 'Crew', 'Supplier', 'Agent', 'Production Company', 'None'],
     default: 'None',
   })
   contractorType: string;
