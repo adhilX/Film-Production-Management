@@ -70,3 +70,51 @@ export const onboardingSchema = z.object({
   agreeTerms: z.boolean().refine((val) => val === true, { message: 'You must agree to the Terms of Service font-bold' }),
   signatureData: z.string().min(1, 'Digital signature is required'),
 });
+
+export const validateOnboardingStep = (step: number, formData: any) => {
+  let result;
+  if (step === 1) {
+    result = step1Schema.safeParse({
+      contractorType: formData.contractorType,
+    });
+  } else if (step === 2) {
+    result = step2Schema.safeParse({
+      name: formData.name,
+      photoUrl: formData.photoUrl,
+      phoneNumber: formData.phoneNumber,
+      department: formData.department,
+      position: formData.position,
+      experience: formData.experience,
+    });
+  } else if (step === 3) {
+    result = step3Schema.safeParse({
+      bankName: formData.bankName,
+      accountNumber: formData.accountNumber,
+      routingNumber: formData.routingNumber,
+      taxFormUrl: formData.taxFormUrl,
+    });
+  } else if (step === 4) {
+    result = step4Schema.safeParse({
+      governmentIdType: formData.governmentIdType,
+      identityDocs: formData.identityDocs,
+    });
+  } else if (step === 5) {
+    result = step5Schema.safeParse({
+      agreeNda: formData.agreeNda,
+      agreeTerms: formData.agreeTerms,
+      signatureData: formData.signatureData,
+    });
+  }
+
+  if (result && !result.success) {
+    const fieldErrors: Record<string, string> = {};
+    result.error.issues.forEach((issue) => {
+      if (issue.path[0]) {
+        fieldErrors[String(issue.path[0])] = issue.message;
+      }
+    });
+    return { isValid: false, errors: fieldErrors };
+  }
+
+  return { isValid: true, errors: {} };
+};

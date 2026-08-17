@@ -34,7 +34,9 @@ import Step3Financial from './components/Step3Financial';
 import Step4Identity from './components/Step4Identity';
 import Step5Contracts from './components/Step5Contracts';
 import Step6Done from './components/Step6Done';
-import { step1Schema, step2Schema, step3Schema, step4Schema, step5Schema, onboardingSchema } from '@/lib/validation';
+import LeftSidebar from './components/LeftSidebar';
+import RightSidebar from './components/RightSidebar';
+import { onboardingSchema, validateOnboardingStep } from '@/lib/validation';
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -187,47 +189,9 @@ export default function OnboardingPage() {
   };
 
   const handleNext = async () => {
-    let result;
-    if (step === 1) {
-      result = step1Schema.safeParse({
-        contractorType: formData.contractorType,
-      });
-    } else if (step === 2) {
-      result = step2Schema.safeParse({
-        name: formData.name,
-        photoUrl: formData.photoUrl,
-        phoneNumber: formData.phoneNumber,
-        department: formData.department,
-        position: formData.position,
-        experience: formData.experience,
-      });
-    } else if (step === 3) {
-      result = step3Schema.safeParse({
-        bankName: formData.bankName,
-        accountNumber: formData.accountNumber,
-        routingNumber: formData.routingNumber,
-        taxFormUrl: formData.taxFormUrl,
-      });
-    } else if (step === 4) {
-      result = step4Schema.safeParse({
-        governmentIdType: formData.governmentIdType,
-        identityDocs: formData.identityDocs,
-      });
-    } else if (step === 5) {
-      result = step5Schema.safeParse({
-        agreeNda: formData.agreeNda,
-        agreeTerms: formData.agreeTerms,
-        signatureData: formData.signatureData,
-      });
-    }
-
-    if (result && !result.success) {
-      const fieldErrors: Record<string, string> = {};
-      result.error.issues.forEach((issue) => {
-        if (issue.path[0]) {
-          fieldErrors[String(issue.path[0])] = issue.message;
-        }
-      });
+    const { isValid, errors: fieldErrors } = validateOnboardingStep(step, formData);
+    
+    if (!isValid && fieldErrors) {
       setErrors(fieldErrors);
       return;
     }
@@ -417,126 +381,7 @@ export default function OnboardingPage() {
       <div className="flex-1 flex flex-col lg:flex-row relative">
         
         {/* 1. Left Sidebar Navigation */}
-        <aside className="w-full lg:w-[320px] bg-white text-slate-650 flex flex-col justify-between shrink-0 border-r border-slate-200/80 p-6 lg:fixed lg:top-20 lg:bottom-0 lg:h-[calc(100vh-80px)] z-20">
-          <div className="space-y-4">
-            <span className="block text-[10px] font-bold uppercase tracking-widest text-slate-400 font-sans">Onboarding Steps</span>
-            
-            {/* Steps List */}
-            <nav className="space-y-2">
-              {stepsList.map((s, idx) => {
-                const StepIcon = s.icon;
-                const isCompleted = idx + 1 < step;
-                const isActive = idx + 1 === step;
-
-                if (isCompleted) {
-                  return (
-                    <div
-                      key={idx}
-                      className="flex items-center justify-between p-3 rounded-2xl hover:bg-slate-50 text-slate-600 transition"
-                    >
-                      <div className="flex items-center gap-3">
-                        {/* Green Check Circle */}
-                        <div className="w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0">
-                          <Check className="w-3.5 h-3.5 stroke-[3]" />
-                        </div>
-                        {/* Step Number */}
-                        <span className="text-xs font-black text-emerald-600 font-mono">{idx + 1}</span>
-                        
-                        {/* Title & Desc */}
-                        <div className="min-w-0">
-                          <span className="block text-xs font-black text-slate-900 leading-none">
-                            {s.title}
-                          </span>
-                          <span className="block text-[10px] mt-1 text-slate-400 font-medium leading-none">
-                            {s.desc}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Completed Badge */}
-                      <span className="bg-emerald-50 text-emerald-600 border border-emerald-100 px-1.5 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider">
-                        Completed
-                      </span>
-                    </div>
-                  );
-                } else if (isActive) {
-                  return (
-                    <div
-                      key={idx}
-                      className="flex items-center justify-between p-3.5 rounded-2xl bg-gradient-to-r from-[#4f46e5] to-[#3b82f6] text-white font-semibold shadow-lg shadow-indigo-600/15"
-                    >
-                      <div className="flex items-center gap-3">
-                        {/* Semi-transparent icon container */}
-                        <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center text-white shrink-0">
-                          <StepIcon className="w-4 h-4 stroke-[2.5]" />
-                        </div>
-                        
-                        {/* Title & Desc */}
-                        <div className="min-w-0">
-                          <span className="block text-xs font-black text-white leading-none">
-                            {idx + 1} {s.title}
-                          </span>
-                          <span className="block text-[10px] mt-1.5 text-indigo-100 font-medium leading-none">
-                            {s.desc}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Dashed Active Indicator Circle */}
-                      <div className="w-5 h-5 rounded-full border-2 border-white/30 border-dashed flex items-center justify-center shrink-0" />
-                    </div>
-                  );
-                } else {
-                  return (
-                    <div
-                      key={idx}
-                      className="flex items-center justify-between p-3 rounded-2xl text-slate-600"
-                    >
-                      <div className="flex items-center gap-3">
-                        {/* Hollow Step Index Circle */}
-                        <div className="w-6 h-6 rounded-full border border-slate-200 bg-slate-50 text-slate-400 flex items-center justify-center shrink-0 text-xs font-bold font-mono">
-                          {idx + 1}
-                        </div>
-                        
-                        {/* Title & Desc */}
-                        <div className="min-w-0">
-                          <span className="block text-xs font-black text-slate-700 leading-none">
-                            {s.title}
-                          </span>
-                          <span className="block text-[10px] mt-1 text-slate-400 font-medium leading-none">
-                            {s.desc}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Empty Circle Indicator */}
-                      <div className="w-5 h-5 rounded-full border border-slate-200 shrink-0" />
-                    </div>
-                  );
-                }
-              })}
-            </nav>
-          </div>
-
-          {/* Sidebar Help Card */}
-          <div className="mt-8 p-4.5 bg-[#f8fafc] border border-slate-200/80 rounded-2xl space-y-3">
-            <div className="flex items-center gap-2 text-slate-800">
-              <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-600">
-                <Headphones className="w-4 h-4" />
-              </div>
-              <span className="text-xs font-bold">Need Help?</span>
-            </div>
-            <p className="text-[11px] text-slate-550 leading-normal">
-              If you face any issues during onboarding, our team is here to help.
-            </p>
-            <a
-              href="mailto:support@tendagon.com"
-              className="inline-flex items-center gap-1 text-[11px] font-bold text-[#4f46e5] hover:text-indigo-650 transition"
-            >
-              Contact Support &rarr;
-            </a>
-          </div>
-        </aside>
+        <LeftSidebar step={step} stepsList={stepsList} />
 
         {/* 2. Main Content Area */}
         <main className="flex-1 flex flex-col min-w-0 lg:pl-[320px] lg:pr-[300px]">
@@ -817,131 +662,12 @@ export default function OnboardingPage() {
       </main>
 
       {/* 3. Right Sidebar Details Panel */}
-      <aside className="w-full lg:w-[300px] bg-[#f8fafc] border-l border-slate-200/80 p-6 space-y-6 lg:fixed lg:top-20 lg:right-0 lg:bottom-0 lg:h-[calc(100vh-80px)] lg:overflow-y-auto z-20">
-        
-        {step === 6 ? (
-          <>
-            <div className="bg-white border border-slate-200/80 rounded-2xl p-5 space-y-4">
-              <h4 className="text-xs font-bold text-slate-800 border-b border-slate-100 pb-3">Application Summary</h4>
-              <div className="space-y-3">
-                <div>
-                  <span className="block text-[10px] font-semibold text-slate-400 mb-0.5">Contractor Type</span>
-                  <span className="text-xs font-bold text-slate-800">{formData.contractorType || 'N/A'}</span>
-                </div>
-                <div>
-                  <span className="block text-[10px] font-semibold text-slate-400 mb-0.5">Department</span>
-                  <span className="text-xs font-bold text-slate-800">{formData.department || 'N/A'}</span>
-                </div>
-                <div>
-                  <span className="block text-[10px] font-semibold text-slate-400 mb-0.5">Position</span>
-                  <span className="text-xs font-bold text-slate-800">{formData.position || 'N/A'}</span>
-                </div>
-                <div>
-                  <span className="block text-[10px] font-semibold text-slate-400 mb-0.5">Experience</span>
-                  <span className="text-xs font-bold text-slate-800">{formData.experience || 'N/A'}</span>
-                </div>
-              </div>
-              <div className="pt-3 border-t border-slate-100">
-                <Link href="/onboarding/details" className="text-[11px] font-bold text-[#4f46e5] hover:text-indigo-700 transition">View Full Details &rarr;</Link>
-              </div>
-            </div>
-
-            <div className="bg-white border border-slate-200/80 rounded-2xl p-5 space-y-2 text-left">
-              <h4 className="text-xs font-bold text-slate-800">Need Help?</h4>
-              <p className="text-[11px] text-slate-500 leading-relaxed">If you have any questions about your application, feel free to reach out.</p>
-              <button className="w-full mt-2 py-2 bg-indigo-50 text-[#4f46e5] hover:bg-indigo-100 text-xs font-bold rounded-xl transition">
-                Contact Support &rarr;
-              </button>
-            </div>
-
-            <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 flex gap-3">
-              <div className="p-2 bg-white rounded-xl shadow-sm border border-slate-200 shrink-0 h-min">
-                <Bell className="w-4 h-4 text-slate-500" />
-              </div>
-              <div>
-                <h4 className="text-xs font-bold text-slate-800 mb-1">Stay Updated</h4>
-                <p className="text-[10px] text-slate-500 leading-relaxed">We'll notify you here and via email once there is an update on your application.</p>
-              </div>
-            </div>
-          </>
-        ) : (
-          <>
-            {/* Card 1: Overall Progress */}
-            <div className="bg-white border border-slate-200/80 rounded-2xl p-5 space-y-4">
-              <div className="flex justify-between items-center text-xs">
-                <span className="font-bold text-slate-800">Overall Progress</span>
-                <span className="font-extrabold font-mono transition-colors duration-500" style={{ color: progressColor }}>{progressPercentage}%</span>
-              </div>
-
-              <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-                <div 
-                  className="h-full transition-all duration-500 rounded-full"
-                  style={{ width: `${progressPercentage}%`, backgroundColor: progressColor }}
-                />
-              </div>
-
-              <span className="block text-[11px] text-slate-400 font-medium">
-                {step} of 5 steps completed
-              </span>
-            </div>
-
-            {/* Card 2: What to Expect list */}
-            <div className="bg-white border border-slate-200/80 rounded-2xl p-5 space-y-4">
-              <h4 className="text-xs font-bold text-slate-800">What to Expect</h4>
-              
-              <div className="space-y-4">
-                
-                {/* Expect 1 */}
-                <div className="flex gap-3 items-start">
-                  <div className="p-2 bg-[#e0e7ff] text-[#4f46e5] rounded-xl shrink-0">
-                    <Clock className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <span className="block text-xs font-bold text-slate-800 font-sans">Takes about 10–15 minutes</span>
-                    <p className="text-[10px] text-slate-405 leading-normal mt-0.5">Complete all steps at your own pace.</p>
-                  </div>
-                </div>
-
-                {/* Expect 2 */}
-                <div className="flex gap-3 items-start">
-                  <div className="p-2 bg-emerald-50 text-emerald-650 rounded-xl shrink-0">
-                    <Shield className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <span className="block text-xs font-bold text-slate-800">Secure & Confidential</span>
-                    <p className="text-[10px] text-slate-405 leading-normal mt-0.5">Your information is safe with us.</p>
-                  </div>
-                </div>
-
-                {/* Expect 3 */}
-                <div className="flex gap-3 items-start">
-                  <div className="p-2 bg-teal-50 text-teal-650 rounded-xl shrink-0">
-                    <Save className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <span className="block text-xs font-bold text-slate-800">Save & Continue</span>
-                    <p className="text-[10px] text-slate-405 leading-normal mt-0.5">You can save progress and continue later.</p>
-                  </div>
-                </div>
-
-                {/* Expect 4 */}
-                <div className="flex gap-3 items-start">
-                  <div className="p-2 bg-indigo-50 text-indigo-650 rounded-xl shrink-0">
-                    <Bell className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <span className="block text-xs font-bold text-slate-800">Get Notified</span>
-                    <p className="text-[10px] text-slate-405 leading-normal mt-0.5">We'll notify you once your onboarding is reviewed.</p>
-                  </div>
-                </div>
-
-              </div>
-            </div>
-          </>
-        )}
-
-        
-      </aside>
+      <RightSidebar 
+        step={step} 
+        progressPercentage={progressPercentage} 
+        progressColor={progressColor} 
+        formData={formData} 
+      />
 
       </div> {/* End of flex-1 container */}
     </div>
