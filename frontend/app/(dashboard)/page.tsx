@@ -59,62 +59,51 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="animate-in fade-in duration-300">
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-100 flex items-center gap-3">
-            <LayoutDashboard className="text-amber-500 w-8 h-8" />
-            Admin Dashboard
-          </h1>
-          <p className="text-slate-400 mt-2">System overview and high-level metrics.</p>
-        </div>
-        <LogoutButton className="flex items-center gap-2 py-2 px-4 bg-red-950/20 border border-red-900/30 hover:bg-red-950/40 text-red-400 text-xs font-semibold rounded-xl transition-colors cursor-pointer" />
-      </div>
-
+    <div className="max-w-[1400px] mx-auto px-6 md:px-8 lg:px-10 py-8 animate-in fade-in duration-300">
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="bg-slate-900 border border-slate-800 rounded-2xl h-32 animate-pulse" />
+            <div key={i} className="bg-white border border-slate-200/80 rounded-2xl h-32 animate-pulse" />
           ))}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Pending Approvals */}
-          <Link href="/approvals" className="block bg-slate-900 border border-slate-800 rounded-2xl p-6 hover:border-amber-500/50 transition cursor-pointer group">
+          <Link href="/approvals" className="block bg-white border border-slate-200/80 rounded-2xl p-6 hover:border-amber-500/50 hover:shadow-md transition cursor-pointer group">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-1 group-hover:text-amber-400 transition">Pending Approvals</p>
-                <h3 className="text-4xl font-bold text-slate-100">{metrics.pending}</h3>
+                <p className="text-xs font-bold uppercase tracking-wider text-slate-450 mb-1 group-hover:text-amber-600 transition">Pending Approvals</p>
+                <h3 className="text-3xl font-extrabold text-slate-900">{metrics.pending}</h3>
               </div>
-              <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center">
-                <Clock className="w-6 h-6 text-amber-500" />
+              <div className="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center">
+                <Clock className="w-6 h-6 text-amber-600" />
               </div>
             </div>
           </Link>
 
           {/* Stale Applications */}
-          <Link href="/approvals?filter=stale" className="block bg-red-950/20 border border-red-900/50 rounded-2xl p-6 hover:border-red-500/50 transition cursor-pointer group">
+          <Link href="/approvals?filter=stale" className="block bg-red-50/30 border border-red-200/80 rounded-2xl p-6 hover:border-red-500/50 hover:shadow-md transition cursor-pointer group">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-semibold uppercase tracking-wider text-red-400 mb-1 group-hover:text-red-300 transition">Stale Applications (&gt;3 Days)</p>
-                <h3 className="text-4xl font-bold text-red-100">{metrics.stalePending}</h3>
+                <p className="text-xs font-bold uppercase tracking-wider text-red-650 mb-1 group-hover:text-red-700 transition font-sans">Stale Applications (&gt;3 Days)</p>
+                <h3 className="text-3xl font-extrabold text-red-900">{metrics.stalePending}</h3>
               </div>
-              <div className="w-12 h-12 rounded-xl bg-red-500/20 flex items-center justify-center">
-                <AlertTriangle className="w-6 h-6 text-red-400" />
+              <div className="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center">
+                <AlertTriangle className="w-6 h-6 text-red-600" />
               </div>
             </div>
-            <p className="text-xs text-red-400/80 mt-4">Requires immediate review</p>
+            <p className="text-[10px] text-red-600 font-bold mt-4 uppercase tracking-wider">Requires immediate review</p>
           </Link>
 
           {/* Total Users */}
-          <Link href="/users" className="block bg-slate-900 border border-slate-800 rounded-2xl p-6 hover:border-blue-500/50 transition cursor-pointer group">
+          <Link href="/users" className="block bg-white border border-slate-200/80 rounded-2xl p-6 hover:border-indigo-500/50 hover:shadow-md transition cursor-pointer group">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-1 group-hover:text-blue-400 transition">Total Users</p>
-                <h3 className="text-4xl font-bold text-slate-100">{metrics.totalUsers}</h3>
+                <p className="text-xs font-bold uppercase tracking-wider text-slate-450 mb-1 group-hover:text-indigo-650 transition">Total Users</p>
+                <h3 className="text-3xl font-extrabold text-slate-900">{metrics.totalUsers}</h3>
               </div>
-              <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center">
-                <Users className="w-6 h-6 text-blue-500" />
+              <div className="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center">
+                <Users className="w-6 h-6 text-[#4f46e5]" />
               </div>
             </div>
           </Link>

@@ -30,35 +30,30 @@ export default function CostumesModule() {
   };
 
   return (
-    <div className="space-y-6 animate-fadeIn">
-      <div>
-        <h2 className="text-2xl font-bold text-slate-100">Costumes & Assets Inventory</h2>
-        <p className="text-xs text-slate-400 mt-1">Manage physical costume listings, period catalogs, and item sizes.</p>
-      </div>
-
+    <div className="max-w-[1400px] mx-auto px-6 md:px-8 lg:px-10 py-8 space-y-6 animate-in fade-in duration-300">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         {/* Costumes table list */}
-        <div className="lg:col-span-2 bg-slate-900/40 border border-slate-800 rounded-xl p-5 space-y-4">
-          <h3 className="text-sm font-semibold text-purple-400 uppercase tracking-wider">Itemized costumes catalog</h3>
+        <div className="lg:col-span-2 bg-white border border-slate-200/80 rounded-2xl p-6 shadow-xs space-y-4">
+          <h3 className="text-xs font-bold text-slate-450 uppercase tracking-wider border-b border-slate-100 pb-3">Itemized costumes catalog</h3>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-xs text-left text-slate-350">
-              <thead className="bg-slate-950/60 border border-slate-800 text-[10px] text-slate-400 uppercase tracking-wider">
+            <table className="w-full text-xs text-left text-slate-700">
+              <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] tracking-wider border-b border-slate-200/80">
                 <tr>
-                  <th className="py-3 px-4">Item Name</th>
-                  <th className="py-3 px-4">Category</th>
-                  <th className="py-3 px-4">Size</th>
-                  <th className="py-3 px-4">Stock Quantity</th>
+                  <th className="py-3 px-4 font-bold">Item Name</th>
+                  <th className="py-3 px-4 font-bold">Category</th>
+                  <th className="py-3 px-4 font-bold">Size</th>
+                  <th className="py-3 px-4 font-bold">Stock Quantity</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-850">
+              <tbody className="divide-y divide-slate-100">
                 {costumes.map((c) => (
-                  <tr key={c._id} className="hover:bg-slate-950/20">
-                    <td className="py-3 px-4 font-semibold text-slate-200">{c.name}</td>
-                    <td className="py-3 px-4 text-purple-400 font-semibold">{c.category}</td>
-                    <td className="py-3 px-4 font-mono">{c.size}</td>
-                    <td className="py-3 px-4 text-slate-250 font-semibold">{c.quantity} items</td>
+                  <tr key={c._id} className="hover:bg-slate-50/50 transition">
+                    <td className="py-3 px-4 font-bold text-slate-800">{c.name}</td>
+                    <td className="py-3 px-4 text-indigo-650 font-bold">{c.category}</td>
+                    <td className="py-3 px-4 font-mono text-slate-600">{c.size}</td>
+                    <td className="py-3 px-4 text-slate-700 font-bold">{c.quantity} items</td>
                   </tr>
                 ))}
               </tbody>
@@ -67,45 +62,45 @@ export default function CostumesModule() {
         </div>
 
         {/* Add Costume Form */}
-        <div className="space-y-4">
-          <h3 className="text-sm font-semibold text-purple-400 uppercase tracking-wider">Log Costume Asset</h3>
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-xs space-y-4 h-fit">
+          <h3 className="text-xs font-bold text-slate-450 uppercase tracking-wider border-b border-slate-100 pb-3">Log Costume Asset</h3>
           
-          <form onSubmit={handleAddCostume} className="bg-slate-900/40 border border-slate-800 rounded-xl p-5 space-y-4">
+          <form onSubmit={handleAddCostume} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Costume Name</label>
+              <label className="block text-[10px] font-bold text-slate-450 uppercase tracking-wider mb-2">Costume Name</label>
               <input 
                 type="text" 
                 placeholder="e.g. Roman Armor Suit"
                 value={newCostumeName}
                 onChange={(e) => setNewCostumeName(e.target.value)}
                 required
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-xs focus:outline-none focus:border-purple-500 text-slate-200"
+                className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-900"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Category</label>
+              <label className="block text-[10px] font-bold text-slate-450 uppercase tracking-wider mb-2">Category</label>
               <input 
                 type="text" 
                 placeholder="e.g. Period, Fantasy, Modern"
                 value={newCostumeCategory}
                 onChange={(e) => setNewCostumeCategory(e.target.value)}
                 required
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-xs focus:outline-none focus:border-purple-500 text-slate-200"
+                className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-900"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Size</label>
+              <label className="block text-[10px] font-bold text-slate-450 uppercase tracking-wider mb-2">Size</label>
               <input 
                 type="text" 
                 placeholder="e.g. S, M, L, XL"
                 value={newCostumeSize}
                 onChange={(e) => setNewCostumeSize(e.target.value)}
                 required
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-xs focus:outline-none focus:border-purple-500 text-slate-200"
+                className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-900"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Quantity</label>
+              <label className="block text-[10px] font-bold text-slate-450 uppercase tracking-wider mb-2">Quantity</label>
               <input 
                 type="number" 
                 placeholder="e.g. 5"
@@ -113,13 +108,13 @@ export default function CostumesModule() {
                 onChange={(e) => setNewCostumeQty(e.target.value)}
                 required
                 min={1}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-xs focus:outline-none focus:border-purple-500 text-slate-200"
+                className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-900"
               />
             </div>
             
             <button 
               type="submit"
-              className="w-full py-2 bg-purple-600 hover:bg-purple-500 rounded-lg text-white text-xs font-semibold cursor-pointer shadow-[0_0_10px_rgba(147,51,234,0.2)]"
+              className="w-full py-2.5 bg-indigo-650 hover:bg-indigo-755 rounded-xl text-white text-xs font-bold cursor-pointer transition shadow-xs"
             >
               Add Costume Asset
             </button>

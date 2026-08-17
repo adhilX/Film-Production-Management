@@ -51,7 +51,6 @@ export default function ProductionsPage() {
     status: 'Draft',
   });
 
-
   const [formError, setFormError] = useState('');
 
   const hasPermission = (perm: string): boolean => {
@@ -179,16 +178,15 @@ export default function ProductionsPage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'Active': return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30';
-      case 'Draft': return 'bg-amber-500/10 text-amber-400 border-amber-500/30';
-      case 'On Hold': return 'bg-orange-500/10 text-orange-400 border-orange-500/30';
-      case 'Completed': return 'bg-blue-500/10 text-blue-400 border-blue-500/30';
-      case 'Cancelled': return 'bg-rose-500/10 text-rose-400 border-rose-500/30';
-      default: return 'bg-slate-500/10 text-slate-400 border-slate-500/30';
+      case 'Active': return 'bg-emerald-50 text-emerald-700 border-emerald-150';
+      case 'Draft': return 'bg-amber-50 text-amber-700 border-amber-150';
+      case 'On Hold': return 'bg-orange-50 text-orange-700 border-orange-150';
+      case 'Completed': return 'bg-blue-50 text-blue-700 border-blue-150';
+      case 'Cancelled': return 'bg-rose-50 text-rose-700 border-rose-150';
+      default: return 'bg-slate-50 text-slate-600 border-slate-150';
     }
   };
 
-  // Filter eligible managers (pre-filtered by backend to only return eligible managers)
   const eligibleManagers = systemUsers;
 
   const getValidTransitions = (status: string) => {
@@ -201,33 +199,23 @@ export default function ProductionsPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-300">
-      <div className="flex justify-between items-end border-b border-slate-800 pb-5">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-purple-400 to-purple-200 bg-clip-text text-transparent flex items-center gap-3">
-            <Film className="w-8 h-8 text-purple-500" />
-            Film Productions
-          </h1>
-          <p className="text-slate-400 mt-2 text-sm">
-            Create, track, and manage details, budgets, schedules, and personnel.
-          </p>
-        </div>
-
-        {hasPermission('productions.create') && (
+    <div className="max-w-[1400px] mx-auto px-6 md:px-8 lg:px-10 py-8 space-y-6 animate-in fade-in duration-300">
+      {hasPermission('productions.create') && (
+        <div className="flex justify-end">
           <button
             onClick={openCreateModal}
-            className="flex items-center gap-2 px-5 py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl shadow-lg shadow-purple-900/20 transition cursor-pointer"
+            className="flex items-center gap-2 px-4 py-2.5 bg-indigo-650 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-xs transition cursor-pointer text-xs"
           >
-            <Plus className="w-5 h-5" />
+            <Plus className="w-4 h-4" />
             Create Production
           </button>
-        )}
-      </div>
+        </div>
+      )}
 
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {[1, 2].map((i) => (
-            <div key={i} className="bg-slate-900 border border-slate-800 rounded-2xl h-64 animate-pulse" />
+            <div key={i} className="bg-white border border-slate-200/80 rounded-2xl h-64 animate-pulse shadow-xs" />
           ))}
         </div>
       ) : productions.length > 0 ? (
@@ -241,57 +229,55 @@ export default function ProductionsPage() {
             return (
               <div
                 key={prod._id}
-                className={`bg-slate-900/40 backdrop-blur-md border rounded-2xl p-6 transition flex flex-col justify-between relative overflow-hidden group ${
-                  isCurrentActive ? 'border-purple-500/70 shadow-lg shadow-purple-500/5' : 'border-slate-800 hover:border-slate-700'
+                className={`bg-white border rounded-2xl p-6 transition flex flex-col justify-between relative overflow-hidden group shadow-xs ${
+                  isCurrentActive ? 'border-indigo-500 shadow-md shadow-indigo-500/5' : 'border-slate-200/80 hover:border-slate-350 hover:shadow-xs'
                 }`}
               >
                 {/* Active Indicator Badge */}
                 {isCurrentActive && (
-                  <div className="absolute top-0 right-0 bg-purple-600 text-white text-[9px] font-extrabold uppercase px-3.5 py-1 rounded-bl-xl shadow flex items-center gap-1">
+                  <div className="absolute top-0 right-0 bg-indigo-650 text-white text-[9px] font-extrabold uppercase px-3.5 py-1 rounded-bl-xl shadow flex items-center gap-1">
                     <Check size={10} strokeWidth={3} /> Active Project
                   </div>
                 )}
 
                 <div className="space-y-4">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="text-lg font-bold text-slate-100 group-hover:text-purple-400 transition pr-24">{prod.title}</h3>
-                      <span className={`inline-block border text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 mt-1.5 rounded ${getStatusColor(prod.status)}`}>
-                        {prod.status}
-                      </span>
-                    </div>
+                  <div>
+                    <h3 className="text-base font-bold text-slate-800 group-hover:text-indigo-650 transition pr-24 leading-snug">{prod.title}</h3>
+                    <span className={`inline-block border text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 mt-2 rounded-lg ${getStatusColor(prod.status)}`}>
+                      {prod.status}
+                    </span>
                   </div>
 
-                  <p className="text-xs text-slate-400 leading-relaxed line-clamp-2">
+                  <p className="text-xs text-slate-500 leading-relaxed line-clamp-2">
                     {prod.logline || prod.description || 'No logline provided.'}
                   </p>
 
-                  <div className="grid grid-cols-2 gap-4 border-y border-slate-850 py-3 text-xs text-slate-300">
+                  <div className="grid grid-cols-2 gap-4 border-y border-slate-100 py-3 text-xs text-slate-655 font-medium">
                     <div className="flex items-center gap-2">
-                      <Folder className="w-3.5 h-3.5 text-purple-400" />
-                      <span>{prod.format} • {prod.genre}</span>
+                      <Folder className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+                      <span className="truncate">{prod.format} • {prod.genre}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Globe className="w-3.5 h-3.5 text-purple-400" />
-                      <span>{prod.language}</span>
+                      <Globe className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+                      <span className="truncate">{prod.language}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Calendar className="w-3.5 h-3.5 text-purple-400" />
-                      <span>
+                      <Calendar className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+                      <span className="truncate">
                         {prod.startDate ? new Date(prod.startDate).toLocaleDateString() : 'N/A'} - {prod.endDate ? new Date(prod.endDate).toLocaleDateString() : 'N/A'}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <DollarSign className="w-3.5 h-3.5 text-purple-400" />
-                      <span className="font-semibold text-slate-200">
+                      <DollarSign className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+                      <span className="font-bold text-slate-700 truncate">
                         Budget: ${prod.budget?.toLocaleString() || '0'}
                       </span>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 text-xs text-slate-400 bg-slate-950/40 p-2.5 rounded-lg border border-slate-850">
-                    <User className="w-3.5 h-3.5 text-purple-400" />
-                    <span>Manager: <strong className="text-slate-300">{mgrName}</strong></span>
+                  <div className="flex items-center gap-2 text-xs text-slate-500 bg-slate-50 p-2.5 rounded-xl border border-slate-150">
+                    <User className="w-3.5 h-3.5 text-indigo-600" />
+                    <span>Manager: <strong className="text-slate-705 font-bold">{mgrName}</strong></span>
                   </div>
                 </div>
 
@@ -301,8 +287,8 @@ export default function ProductionsPage() {
                     disabled={isCurrentActive}
                     className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
                       isCurrentActive
-                        ? 'bg-purple-950/20 text-purple-400/60 border border-purple-900/30 cursor-not-allowed'
-                        : 'bg-purple-600 hover:bg-purple-500 text-white'
+                        ? 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed'
+                        : 'bg-indigo-650 hover:bg-indigo-750 text-white'
                     }`}
                   >
                     Select Project
@@ -311,7 +297,7 @@ export default function ProductionsPage() {
                   {hasPermission('productions.update') && (
                     <button
                       onClick={() => openEditModal(prod)}
-                      className="py-2 px-3.5 border border-slate-800 hover:border-purple-500/50 hover:bg-purple-950/10 rounded-xl text-slate-300 hover:text-purple-400 transition cursor-pointer flex items-center gap-1"
+                      className="py-2 px-3.5 border border-slate-200 hover:bg-slate-50 rounded-xl text-slate-700 transition cursor-pointer flex items-center gap-1 text-xs font-bold"
                     >
                       <Edit2 size={13} /> Edit
                     </button>
@@ -322,27 +308,28 @@ export default function ProductionsPage() {
           })}
         </div>
       ) : (
-        <div className="bg-slate-900/30 border border-slate-800 rounded-2xl p-16 text-center text-slate-400 space-y-4 max-w-2xl mx-auto">
-          <Film size={48} className="mx-auto text-purple-500/40 animate-pulse" />
-          <h3 className="text-lg font-bold text-slate-200">No Productions Found</h3>
-          <p className="text-sm">You are not mapped to any active productions yet.</p>
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-16 text-center text-slate-450 space-y-4 max-w-2xl mx-auto shadow-xs">
+          <Film size={44} className="mx-auto text-indigo-500/40" />
+          <h3 className="text-sm font-bold text-slate-800">No Productions Found</h3>
+          <p className="text-xs text-slate-450">You are not mapped to any active productions yet.</p>
         </div>
       )}
 
       {/* --- CREATE PRODUCTION MODAL --- */}
       {isCreateOpen && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 w-full max-w-2xl rounded-2xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
-            <div className="bg-slate-950 px-6 py-4 border-b border-slate-800 flex justify-between items-center">
-              <h2 className="text-base font-bold text-slate-100 flex items-center gap-2">
-                <Film className="w-5 h-5 text-purple-500" /> Create Film Production
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-xs" onClick={() => setIsCreateOpen(false)} />
+          <div className="relative bg-white border border-slate-200 w-full max-w-2xl rounded-2xl overflow-hidden shadow-xl animate-in zoom-in-95 duration-200 flex flex-col">
+            <div className="p-6 border-b border-slate-100 flex justify-between items-center">
+              <h2 className="text-base font-bold text-slate-800 flex items-center gap-2">
+                <Film className="w-5 h-5 text-indigo-600" /> Create Film Production
               </h2>
-              <button onClick={() => setIsCreateOpen(false)} className="text-xs text-slate-500 hover:text-slate-300 cursor-pointer">Close</button>
+              <button onClick={() => setIsCreateOpen(false)} className="text-slate-400 hover:text-slate-655 cursor-pointer font-bold text-xs">Close</button>
             </div>
 
-            <form onSubmit={handleCreateSubmit} className="p-6 space-y-4">
+            <form onSubmit={handleCreateSubmit} className="p-6 space-y-4 overflow-y-auto max-h-[70vh]">
               {formError && (
-                <div className="bg-rose-500/10 border border-rose-500/30 text-rose-400 rounded-xl p-3 text-xs flex items-center gap-2">
+                <div className="bg-red-50 border border-red-200 text-red-750 rounded-xl p-3 text-xs flex items-center gap-2">
                   <AlertCircle className="w-4 h-4 shrink-0" />
                   <span>{formError}</span>
                 </div>
@@ -350,68 +337,68 @@ export default function ProductionsPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Title</label>
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-450">Title</label>
                   <input
                     type="text"
                     name="title"
                     required
                     value={formData.title}
                     onChange={handleInputChange}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-xs focus:outline-none focus:border-purple-500 text-slate-200"
+                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-900"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Budget ($)</label>
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-450">Budget ($)</label>
                   <input
                     type="number"
                     name="budget"
                     required
                     value={formData.budget}
                     onChange={handleInputChange}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-xs focus:outline-none focus:border-purple-500 text-slate-200"
+                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-900"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Genre</label>
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-450">Genre</label>
                   <input
                     type="text"
                     name="genre"
                     required
                     value={formData.genre}
                     onChange={handleInputChange}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-xs focus:outline-none focus:border-purple-500 text-slate-200"
+                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-900"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Format</label>
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-450">Format</label>
                   <input
                     type="text"
                     name="format"
                     required
                     value={formData.format}
                     onChange={handleInputChange}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-xs focus:outline-none focus:border-purple-500 text-slate-200"
+                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-900"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Language</label>
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-450">Language</label>
                   <input
                     type="text"
                     name="language"
                     required
                     value={formData.language}
                     onChange={handleInputChange}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-xs focus:outline-none focus:border-purple-500 text-slate-200"
+                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-900"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Production Manager</label>
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-450">Production Manager</label>
                   <select
                     name="productionManager"
                     required
                     value={formData.productionManager}
                     onChange={handleInputChange}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-xs focus:outline-none focus:border-purple-500 text-slate-200"
+                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-700 appearance-none cursor-pointer"
                   >
                     <option value="">Select Eligible Manager...</option>
                     {eligibleManagers.map((u) => (
@@ -420,85 +407,87 @@ export default function ProductionsPage() {
                   </select>
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Start Date</label>
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-450">Start Date</label>
                   <input
                     type="date"
                     name="startDate"
                     required
                     value={formData.startDate}
                     onChange={handleInputChange}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-xs focus:outline-none focus:border-purple-500 text-slate-200"
+                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-700 cursor-pointer"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">End Date</label>
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-450">End Date</label>
                   <input
                     type="date"
                     name="endDate"
                     required
                     value={formData.endDate}
                     onChange={handleInputChange}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-xs focus:outline-none focus:border-purple-500 text-slate-200"
+                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-700 cursor-pointer"
                   />
                 </div>
               </div>
 
               <div className="space-y-1">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Logline</label>
+                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-450">Logline</label>
                 <input
                   type="text"
                   name="logline"
                   value={formData.logline}
                   onChange={handleInputChange}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-xs focus:outline-none focus:border-purple-500 text-slate-200"
+                  className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-900"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Synopsis</label>
+                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-450">Synopsis</label>
                 <textarea
                   name="synopsis"
                   value={formData.synopsis}
                   onChange={handleInputChange}
                   rows={3}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-xs focus:outline-none focus:border-purple-500 text-slate-200 resize-none"
+                  className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-900 resize-none"
                 />
               </div>
-
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-800">
-                <button
-                  type="button"
-                  onClick={() => setIsCreateOpen(false)}
-                  className="px-4 py-2 border border-slate-800 rounded-xl text-slate-400 hover:text-slate-300 text-xs font-semibold cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-semibold cursor-pointer shadow-lg shadow-purple-900/25"
-                >
-                  Create
-                </button>
-              </div>
             </form>
+
+            <div className="p-6 border-t border-slate-100 bg-slate-50 flex justify-end gap-3 mt-auto">
+              <button
+                type="button"
+                onClick={() => setIsCreateOpen(false)}
+                className="px-4 py-2 border border-slate-200 rounded-xl text-slate-650 hover:bg-slate-100 text-xs font-bold cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                onClick={handleCreateSubmit}
+                className="px-5 py-2 bg-indigo-650 hover:bg-indigo-755 text-white rounded-xl text-xs font-bold cursor-pointer"
+              >
+                Create
+              </button>
+            </div>
           </div>
         </div>
       )}
 
       {/* --- EDIT PRODUCTION MODAL --- */}
       {isEditOpen && editingProd && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 w-full max-w-2xl rounded-2xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
-            <div className="bg-slate-950 px-6 py-4 border-b border-slate-800 flex justify-between items-center">
-              <h2 className="text-base font-bold text-slate-100 flex items-center gap-2">
-                <Film className="w-5 h-5 text-purple-500" /> Edit Production: {editingProd.title}
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-xs" onClick={() => setIsEditOpen(false)} />
+          <div className="relative bg-white border border-slate-200 w-full max-w-2xl rounded-2xl overflow-hidden shadow-xl animate-in zoom-in-95 duration-200 flex flex-col">
+            <div className="p-6 border-b border-slate-100 flex justify-between items-center">
+              <h2 className="text-base font-bold text-slate-800 flex items-center gap-2">
+                <Film className="w-5 h-5 text-indigo-600" /> Edit Production: {editingProd.title}
               </h2>
-              <button onClick={() => setIsEditOpen(false)} className="text-xs text-slate-500 hover:text-slate-300 cursor-pointer">Close</button>
+              <button onClick={() => setIsEditOpen(false)} className="text-slate-400 hover:text-slate-655 cursor-pointer font-bold text-xs">Close</button>
             </div>
 
-            <form onSubmit={handleEditSubmit} className="p-6 space-y-4">
+            <form onSubmit={handleEditSubmit} className="p-6 space-y-4 overflow-y-auto max-h-[70vh]">
               {formError && (
-                <div className="bg-rose-500/10 border border-rose-500/30 text-rose-400 rounded-xl p-3 text-xs flex items-center gap-2">
+                <div className="bg-red-50 border border-red-200 text-red-750 rounded-xl p-3 text-xs flex items-center gap-2">
                   <AlertCircle className="w-4 h-4 shrink-0" />
                   <span>{formError}</span>
                 </div>
@@ -506,24 +495,24 @@ export default function ProductionsPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Title</label>
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-450">Title</label>
                   <input
                     type="text"
                     name="title"
                     required
                     value={formData.title}
                     onChange={handleInputChange}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-xs focus:outline-none focus:border-purple-500 text-slate-200"
+                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-900"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Status & Transitions</label>
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-450">Status & Transitions</label>
                   <select
                     name="status"
                     required
                     value={formData.status}
                     onChange={handleInputChange}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-xs focus:outline-none focus:border-purple-500 text-slate-200 font-semibold"
+                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-705 font-bold cursor-pointer"
                   >
                     <option value={editingProd.status}>{editingProd.status} (Current)</option>
                     {getValidTransitions(editingProd.status).map((s) => (
@@ -532,57 +521,57 @@ export default function ProductionsPage() {
                   </select>
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Budget ($)</label>
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-450">Budget ($)</label>
                   <input
                     type="number"
                     name="budget"
                     required
                     value={formData.budget}
                     onChange={handleInputChange}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-xs focus:outline-none focus:border-purple-500 text-slate-200"
+                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-900"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Genre</label>
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-450">Genre</label>
                   <input
                     type="text"
                     name="genre"
                     required
                     value={formData.genre}
                     onChange={handleInputChange}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-xs focus:outline-none focus:border-purple-500 text-slate-200"
+                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-900"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Format</label>
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-450">Format</label>
                   <input
                     type="text"
                     name="format"
                     required
                     value={formData.format}
                     onChange={handleInputChange}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-xs focus:outline-none focus:border-purple-500 text-slate-200"
+                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-900"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Language</label>
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-450">Language</label>
                   <input
                     type="text"
                     name="language"
                     required
                     value={formData.language}
                     onChange={handleInputChange}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-xs focus:outline-none focus:border-purple-500 text-slate-200"
+                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-900"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Production Manager</label>
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-450">Production Manager</label>
                   <select
                     name="productionManager"
                     required
                     value={formData.productionManager}
                     onChange={handleInputChange}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-xs focus:outline-none focus:border-purple-500 text-slate-200"
+                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-705 cursor-pointer"
                   >
                     {eligibleManagers.map((u) => (
                       <option key={u._id} value={u._id}>{u.name}</option>
@@ -590,67 +579,68 @@ export default function ProductionsPage() {
                   </select>
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 font-semibold text-slate-400">Start Date</label>
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-455 font-bold">Start Date</label>
                   <input
                     type="date"
                     name="startDate"
                     required
                     value={formData.startDate}
                     onChange={handleInputChange}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-xs focus:outline-none focus:border-purple-500 text-slate-200"
+                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-700 cursor-pointer"
                   />
                 </div>
                 <div className="space-y-1 col-span-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">End Date</label>
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-450">End Date</label>
                   <input
                     type="date"
                     name="endDate"
                     required
                     value={formData.endDate}
                     onChange={handleInputChange}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-xs focus:outline-none focus:border-purple-500 text-slate-200"
+                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-700 cursor-pointer"
                   />
                 </div>
               </div>
 
               <div className="space-y-1">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Logline</label>
+                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-450">Logline</label>
                 <input
                   type="text"
                   name="logline"
                   value={formData.logline}
                   onChange={handleInputChange}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-xs focus:outline-none focus:border-purple-500 text-slate-200"
+                  className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-900"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Synopsis</label>
+                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-450">Synopsis</label>
                 <textarea
                   name="synopsis"
                   value={formData.synopsis}
                   onChange={handleInputChange}
                   rows={3}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-xs focus:outline-none focus:border-purple-500 text-slate-200 resize-none"
+                  className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-900 resize-none"
                 />
               </div>
-
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-800">
-                <button
-                  type="button"
-                  onClick={() => setIsEditOpen(false)}
-                  className="px-4 py-2 border border-slate-800 rounded-xl text-slate-400 hover:text-slate-300 text-xs font-semibold cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-semibold cursor-pointer shadow-lg shadow-purple-900/25"
-                >
-                  Save Changes
-                </button>
-              </div>
             </form>
+
+            <div className="p-6 border-t border-slate-100 bg-slate-50 flex justify-end gap-3 mt-auto">
+              <button
+                type="button"
+                onClick={() => setIsEditOpen(false)}
+                className="px-4 py-2 border border-slate-200 rounded-xl text-slate-655 hover:bg-slate-100 text-xs font-bold cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                onClick={handleEditSubmit}
+                className="px-5 py-2 bg-indigo-650 hover:bg-indigo-755 text-white rounded-xl text-xs font-bold cursor-pointer"
+              >
+                Save Changes
+              </button>
+            </div>
           </div>
         </div>
       )}

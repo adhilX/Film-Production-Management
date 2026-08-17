@@ -53,20 +53,20 @@ export default function PermissionMatrix({
   return (
     <div className="space-y-6">
       {/* Controls: Search & Category Filter pills */}
-      <div className="bg-slate-900/30 border border-slate-800/80 rounded-2xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+      <div className="bg-white border border-slate-200/80 rounded-2xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xs">
+        <div className="relative flex-1 max-w-md w-full">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search matrix permissions..."
-            className="w-full bg-slate-950/60 border border-slate-800 rounded-xl pl-10 pr-4 py-2 text-slate-200 text-sm focus:outline-none focus:border-amber-500/50 transition"
+            className="w-full bg-white border border-slate-250 rounded-xl pl-10 pr-10 py-2 text-slate-900 text-xs focus:outline-none focus:border-indigo-650 transition"
           />
           {searchQuery && (
             <button 
               onClick={() => setSearchQuery('')}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-slate-500 hover:text-slate-300"
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 hover:text-slate-650 cursor-pointer font-bold"
             >
               Clear
             </button>
@@ -78,10 +78,10 @@ export default function PermissionMatrix({
             <button
               key={grp}
               onClick={() => setSelectedGroupFilter(grp)}
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition shrink-0 ${
+              className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition shrink-0 cursor-pointer ${
                 selectedGroupFilter === grp
-                  ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30'
-                  : 'bg-slate-900/20 text-slate-400 border border-slate-800/50 hover:text-slate-200'
+                  ? 'bg-indigo-50 text-indigo-700 border border-indigo-200/60 shadow-2xs'
+                  : 'bg-slate-50 text-slate-450 border border-slate-200/80 hover:bg-slate-100 hover:text-slate-700'
               }`}
             >
               {grp}
@@ -92,46 +92,48 @@ export default function PermissionMatrix({
 
       {/* Matrix Table */}
       {loading ? (
-        <div className="flex justify-center items-center h-64 bg-slate-900/20 border border-slate-800/50 rounded-2xl">
-          <div className="w-12 h-12 border-2 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
+        <div className="flex justify-center items-center h-64 bg-white border border-slate-200/80 rounded-2xl shadow-xs">
+          <div className="w-10 h-10 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
         </div>
       ) : filteredPermissions.length === 0 ? (
-        <div className="flex flex-col justify-center items-center h-64 bg-slate-900/10 border border-slate-800/30 rounded-2xl text-center p-6">
-          <ShieldAlert className="w-10 h-10 text-slate-600 mb-3" />
-          <h3 className="font-bold text-slate-400 text-sm">No permissions match your criteria</h3>
-          <p className="text-xs text-slate-500 mt-1">Try clearing or adjusting search filters.</p>
+        <div className="flex flex-col justify-center items-center h-64 bg-white border border-slate-200/80 rounded-2xl text-center p-6 shadow-xs">
+          <ShieldAlert className="w-8 h-8 text-slate-400 mb-3" />
+          <h3 className="font-bold text-slate-600 text-xs">No permissions match your criteria</h3>
+          <p className="text-[11px] text-slate-450 mt-1 font-medium">Try clearing or adjusting search filters.</p>
         </div>
       ) : (
-        <div className="overflow-x-auto bg-slate-900/30 border border-slate-800 rounded-2xl shadow-sm">
-          <table className="w-full border-collapse text-left min-w-[600px]">
+        <div className="overflow-x-auto bg-white border border-slate-200/80 rounded-2xl shadow-xs">
+          <table className="w-full border-collapse text-left min-w-[600px] text-xs">
             <thead>
-              <tr className="border-b border-slate-800 bg-slate-950/40">
-                <th className="p-4 text-xs font-semibold text-slate-400 uppercase tracking-wider w-[40%]">
+              <tr className="border-b border-slate-200/80 bg-slate-50 text-slate-500 uppercase text-[10px] tracking-wider">
+                <th className="p-4 font-bold w-[40%]">
                   Permission Description & String
                 </th>
                 {roles.map(role => (
                   <th 
                     key={role._id} 
-                    className="p-4 text-xs font-semibold text-slate-400 uppercase tracking-wider text-center"
+                    className="p-4 font-bold text-center"
                   >
                     {role.name}
                   </th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/40">
+            <tbody className="divide-y divide-slate-100">
               {filteredPermissions.map(perm => (
-                <tr key={perm._id} className="hover:bg-slate-900/10 transition">
-                  <td className="p-4 space-y-1">
-                    <div className="text-sm font-semibold text-slate-200">
+                <tr key={perm._id} className="hover:bg-slate-50/50 transition">
+                  <td className="p-4 space-y-1.5">
+                    <div className="text-xs font-bold text-slate-800">
                       {perm.description || 'No description provided.'}
                     </div>
-                    <div className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-slate-800/60 text-slate-400 rounded text-[10px] font-mono border border-slate-800">
-                      {perm.name}
+                    <div className="flex items-center">
+                      <div className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-slate-100 text-slate-500 rounded text-[9px] font-mono border border-slate-200/60">
+                        {perm.name}
+                      </div>
+                      <span className="text-[9px] text-indigo-650 font-bold uppercase bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100/50 ml-2">
+                        {perm.group || 'Custom'}
+                      </span>
                     </div>
-                    <span className="text-[9px] text-slate-500 ml-2 font-mono uppercase bg-slate-950/20 px-1 py-0.5 rounded border border-slate-900">
-                      {perm.group || 'Custom'}
-                    </span>
                   </td>
 
                   {roles.map(role => {
@@ -145,13 +147,13 @@ export default function PermissionMatrix({
                       <td key={role._id} className="p-4 text-center">
                         <div className="flex items-center justify-center">
                           {isCellUpdating ? (
-                            <div className="w-4.5 h-4.5 border-2 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
+                            <div className="w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
                           ) : (
                             <input
                               type="checkbox"
                               checked={hasPermission}
                               onChange={() => handleToggleMatrixPermission(role, perm._id)}
-                              className="w-4.5 h-4.5 rounded border-slate-800 bg-slate-950 text-amber-500 focus:ring-amber-500/20 focus:ring-offset-0 transition cursor-pointer"
+                              className="w-4.5 h-4.5 rounded border-slate-350 bg-white text-indigo-650 focus:ring-indigo-650/20 focus:ring-offset-0 transition cursor-pointer"
                             />
                           )}
                         </div>

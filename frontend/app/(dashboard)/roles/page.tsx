@@ -59,58 +59,47 @@ export default function AdminRolesPage() {
   };
 
   return (
-    <div className="max-w-none w-full space-y-8">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-amber-400 to-amber-200 bg-clip-text text-transparent flex items-center gap-3">
-            <Shield className="w-8 h-8 text-amber-500" />
-            System Settings (RBAC)
-          </h1>
-          <p className="text-slate-400 mt-2 text-sm">
-            Configure roles, granular permissions, and control access levels across the system.
-          </p>
-        </div>
-
-        {activeTab === 'roles' && (
+    <div className="max-w-[1400px] mx-auto px-6 md:px-8 lg:px-10 py-8 space-y-6 animate-in fade-in duration-300">
+      {activeTab === 'roles' && (
+        <div className="flex justify-end">
           <button
             onClick={handleCreate}
-            className="flex items-center gap-2 px-5 py-2.5 bg-amber-600 hover:bg-amber-500 text-slate-950 font-bold rounded-xl shadow-lg shadow-amber-900/20 transition"
+            className="flex items-center gap-2 px-4 py-2.5 bg-indigo-650 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-xs transition cursor-pointer text-xs"
           >
-            <Plus className="w-5 h-5" />
+            <Plus className="w-4 h-4" />
             Create Role
           </button>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Tabs Selector */}
-      <div className="flex border-b border-slate-800 gap-4">
+      <div className="flex border-b border-slate-200 gap-6">
         <button
           onClick={() => setActiveTab('matrix')}
-          className={`pb-4 px-2 font-semibold text-sm border-b-2 transition ${
+          className={`pb-4 px-1 font-bold text-xs border-b-2 transition uppercase tracking-wider ${
             activeTab === 'matrix'
-              ? 'border-amber-500 text-amber-400 font-bold'
-              : 'border-transparent text-slate-400 hover:text-slate-200'
+              ? 'border-indigo-600 text-indigo-600'
+              : 'border-transparent text-slate-450 hover:text-slate-700'
           }`}
         >
           Permission Matrix (Grid View)
         </button>
         <button
           onClick={() => setActiveTab('roles')}
-          className={`pb-4 px-2 font-semibold text-sm border-b-2 transition ${
+          className={`pb-4 px-1 font-bold text-xs border-b-2 transition uppercase tracking-wider ${
             activeTab === 'roles'
-              ? 'border-amber-500 text-amber-400 font-bold'
-              : 'border-transparent text-slate-400 hover:text-slate-200'
+              ? 'border-indigo-600 text-indigo-600'
+              : 'border-transparent text-slate-450 hover:text-slate-700'
           }`}
         >
           System Roles ({roles.length})
         </button>
         <button
           onClick={() => setActiveTab('permissions')}
-          className={`pb-4 px-2 font-semibold text-sm border-b-2 transition ${
+          className={`pb-4 px-1 font-bold text-xs border-b-2 transition uppercase tracking-wider ${
             activeTab === 'permissions'
-              ? 'border-amber-500 text-amber-400 font-bold'
-              : 'border-transparent text-slate-400 hover:text-slate-200'
+              ? 'border-indigo-600 text-indigo-600'
+              : 'border-transparent text-slate-450 hover:text-slate-700'
           }`}
         >
           Permissions List ({permissions.length})

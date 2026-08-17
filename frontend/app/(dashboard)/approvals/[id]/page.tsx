@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { adminService } from '@/services/adminService';
+import { useHeaderStore } from '@/store/useHeaderStore';
 import { 
   CheckCircle2, 
   XCircle, 
@@ -34,6 +35,15 @@ export default function ApprovalDetails() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const setHeader = useHeaderStore(state => state.setHeader);
+
+  useEffect(() => {
+    if (user?.name) {
+      setHeader('Approval Review', `Evaluating onboarding submission for ${user.name}`);
+    } else {
+      setHeader('Approval Review', 'Evaluating onboarding submission');
+    }
+  }, [user, setHeader]);
   
   // Decision State
   const [feedback, setFeedback] = useState('');
@@ -88,17 +98,16 @@ export default function ApprovalDetails() {
   const profile = user.profile || {};
 
   return (
-    <div className="animate-in fade-in duration-300 min-h-full bg-[#f8fafc] text-slate-800 p-6 md:p-8 -m-6 md:-m-8 flex flex-col gap-6 font-sans">
-      
-      {/* Top Header Navigation */}
-      <div className="flex items-center justify-between">
-        <button
-          onClick={() => router.back()}
-          className="flex items-center gap-2 text-slate-700 hover:text-indigo-600 transition text-xs font-bold cursor-pointer bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-sm"
-        >
-          <ArrowLeft className="w-4 h-4" /> Back to Queue
-        </button>
-      </div>
+    <div className="animate-in fade-in duration-300 w-full max-w-[1400px] mx-auto px-6 md:px-8 lg:px-10 py-8 flex flex-col gap-8 font-sans text-slate-800">
+        {/* Top Header Navigation */}
+        <div className="flex items-center">
+          <button
+            onClick={() => router.back()}
+            className="flex items-center gap-2 text-slate-700 hover:text-indigo-650 transition text-xs font-bold cursor-pointer bg-white px-4 py-2 rounded-lg border border-slate-200 shadow-xs"
+          >
+            <ArrowLeft className="w-4 h-4" /> Back to Queue
+          </button>
+        </div>
 
       {/* Main Container Card (Submission summary box) */}
       <div className="bg-white border border-slate-200/80 rounded-3xl shadow-sm p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6 relative overflow-hidden">
@@ -411,7 +420,7 @@ export default function ApprovalDetails() {
           <button 
             onClick={() => setShowFeedbackModal(true)}
             disabled={submitting}
-            className="flex items-center gap-1.5 py-3 px-5 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl text-slate-600 text-xs font-bold transition shadow-xs disabled:opacity-50 cursor-pointer"
+            className="flex items-center gap-1.5 py-3 px-5 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg text-slate-650 text-xs font-bold transition shadow-xs disabled:opacity-50 cursor-pointer"
           >
             <XCircle className="w-4 h-4 text-red-500" /> Request Changes
           </button>
@@ -419,7 +428,7 @@ export default function ApprovalDetails() {
           <button 
             onClick={() => setShowApproveModal(true)}
             disabled={submitting || !roleOverride}
-            className="flex items-center gap-1.5 py-3 px-6 bg-indigo-650 hover:bg-indigo-700 text-white text-xs font-extrabold rounded-xl transition shadow-md shadow-indigo-600/10 disabled:opacity-50 cursor-pointer"
+            className="flex items-center gap-1.5 py-3 px-6 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg transition shadow-xs disabled:opacity-50 cursor-pointer"
           >
             <CheckCircle2 className="w-4 h-4" /> Approve & Activate Profile
           </button>
@@ -500,7 +509,6 @@ export default function ApprovalDetails() {
           </div>
         </div>
       )}
-
     </div>
   );
 }

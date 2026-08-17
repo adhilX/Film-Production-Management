@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import { authService } from '@/services/authService';
 import { useAuthStore } from '@/store/useAuthStore';
-import TopNavbar from '../components/TopNavbar';
+import NavBar from '@/app/components/NavBar';
 
 export default function ApplicationDetailsPage() {
   const router = useRouter();
@@ -89,7 +89,7 @@ export default function ApplicationDetailsPage() {
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-800 flex flex-col font-sans">
       {/* Top Navbar */}
-      <TopNavbar formData={formData} currentUser={currentUser} />
+      <NavBar title="Onboarding Process" subtitle="Complete all steps to join Tendagon" />
 
       {/* Main Layout Body Container (Centered Standalone Page) */}
       <div className="flex-1 flex flex-col">

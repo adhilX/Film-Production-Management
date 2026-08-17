@@ -36,7 +36,7 @@ import Step5Contracts from './components/Step5Contracts';
 import Step6Done from './components/Step6Done';
 import LeftSidebar from './components/LeftSidebar';
 import RightSidebar from './components/RightSidebar';
-import TopNavbar from './components/TopNavbar';
+import NavBar from '@/app/components/NavBar';
 import FormHeader from './components/FormHeader';
 import { onboardingSchema, validateOnboardingStep } from '@/lib/validation';
 
@@ -318,7 +318,7 @@ export default function OnboardingPage() {
     <div className="min-h-screen bg-[#f8fafc] text-slate-800 flex flex-col font-sans">
       
       {/* Top Header (Full Width) */}
-      <TopNavbar formData={formData} currentUser={currentUser} />
+      <NavBar title="Onboarding Process" subtitle="Complete all steps to join Tendagon" />
 
       {/* Main Layout Body Container */}
       <div className="flex-1 flex flex-col lg:flex-row relative">

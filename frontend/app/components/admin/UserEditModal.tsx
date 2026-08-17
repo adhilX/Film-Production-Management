@@ -101,71 +101,71 @@ export default function UserEditModal({ isOpen, onClose, user, onSave }: UserEdi
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col">
+      <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-xs" onClick={onClose} />
+      <div className="relative bg-white border border-slate-200 rounded-2xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col">
         
-        <div className="p-6 border-b border-slate-800 flex justify-between items-center">
-          <h2 className="text-xl font-bold text-slate-100">{user ? 'Edit User' : 'Create User'}</h2>
-          <button onClick={onClose} className="text-slate-500 hover:text-slate-300 transition">
+        <div className="p-6 border-b border-slate-100 flex justify-between items-center">
+          <h2 className="text-base font-bold text-slate-800">{user ? 'Edit User' : 'Create User'}</h2>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition cursor-pointer">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         <div className="p-6 overflow-y-auto max-h-[70vh]">
           {error && (
-            <div className="mb-6 p-4 bg-red-950/40 border border-red-900/50 rounded-xl flex items-start gap-3">
+            <div className="mb-5 p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3">
               <AlertTriangle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
-              <p className="text-sm text-red-200">{error}</p>
+              <p className="text-xs text-red-750 font-medium">{error}</p>
             </div>
           )}
 
           <form id="user-form" onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Name</label>
+              <label className="block text-[10px] font-bold text-slate-450 uppercase tracking-wider mb-2">Name</label>
               <input
                 type="text"
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
                 required
-                className="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-200 focus:outline-none focus:border-amber-500/50 transition"
+                className="w-full bg-white border border-slate-250 rounded-xl px-4 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-indigo-650 transition"
                 placeholder="John Doe"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Email</label>
+              <label className="block text-[10px] font-bold text-slate-450 uppercase tracking-wider mb-2">Email</label>
               <input
                 type="email"
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
                 required
-                className="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-200 focus:outline-none focus:border-amber-500/50 transition"
+                className="w-full bg-white border border-slate-250 rounded-xl px-4 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-indigo-650 transition"
                 placeholder="john@example.com"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Contractor Type</label>
+                <label className="block text-[10px] font-bold text-slate-450 uppercase tracking-wider mb-2">Contractor Type</label>
                 <input
                   type="text"
                   name="contractorType"
                   value={formData.contractorType}
                   onChange={handleChange}
-                  className="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-200 focus:outline-none focus:border-amber-500/50 transition"
+                  className="w-full bg-white border border-slate-250 rounded-xl px-4 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-indigo-650 transition"
                   placeholder="e.g. Cast, Crew"
                 />
               </div>
               
               <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Onboarding Status</label>
+                <label className="block text-[10px] font-bold text-slate-450 uppercase tracking-wider mb-2">Onboarding Status</label>
                 <select
                   name="onboardingStatus"
                   value={formData.onboardingStatus}
                   onChange={handleChange}
-                  className="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-200 focus:outline-none focus:border-amber-500/50 transition appearance-none"
+                  className="w-full bg-white border border-slate-250 rounded-xl px-4 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-indigo-650 transition appearance-none cursor-pointer"
                 >
                   <option value="draft">Draft</option>
                   <option value="pending-review">Pending Review</option>
@@ -176,12 +176,12 @@ export default function UserEditModal({ isOpen, onClose, user, onSave }: UserEdi
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Assigned System Role</label>
+              <label className="block text-[10px] font-bold text-slate-450 uppercase tracking-wider mb-2">Assigned System Role</label>
               <select
                 name="systemRoleId"
                 value={formData.systemRoleId}
                 onChange={handleChange}
-                className="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-200 focus:outline-none focus:border-amber-500/50 transition appearance-none"
+                className="w-full bg-white border border-slate-250 rounded-xl px-4 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-indigo-650 transition appearance-none cursor-pointer"
               >
                 <option value="">-- No Specific Role (Pending) --</option>
                 {roles.map(r => (
@@ -193,25 +193,25 @@ export default function UserEditModal({ isOpen, onClose, user, onSave }: UserEdi
             <div className="flex items-center gap-3 py-2">
               <label className="relative inline-flex items-center cursor-pointer">
                 <input type="checkbox" name="isActive" checked={formData.isActive} onChange={handleChange} className="sr-only peer" />
-                <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
-                <span className="ml-3 text-sm font-medium text-slate-300">Account Active</span>
+                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                <span className="ml-3 text-xs font-bold text-slate-700">Account Active</span>
               </label>
             </div>
 
             {!user && (
-              <p className="text-xs text-amber-500/80 mt-2 bg-amber-950/20 p-3 rounded-lg border border-amber-900/30">
-                A temporary password <strong className="text-amber-400">TempPass123!</strong> will be generated for manually created users.
+              <p className="text-[11px] text-amber-800 mt-2 bg-amber-50 p-3 rounded-xl border border-amber-200/60 font-medium">
+                A temporary password <strong className="text-amber-900">TempPass123!</strong> will be generated for manually created users.
               </p>
             )}
 
           </form>
         </div>
 
-        <div className="p-6 border-t border-slate-800 bg-slate-900/50 flex justify-end gap-3 mt-auto">
+        <div className="p-6 border-t border-slate-100 bg-slate-50 flex justify-end gap-3 mt-auto">
           <button 
             type="button" 
             onClick={onClose}
-            className="px-5 py-2.5 rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-800 transition text-sm font-semibold"
+            className="px-4 py-2 rounded-xl border border-slate-200 text-slate-650 hover:bg-slate-100 transition text-xs font-bold cursor-pointer"
           >
             Cancel
           </button>
@@ -219,7 +219,7 @@ export default function UserEditModal({ isOpen, onClose, user, onSave }: UserEdi
             type="submit"
             form="user-form"
             disabled={loading}
-            className="px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-slate-950 transition text-sm font-bold flex items-center gap-2 disabled:opacity-50"
+            className="px-4 py-2 rounded-xl bg-indigo-650 hover:bg-indigo-750 text-white transition text-xs font-bold flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
           >
             {loading ? 'Saving...' : (
               <>
