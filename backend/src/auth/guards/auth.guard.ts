@@ -1,13 +1,7 @@
-import {
-  CanActivate,
-  ExecutionContext,
-  Injectable,
-  UnauthorizedException,
-  ForbiddenException,
-} from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable, UnauthorizedException, ForbiddenException,} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { User, UserDocument } from '../../users/schemas/user.schema';
 import { Role, RoleDocument } from '../schemas/role.schema';
 import { CastCrew, CastCrewDocument } from '../../productions/schemas/cast-crew.schema';
@@ -58,6 +52,7 @@ export class AuthGuard implements CanActivate {
     const isLogoutRequest = request.url.includes('/auth/logout');
 
     if (!user.isActive && !isSelfProfileRequest && !isStatusRequest && !isOnboardingRequest && !isLogoutRequest) {
+      console.log(`[AuthGuard] Inactive account: ${user._id}`);
       throw new ForbiddenException(USER_MESSAGES.INACTIVE_ACCOUNT);
     }
 
@@ -76,6 +71,7 @@ export class AuthGuard implements CanActivate {
           userPermissions.includes(perm),
         );
         if (!hasAllPermissions) {
+          console.log(`[AuthGuard] Missing permissions for ${user._id}. Required: ${requiredPermissions}, Has: ${userPermissions}`);
           throw new ForbiddenException(GENERAL_MESSAGES.FORBIDDEN);
         }
       }
@@ -98,12 +94,20 @@ export class AuthGuard implements CanActivate {
         }
 
         if (!productionId) {
+          console.log(`[AuthGuard] No productionId provided for ${request.url}`);
           throw new ForbiddenException('Production ID is required for resource scope check');
+        }
+
+        let prodObjId;
+        try {
+          prodObjId = new Types.ObjectId(productionId);
+        } catch (e) {
+          throw new ForbiddenException('Invalid Production ID format');
         }
 
         const isAssigned = await this._castCrewModel.findOne({
           userId: user._id,
-          productionId,
+          productionId: prodObjId,
         }).exec();
 
         if (!isAssigned) {

@@ -57,6 +57,10 @@ export const adminService = {
     const res = await axiosClient.patch<any>(`/admin/users/${id}`, payload);
     return res.data;
   },
+  async updateOnboardingStatus(id: string, payload: { status: string; systemRole?: string }): Promise<any> {
+    const res = await axiosClient.patch<any>(`/users/${id}/onboard`, payload);
+    return res.data;
+  },
 
   // Audit Logs
   async getAuditLogs(): Promise<any[]> {
