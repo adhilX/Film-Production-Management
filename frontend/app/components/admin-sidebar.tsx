@@ -2,9 +2,8 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, CheckSquare, Users, Shield } from 'lucide-react';
-import { useAuthStore } from '@/store/useAuthStore';
-import { useRouter } from 'next/navigation';
+import { LayoutDashboard, CheckSquare, Users, Shield, Activity } from 'lucide-react';
+
 import LogoutButton from '@/app/components/LogoutButton';
 
 export default function AdminSidebar() {
@@ -15,6 +14,7 @@ export default function AdminSidebar() {
     { name: 'Onboarding Approvals', href: '/admin/approvals', icon: CheckSquare },
     { name: 'User Management', href: '/admin/users', icon: Users },
     { name: 'Roles & Permissions', href: '/admin/roles', icon: Shield },
+    { name: 'System Logs', href: '/admin/logs', icon: Activity },
   ];
 
   return (

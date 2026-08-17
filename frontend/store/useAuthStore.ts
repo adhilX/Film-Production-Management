@@ -14,7 +14,7 @@ interface AuthState {
   logout: () => Promise<void>;
   refreshToken: () => Promise<string | null>;
   clearAuth: () => void;
-  checkStatus: () => Promise<{ status: string; isActive: boolean; systemRole: string; onboardingStatus?: string } | null>;
+  checkStatus: () => Promise<{ status: string; isActive: boolean; systemRole: string; onboardingStatus?: string; permissions?: string[] } | null>;
 }
 
 const setAuthCookie = () => {

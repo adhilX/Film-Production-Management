@@ -5,6 +5,8 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './filters/all-exceptions.filter';
+import { ForbiddenAuditFilter } from './filters/forbidden-audit.filter';
+import { AuditLogsService } from './audit-logs/audit-logs.service';
 
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
@@ -14,6 +16,7 @@ import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  app.getHttpAdapter().getInstance().set('trust proxy', true);
 
   app.useStaticAssets(join(process.cwd(), 'uploads'), {
     prefix: '/uploads/',
@@ -37,6 +40,10 @@ async function bootstrap() {
   );
 
   app.useGlobalFilters(new AllExceptionsFilter());
+
+  // Global Audit logging for 403 Forbidden errors
+  const auditLogsService = app.get(AuditLogsService);
+  app.useGlobalFilters(new ForbiddenAuditFilter(auditLogsService));
 
   // OpenAPI Swagger Configuration
   const swaggerConfig = new DocumentBuilder()

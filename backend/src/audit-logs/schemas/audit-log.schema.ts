@@ -18,6 +18,15 @@ export class AuditLog {
   resourceType: string;
 
   @Prop()
+  module: string;
+
+  @Prop({ type: Object })
+  metadata: Record<string, any>;
+
+  @Prop()
+  ipAddress: string;
+
+  @Prop()
   previousState: string;
 
   @Prop()

@@ -17,6 +17,9 @@ export class AuditLogsService {
     previousState: string,
     newState: string,
     session?: ClientSession,
+    module?: string,
+    metadata?: Record<string, any>,
+    ipAddress?: string,
   ): Promise<AuditLog> {
     const logEntry = new this.auditLogModel({
       userId: new Types.ObjectId(userId),
@@ -25,6 +28,9 @@ export class AuditLogsService {
       resourceType,
       previousState,
       newState,
+      module,
+      metadata,
+      ipAddress,
       timestamp: new Date(),
     });
 
@@ -39,7 +45,9 @@ export class AuditLogsService {
     actorId: string,
     targetId: string,
     action: string,
-    metadata: { oldStatus?: string; newStatus?: string },
+    metadata: { oldStatus?: string; newStatus?: string; [key: string]: any },
+    module?: string,
+    ipAddress?: string,
   ): Promise<AuditLog> {
     return this.log(
       actorId,
@@ -48,6 +56,10 @@ export class AuditLogsService {
       'User',
       metadata.oldStatus || '',
       metadata.newStatus || '',
+      undefined,
+      module,
+      metadata,
+      ipAddress,
     );
   }
 

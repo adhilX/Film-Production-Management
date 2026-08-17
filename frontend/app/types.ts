@@ -49,6 +49,7 @@ export interface LocationBooking {
 }
 
 export interface FundRequest {
+  [x: string]: string;
   _id: string;
   productionId: string;
   requestedBy: {

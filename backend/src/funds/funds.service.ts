@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectModel, InjectConnection } from '@nestjs/mongoose';
 import { Model, Connection, Types } from 'mongoose';
 import { FundRequest, FundRequestDocument } from './schemas/fund-request.schema';
@@ -27,6 +27,19 @@ export class FundsService {
       status: 'Pending',
     });
     await fund.save();
+
+    await this.auditLogsService.log(
+      requestedBy,
+      'FUND_CREATED',
+      (fund._id as any).toString(),
+      'FundRequest',
+      '',
+      'Pending',
+      undefined,
+      'FUNDS',
+      { amount: fund.amount, justification: fund.justification }
+    );
+
     return fund;
   }
 
@@ -50,7 +63,7 @@ export class FundsService {
     updateDto: UpdateFundStatusDto,
     userId: string,
   ): Promise<FundRequest> {
-    const { status: nextStatus } = updateDto;
+    const { status: nextStatus, rejectionReason } = updateDto;
     const fund = await this.fundRequestModel.findById(id).exec();
     if (!fund) {
       throw new NotFoundException('Fund request not found');
@@ -59,6 +72,10 @@ export class FundsService {
     const previousStatus = fund.status;
     if (previousStatus === nextStatus) {
       return fund;
+    }
+
+    if (nextStatus === 'Rejected' && !rejectionReason) {
+      throw new BadRequestException('Rejection reason is required when rejecting a fund request');
     }
 
     // Try Mongoose Transaction
@@ -73,27 +90,43 @@ export class FundsService {
 
     try {
       fund.status = nextStatus;
+      if (nextStatus === 'Approved') {
+        fund.approvedBy = new Types.ObjectId(userId);
+      }
+      
+      const action = nextStatus === 'Approved' ? 'FUND_APPROVED' : nextStatus === 'Rejected' ? 'FUND_REJECTED' : 'FUND_STATUS_CHANGE';
+      const metadata = {
+        requestId: fund._id.toString(),
+        amount: fund.amount,
+        ...(rejectionReason && { rejectionReason })
+      };
+
       if (session) {
         await fund.save({ session });
         await this.auditLogsService.log(
           userId,
-          'FUND_STATUS_CHANGE',
+          action,
           (fund._id as any).toString(),
           'FundRequest',
           previousStatus,
           nextStatus,
           session,
+          'FUNDS',
+          metadata,
         );
         await session.commitTransaction();
       } else {
         await fund.save();
         await this.auditLogsService.log(
           userId,
-          'FUND_STATUS_CHANGE',
+          action,
           (fund._id as any).toString(),
           'FundRequest',
           previousStatus,
           nextStatus,
+          undefined,
+          'FUNDS',
+          metadata,
         );
       }
     } catch (err) {

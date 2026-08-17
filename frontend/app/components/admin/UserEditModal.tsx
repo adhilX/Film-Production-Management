@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { X, Save, AlertTriangle } from 'lucide-react';
 import { adminService } from '@/services/adminService';
+import { useAuthStore } from '@/store/useAuthStore';
 
 interface UserEditModalProps {
   isOpen: boolean;
@@ -89,6 +90,13 @@ export default function UserEditModal({ isOpen, onClose, user, onSave }: UserEdi
     try {
       if (user) {
         await adminService.updateUser(user._id, formData);
+        
+        // Doc 5 sync: Check if the updated user was the current logged-in user to refresh permissions
+        const currentUser = useAuthStore.getState().user;
+        const currentUserId = currentUser ? (currentUser.id || (currentUser as any)._id) : null;
+        if (currentUserId && currentUserId === user._id) {
+          await useAuthStore.getState().checkStatus();
+        }
       } else {
         await adminService.createUser(formData);
       }

@@ -23,6 +23,9 @@ export class FundRequest {
     default: 'Pending',
   })
   status: string;
+
+  @Prop({ type: Types.ObjectId, ref: 'User' })
+  approvedBy: Types.ObjectId;
 }
 
 export const FundRequestSchema = SchemaFactory.createForClass(FundRequest);

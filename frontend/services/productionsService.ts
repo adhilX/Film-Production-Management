@@ -35,8 +35,8 @@ export const productionsService = {
     const res = await axiosClient.post<FundRequest>(`/productions/${productionId}/funds`, payload);
     return res.data;
   },
-  async updateFundStatus(productionId: string, fundId: string, status: string): Promise<FundRequest> {
-    const res = await axiosClient.patch<FundRequest>(`/productions/${productionId}/funds/${fundId}/status`, { status });
+  async updateFundStatus(productionId: string, fundId: string, status: string, rejectionReason?: string): Promise<FundRequest> {
+    const res = await axiosClient.patch<FundRequest>(`/productions/${productionId}/funds/${fundId}/status`, { status, rejectionReason });
     return res.data;
   },
 

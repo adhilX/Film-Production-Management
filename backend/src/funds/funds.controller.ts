@@ -16,6 +16,7 @@ export class FundsController {
   constructor(private readonly fundsService: FundsService) { }
 
   @Post()
+  @Permissions('productions.view')
   @ApiOperation({ summary: 'Submit a budget / fund request for a production' })
   @ApiResponse({ status: 201, description: 'Fund request submitted successfully.' })
   create(
@@ -27,6 +28,7 @@ export class FundsController {
   }
 
   @Get()
+  @Permissions('productions.view')
   @ApiOperation({ summary: 'List all fund requests for a production' })
   @ApiResponse({ status: 200, description: 'Array of fund request documents.' })
   findAll(@Param('productionId') productionId: string) {
