@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ShieldCheck, Upload, CheckCircle2, AlertCircle } from 'lucide-react';
+import { ShieldCheck, Upload, AlertCircle, HelpCircle } from 'lucide-react';
 import { authService } from '@/services/authService';
+import UploadedFileCard from '@/app/components/UploadedFileCard';
 
 interface Step4Props {
   formData: any;
@@ -42,23 +43,30 @@ export default function Step4Identity({ formData, errors, onChange, onFieldChang
     }
   };
 
+  const handleRemoveDoc = (position: 'front' | 'back') => {
+    const currentDocs = [...(formData.identityDocs || [])];
+    if (position === 'front') {
+      currentDocs[0] = '';
+    } else {
+      currentDocs[1] = '';
+    }
+    onFieldChange('identityDocs', currentDocs);
+  };
+
   const isIdRejected = adminFeedback?.toLowerCase().match(/id|passport|identity|license/);
 
   return (
-    <div className="space-y-4 animate-in fade-in duration-200">
-      <h2 className="text-lg font-semibold text-slate-100 flex items-center gap-2">
-        <ShieldCheck className="w-5 h-5 text-amber-500" /> Step 4: Identity Verification
-      </h2>
-
+    <div className="space-y-6 animate-in fade-in duration-200">
+      
       {/* Identity Type Selection */}
-      <div>
-        <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">Verification Document Type</label>
+      <div className="space-y-1.5">
+        <label className="block text-xs font-bold text-slate-800">Verification Document Type</label>
         <select
           name="governmentIdType"
           value={formData.governmentIdType}
           onChange={onChange}
-          className={`w-full bg-slate-950 border rounded-xl px-3.5 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-amber-500 text-slate-200 ${
-            errors.governmentIdType ? 'border-red-500/50' : 'border-slate-800'
+          className={`w-full bg-white border rounded-xl px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-[#4f46e5] focus:ring-1 focus:ring-[#4f46e5]/20 ${
+            errors.governmentIdType ? 'border-red-500/50' : 'border-slate-200'
           }`}
         >
           <option value="">Select ID Type</option>
@@ -66,74 +74,84 @@ export default function Step4Identity({ formData, errors, onChange, onFieldChang
           <option value="Driver License">Driver's License</option>
           <option value="National ID Card">National ID Card</option>
         </select>
-        {errors.governmentIdType && <span className="text-red-400 text-xs mt-1 block">{errors.governmentIdType}</span>}
+        {errors.governmentIdType && <span className="text-red-505 text-xs mt-1 block font-semibold">{errors.governmentIdType}</span>}
       </div>
 
-      {uploadError && <p className="text-red-400 text-xs">{uploadError}</p>}
+      {uploadError && <p className="text-red-505 text-xs font-semibold">{uploadError}</p>}
       {isIdRejected && (
-        <div className="p-3 bg-red-950/20 border border-red-900/50 rounded-xl text-red-400 text-xs flex items-center gap-1.5 mb-2">
-          <AlertCircle className="w-4 h-4 shrink-0" />
+        <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-800 text-xs flex items-center gap-1.5 mb-2 font-semibold">
+          <AlertCircle className="w-4 h-4 shrink-0 text-red-650" />
           <span>Admin requested changes to your ID uploads. Please upload clear, un-cropped images.</span>
         </div>
       )}
 
       {/* Front Upload */}
-      <div className={`p-4 rounded-xl border ${errors.identityDocs || isIdRejected ? 'border-red-500/50 bg-red-950/10' : 'border-slate-800 bg-slate-950/40'} flex items-center justify-between`}>
-        <div>
-          <span className="block text-xs font-semibold uppercase tracking-wider text-slate-300">ID Document - Front Side</span>
-          <p className="text-xs text-slate-500 mt-0.5">Upload a scan/photo of the front of your identification card.</p>
+      <div className={`p-5 rounded-2xl border ${errors.identityDocs || isIdRejected ? 'border-red-200 bg-red-50/30' : 'border-slate-200 bg-white'} space-y-4`}>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-1.5">
+              <span className="block text-xs font-bold text-slate-800">ID Document - Front Side</span>
+              <HelpCircle className="w-3.5 h-3.5 text-slate-400 cursor-pointer" />
+            </div>
+            <p className="text-[11px] text-slate-550">Upload a scan/photo of the front of your identification card.</p>
+          </div>
+          
+          <label className="cursor-pointer shrink-0 px-4.5 py-2 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 shadow-sm transition flex items-center justify-center gap-2">
+            {uploadingFront ? (
+              <span className="w-3.5 h-3.5 border border-slate-550 border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <Upload className="w-3.5 h-3.5" />
+            )}
+            <span>Upload Front</span>
+            <input type="file" accept="image/*,.pdf" onChange={(e) => handleIdUpload(e, 'front')} disabled={uploadingFront} className="hidden" />
+          </label>
         </div>
-        <label className="cursor-pointer px-4 py-2 bg-slate-850 hover:bg-slate-800 border border-slate-700 rounded-lg text-xs font-semibold transition flex items-center gap-2">
-          {uploadingFront ? (
-            <span className="w-3.5 h-3.5 border border-slate-200 border-t-transparent rounded-full animate-spin" />
-          ) : (
-            <Upload className="w-3.5 h-3.5" />
-          )}
-          <span>Upload Front</span>
-          <input type="file" accept="image/*,.pdf" onChange={(e) => handleIdUpload(e, 'front')} disabled={uploadingFront} className="hidden" />
-        </label>
+
+        {formData.identityDocs?.[0] && (
+          <UploadedFileCard
+            fileUrl={formData.identityDocs[0]}
+            fileName={formData.identityDocs[0].split('/').pop() || 'ID_Front_Side.png'}
+            label="Front ID"
+            successMessage="Front ID uploaded successfully"
+            onRemove={() => handleRemoveDoc('front')}
+          />
+        )}
       </div>
-      {formData.identityDocs?.[0] && (
-        <div className="flex flex-col gap-2 -mt-2">
-          <div className="flex items-center gap-2 text-emerald-400 text-xs bg-emerald-950/20 border border-emerald-950 px-3 py-2 rounded-lg">
-            <CheckCircle2 className="w-4 h-4" />
-            <span>Front Side Loaded: {formData.identityDocs[0].split('/').pop()}</span>
-          </div>
-          <div className="w-32 h-24 rounded-lg overflow-hidden border border-slate-800 bg-slate-900 shrink-0">
-            <img src={formData.identityDocs[0]} alt="Front ID Preview" className="w-full h-full object-cover" />
-          </div>
-        </div>
-      )}
 
       {/* Back Upload */}
-      <div className={`p-4 rounded-xl border ${errors.identityDocs || isIdRejected ? 'border-red-500/50 bg-red-950/10' : 'border-slate-800 bg-slate-950/40'} flex items-center justify-between`}>
-        <div>
-          <span className="block text-xs font-semibold uppercase tracking-wider text-slate-300">ID Document - Back Side</span>
-          <p className="text-xs text-slate-500 mt-0.5">Upload a scan/photo of the back of your identification card.</p>
-        </div>
-        <label className="cursor-pointer px-4 py-2 bg-slate-850 hover:bg-slate-800 border border-slate-700 rounded-lg text-xs font-semibold transition flex items-center gap-2">
-          {uploadingBack ? (
-            <span className="w-3.5 h-3.5 border border-slate-200 border-t-transparent rounded-full animate-spin" />
-          ) : (
-            <Upload className="w-3.5 h-3.5" />
-          )}
-          <span>Upload Back</span>
-          <input type="file" accept="image/*,.pdf" onChange={(e) => handleIdUpload(e, 'back')} disabled={uploadingBack} className="hidden" />
-        </label>
-      </div>
-      {formData.identityDocs?.[1] && (
-        <div className="flex flex-col gap-2 -mt-2">
-          <div className="flex items-center gap-2 text-emerald-400 text-xs bg-emerald-950/20 border border-emerald-950 px-3 py-2 rounded-lg">
-            <CheckCircle2 className="w-4 h-4" />
-            <span>Back Side Loaded: {formData.identityDocs[1].split('/').pop()}</span>
+      <div className={`p-5 rounded-2xl border ${errors.identityDocs || isIdRejected ? 'border-red-200 bg-red-50/30' : 'border-slate-200 bg-white'} space-y-4`}>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-1.5">
+              <span className="block text-xs font-bold text-slate-800">ID Document - Back Side</span>
+              <HelpCircle className="w-3.5 h-3.5 text-slate-400 cursor-pointer" />
+            </div>
+            <p className="text-[11px] text-slate-550">Upload a scan/photo of the back of your identification card.</p>
           </div>
-          <div className="w-32 h-24 rounded-lg overflow-hidden border border-slate-800 bg-slate-900 shrink-0">
-            <img src={formData.identityDocs[1]} alt="Back ID Preview" className="w-full h-full object-cover" />
-          </div>
+          
+          <label className="cursor-pointer shrink-0 px-4.5 py-2 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 shadow-sm transition flex items-center justify-center gap-2">
+            {uploadingBack ? (
+              <span className="w-3.5 h-3.5 border border-slate-550 border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <Upload className="w-3.5 h-3.5" />
+            )}
+            <span>Upload Back</span>
+            <input type="file" accept="image/*,.pdf" onChange={(e) => handleIdUpload(e, 'back')} disabled={uploadingBack} className="hidden" />
+          </label>
         </div>
-      )}
 
-      {errors.identityDocs && <span className="text-red-400 text-xs mt-1 block">{errors.identityDocs}</span>}
+        {formData.identityDocs?.[1] && (
+          <UploadedFileCard
+            fileUrl={formData.identityDocs[1]}
+            fileName={formData.identityDocs[1].split('/').pop() || 'ID_Back_Side.png'}
+            label="Back ID"
+            successMessage="Back ID uploaded successfully"
+            onRemove={() => handleRemoveDoc('back')}
+          />
+        )}
+      </div>
+
+      {errors.identityDocs && <span className="text-red-500 text-xs mt-1 block font-semibold">{errors.identityDocs}</span>}
     </div>
   );
 }

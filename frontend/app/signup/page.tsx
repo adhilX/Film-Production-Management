@@ -333,13 +333,13 @@ export default function SignupPage() {
                   <select
                     value={formData.role}
                     onChange={(e) => handleInputChange('role', e.target.value)}
-                    className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-600/20 transition duration-200"
+                    className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-600/20 transition duration-200 cursor-pointer"
                   >
                     <option value="Freelancer">Freelancer</option>
                     <option value="Cast">Cast</option>
-                    <option value="Crew">Crew</option>
                     <option value="Supplier">Supplier</option>
-                    <option value="Agent">Agent</option>
+                    <option value="Cast-Crew Agent">Cast-Crew Agent</option>
+                    <option value="TCS Team">TCS Team</option>
                     <option value="Production Company">Production Company</option>
                   </select>
                 </div>

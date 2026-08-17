@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { adminService } from '@/services/adminService';
 import { CheckCircle2, XCircle, ArrowLeft, Building2, UserCircle, Briefcase, FileText, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
+import DocumentPreview from '@/app/components/DocumentPreview';
 
 export default function ApprovalDetails() {
   const { id } = useParams();
@@ -131,19 +132,23 @@ export default function ApprovalDetails() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <span className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Front Side</span>
-                <div className="h-48 bg-slate-900 rounded-xl border border-slate-800 overflow-hidden">
-                  {profile.identityDocs?.[0] ? (
-                    <img src={profile.identityDocs[0]} alt="ID Front" className="w-full h-full object-contain p-2" />
-                  ) : <span className="text-slate-600 text-sm flex h-full items-center justify-center">Missing</span>}
-                </div>
+                {profile.identityDocs?.[0] ? (
+                  <DocumentPreview fileUrl={profile.identityDocs[0]} maxHeight={180} alt="ID Front" className="border-slate-850 bg-slate-900" />
+                ) : (
+                  <div className="h-48 bg-slate-900 rounded-xl border border-slate-800 flex items-center justify-center text-slate-600 text-sm">
+                    Missing
+                  </div>
+                )}
               </div>
               <div>
                 <span className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Back Side</span>
-                <div className="h-48 bg-slate-900 rounded-xl border border-slate-800 overflow-hidden">
-                  {profile.identityDocs?.[1] ? (
-                    <img src={profile.identityDocs[1]} alt="ID Back" className="w-full h-full object-contain p-2" />
-                  ) : <span className="text-slate-600 text-sm flex h-full items-center justify-center">Missing</span>}
-                </div>
+                {profile.identityDocs?.[1] ? (
+                  <DocumentPreview fileUrl={profile.identityDocs[1]} maxHeight={180} alt="ID Back" className="border-slate-850 bg-slate-900" />
+                ) : (
+                  <div className="h-48 bg-slate-900 rounded-xl border border-slate-800 flex items-center justify-center text-slate-600 text-sm">
+                    Missing
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -170,15 +175,13 @@ export default function ApprovalDetails() {
               </div>
               <div>
                 <span className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Tax Document</span>
-                <div className="h-40 bg-slate-900 rounded-xl border border-slate-800 overflow-hidden flex items-center justify-center">
-                   {profile.taxFormUrl ? (
-                     profile.taxFormUrl.toLowerCase().endsWith('.pdf') ? (
-                       <iframe src={profile.taxFormUrl} className="w-full h-full bg-white" />
-                     ) : (
-                       <img src={profile.taxFormUrl} alt="Tax" className="w-full h-full object-cover" />
-                     )
-                   ) : <span className="text-slate-600 text-sm">Missing</span>}
-                </div>
+                {profile.taxFormUrl ? (
+                  <DocumentPreview fileUrl={profile.taxFormUrl} maxHeight={160} alt="Tax Document" className="border-slate-850 bg-slate-900" />
+                ) : (
+                  <div className="h-40 bg-slate-900 rounded-xl border border-slate-800 flex items-center justify-center text-slate-600 text-sm">
+                    Missing
+                  </div>
+                )}
               </div>
             </div>
           </div>

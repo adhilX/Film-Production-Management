@@ -16,7 +16,7 @@ export class SignupDto {
   @IsNotEmpty()
   name: string;
 
-  @ApiProperty({ example: 'Freelancer', enum: ['Freelancer', 'Cast', 'Crew', 'Supplier', 'Agent', 'Production Company'], description: 'Contractor classification' })
-  @IsEnum(['Freelancer', 'Cast', 'Crew', 'Supplier', 'Agent', 'Production Company'])
+  @ApiProperty({ example: 'Freelancer', enum: ['Freelancer', 'Cast', 'Crew', 'Supplier', 'Agent', 'Cast-Crew Agent', 'TCS Team', 'Production Company'], description: 'Contractor classification' })
+  @IsEnum(['Freelancer', 'Cast', 'Crew', 'Supplier', 'Agent', 'Cast-Crew Agent', 'TCS Team', 'Production Company'])
   contractorType: string;
 }

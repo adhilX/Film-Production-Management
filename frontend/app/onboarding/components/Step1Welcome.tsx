@@ -1,27 +1,100 @@
 'use client';
 
 import React from 'react';
-import { Sparkles } from 'lucide-react';
+import { User, Users, Box, Building, GraduationCap, Check } from 'lucide-react';
 
-export default function Step1Welcome() {
+interface Step1Props {
+  formData: any;
+  errors: Record<string, string>;
+  onFieldChange: (name: string, value: any) => void;
+}
+
+export default function Step1Welcome({ formData, errors, onFieldChange }: Step1Props) {
+  const contractorTypes = [
+    {
+      id: 'Freelancer',
+      title: 'Freelancer',
+      description: 'Individuals working as Cast, Crew, or Interns.',
+      icon: User,
+    },
+    {
+      id: 'Cast',
+      title: 'Cast',
+      description: 'Specific for Actors and Talent.',
+      icon: Users,
+    },
+    {
+      id: 'Supplier',
+      title: 'Supplier',
+      description: 'Companies or Agencies providing services/equipment.',
+      icon: Box,
+    },
+    {
+      id: 'Cast-Crew Agent',
+      title: 'Cast-Crew Agent',
+      description: 'Representatives of talent.',
+      icon: Users,
+    },
+    {
+      id: 'TCS Team',
+      title: 'TCS Team',
+      description: 'Internal team members (Production-side).',
+      icon: Building,
+    },
+    {
+      id: 'Production Company',
+      title: 'Production Company',
+      description: 'Businesses managing the overall film project.',
+      icon: Building,
+    },
+  ];
+
   return (
-    <div className="space-y-5 animate-in fade-in">
-      <div className="w-12 h-12 bg-gradient-to-tr from-purple-500 to-indigo-500 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-500/20 mb-2">
-        <Sparkles className="w-6 h-6 text-white" />
+    <div className="space-y-6 animate-in fade-in duration-200">
+      <div className="space-y-1">
+        <h3 className="text-base font-semibold text-slate-900">Select Contractor Type</h3>
+        <p className="text-xs text-slate-500">Please select the type that best describes you.</p>
       </div>
-      <h2 className="text-xl font-semibold text-slate-100">Welcome to the Production Platform</h2>
-      <p className="text-sm text-slate-300 leading-relaxed">
-        Thank you for applying to join our film production system. This onboarding process registers your identity and establishes your <strong>Contractor Classification</strong> (e.g. Freelancer, Cast, Supplier).
-      </p>
-      <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-4 text-xs text-slate-400 space-y-2">
-        <p className="font-semibold text-slate-200 uppercase tracking-wider">What to expect:</p>
-        <ul className="list-disc list-inside space-y-1 text-slate-400">
-          <li>Specify account credentials and select your contractor identity type</li>
-          <li>Provide financial payout details for production fund distributions</li>
-          <li>Upload national ID / contract document serial for compliance</li>
-          <li>Review & agree to NDA and safety regulations</li>
-        </ul>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {contractorTypes.map((type) => {
+          const Icon = type.icon;
+          const isSelected = formData.contractorType === type.id;
+
+          return (
+            <div
+              key={type.id}
+              onClick={() => onFieldChange('contractorType', type.id)}
+              className={`relative p-5 rounded-2xl border text-left cursor-pointer transition-all duration-355 select-none flex flex-col justify-between min-h-[140px] ${
+                isSelected
+                  ? 'border-[#4f46e5] bg-[#e0e7ff]/10 ring-2 ring-[#4f46e5]/20'
+                  : 'border-slate-200 bg-white hover:border-slate-350 hover:scale-101'
+              }`}
+            >
+              <div className="flex justify-between items-start">
+                <div className={`p-2 rounded-xl ${isSelected ? 'bg-[#e0e7ff] text-[#4f46e5]' : 'bg-slate-100 text-slate-500'}`}>
+                  <Icon className="w-5 h-5" />
+                </div>
+                {/* Checked Badge */}
+                <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-all ${
+                  isSelected ? 'bg-[#4f46e5] border-[#4f46e5] text-white' : 'border-slate-300'
+                }`}>
+                  {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                </div>
+              </div>
+
+              <div className="mt-4">
+                <span className="block font-bold text-sm text-slate-800">{type.title}</span>
+                <p className="text-xs text-slate-405 mt-1">{type.description}</p>
+              </div>
+            </div>
+          );
+        })}
       </div>
+
+      {errors.contractorType && (
+        <span className="text-red-500 text-xs mt-1 block font-semibold">{errors.contractorType}</span>
+      )}
     </div>
   );
 }

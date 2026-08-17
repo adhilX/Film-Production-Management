@@ -55,6 +55,11 @@ export class ProfileDataDto {
   @IsString()
   experience?: string;
 
+  @ApiProperty({ required: false, description: 'Contractor Type' })
+  @IsOptional()
+  @IsString()
+  contractorType?: string;
+
   @ApiProperty({ type: BankDetailsDto, required: false, description: 'Bank Account Information' })
   @IsOptional()
   @ValidateNested()

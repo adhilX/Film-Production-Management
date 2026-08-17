@@ -42,6 +42,10 @@ export const step4Schema = z.object({
   identityDocs: z.array(z.string()).min(2, 'Both front and back ID document uploads are required'),
 });
 
+export const step1Schema = z.object({
+  contractorType: z.string().min(1, 'Please select your contractor type'),
+});
+
 export const step5Schema = z.object({
   agreeNda: z.boolean().refine((val) => val === true, { message: 'You must agree to the NDA' }),
   agreeTerms: z.boolean().refine((val) => val === true, { message: 'You must agree to the Terms of Service' }),
@@ -49,6 +53,7 @@ export const step5Schema = z.object({
 });
 
 export const onboardingSchema = z.object({
+  contractorType: z.string().min(1, 'Please select your contractor type'),
   name: z.string().min(2, 'Name must be at least 2 characters'),
   photoUrl: z.string().min(1, 'Profile photo is required'),
   phoneNumber: z.string().min(5, 'Phone number must be at least 5 digits'),

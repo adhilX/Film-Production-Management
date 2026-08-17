@@ -124,6 +124,9 @@ export class UsersService {
       if (profileData.name) {
         user.name = profileData.name;
       }
+      if (profileData.contractorType !== undefined) {
+        user.contractorType = profileData.contractorType;
+      }
       if (profileData.photoUrl !== undefined) {
         profile.photoUrl = profileData.photoUrl;
       }

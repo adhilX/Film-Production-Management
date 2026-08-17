@@ -37,13 +37,13 @@ export default function Step2Information({ formData, errors, onChange, onFieldCh
 
   return (
     <div className="space-y-5 animate-in fade-in duration-200">
-      <h2 className="text-lg font-semibold text-slate-100 flex items-center gap-2">
-        <User className="w-5 h-5 text-amber-500" /> Step 2: Profile & Professional Information
+      <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+        <User className="w-5 h-5 text-[#4f46e5]" /> Step 2: Profile & Professional Information
       </h2>
 
       {/* Profile Photo Upload */}
-      <div className={`p-4 rounded-xl border ${isPhotoRejected ? 'border-red-500/50 bg-red-950/10' : 'border-slate-800 bg-slate-950/40'} flex flex-col sm:flex-row items-center gap-4`}>
-        <div className="relative w-20 h-20 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center overflow-hidden shrink-0">
+      <div className={`p-4 rounded-xl border ${isPhotoRejected ? 'border-red-500/50 bg-red-50' : 'border-slate-200 bg-slate-50/50'} flex flex-col sm:flex-row items-center gap-4`}>
+        <div className="relative w-20 h-20 rounded-full bg-slate-100 border border-slate-250 flex items-center justify-center overflow-hidden shrink-0">
           {formData.photoUrl ? (
             <img 
               src={formData.photoUrl.startsWith('http') ? formData.photoUrl : `${process.env.NEXT_PUBLIC_API_URL?.replace('/api', '')}${formData.photoUrl}`} 
@@ -51,23 +51,23 @@ export default function Step2Information({ formData, errors, onChange, onFieldCh
               className="w-full h-full object-cover" 
             />
           ) : (
-            <User className="w-8 h-8 text-slate-600" />
+            <User className="w-8 h-8 text-slate-400" />
           )}
         </div>
         <div className="flex-1 text-center sm:text-left space-y-1">
-          <span className="block text-xs font-semibold uppercase tracking-wider text-slate-300">Profile Photo</span>
+          <span className="block text-xs font-semibold uppercase tracking-wider text-slate-700">Profile Photo</span>
           <p className="text-xs text-slate-500">Upload a professional headshot (JPG or PNG).</p>
-          {uploadError && <p className="text-red-400 text-xs">{uploadError}</p>}
+          {uploadError && <p className="text-red-500 text-xs">{uploadError}</p>}
           {isPhotoRejected && (
-            <div className="text-red-400 text-xs flex items-center gap-1.5 mt-1">
+            <div className="text-red-500 text-xs flex items-center gap-1.5 mt-1 font-semibold">
               <AlertCircle className="w-3.5 h-3.5" />
               <span>Admin marked this photo as rejected/blurry. Please re-upload.</span>
             </div>
           )}
         </div>
-        <label className="cursor-pointer px-4 py-2 bg-slate-850 hover:bg-slate-800 border border-slate-700 rounded-lg text-xs font-semibold transition flex items-center gap-2">
+        <label className="cursor-pointer px-4 py-2 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-750 shadow-sm transition flex items-center gap-2">
           {uploading ? (
-            <span className="w-3.5 h-3.5 border border-slate-200 border-t-transparent rounded-full animate-spin" />
+            <span className="w-3.5 h-3.5 border border-slate-450 border-t-transparent rounded-full animate-spin" />
           ) : (
             <Upload className="w-3.5 h-3.5" />
           )}
@@ -75,50 +75,50 @@ export default function Step2Information({ formData, errors, onChange, onFieldCh
           <input type="file" accept="image/*" onChange={handlePhotoUpload} disabled={uploading} className="hidden" />
         </label>
       </div>
-      {errors.photoUrl && <span className="text-red-400 text-xs block">{errors.photoUrl}</span>}
+      {errors.photoUrl && <span className="text-red-500 text-xs block font-semibold">{errors.photoUrl}</span>}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {/* Full Name */}
         <div>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">Full Name</label>
+          <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">Full Name</label>
           <input 
             type="text"
             name="name" 
             value={formData.name} 
             onChange={onChange}
             placeholder="John Doe"
-            className={`w-full bg-slate-950/70 border rounded-xl px-3.5 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-500 ${
-              errors.name || isProfileRejected ? 'border-red-500/50' : 'border-slate-800'
+            className={`w-full bg-white border rounded-xl px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#4f46e5] focus:ring-1 focus:ring-[#4f46e5]/20 ${
+              errors.name || isProfileRejected ? 'border-red-500/50' : 'border-slate-200'
             }`}
           />
-          {errors.name && <span className="text-red-400 text-xs mt-1 block">{errors.name}</span>}
+          {errors.name && <span className="text-red-500 text-xs mt-1 block font-semibold">{errors.name}</span>}
         </div>
 
         {/* Phone Number */}
         <div>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">Phone Number</label>
+          <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">Phone Number</label>
           <input 
             type="text"
             name="phoneNumber" 
             value={formData.phoneNumber} 
             onChange={onChange}
             placeholder="+1 (555) 019-2834"
-            className={`w-full bg-slate-950/70 border rounded-xl px-3.5 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-500 ${
-              errors.phoneNumber || isProfileRejected ? 'border-red-500/50' : 'border-slate-800'
+            className={`w-full bg-white border rounded-xl px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#4f46e5] focus:ring-1 focus:ring-[#4f46e5]/20 ${
+              errors.phoneNumber || isProfileRejected ? 'border-red-500/50' : 'border-slate-200'
             }`}
           />
-          {errors.phoneNumber && <span className="text-red-400 text-xs mt-1 block">{errors.phoneNumber}</span>}
+          {errors.phoneNumber && <span className="text-red-500 text-xs mt-1 block font-semibold">{errors.phoneNumber}</span>}
         </div>
 
         {/* Department Dropdown */}
         <div>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">Department</label>
+          <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">Department</label>
           <select
             name="department"
             value={formData.department}
             onChange={onChange}
-            className={`w-full bg-slate-950 border rounded-xl px-3.5 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-amber-500 ${
-              errors.department || isProfileRejected ? 'border-red-500/50' : 'border-slate-800'
+            className={`w-full bg-white border rounded-xl px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-[#4f46e5] focus:ring-1 focus:ring-[#4f46e5]/20 ${
+              errors.department || isProfileRejected ? 'border-red-500/50' : 'border-slate-200'
             }`}
           >
             <option value="">Select Department</option>
@@ -132,40 +132,40 @@ export default function Step2Information({ formData, errors, onChange, onFieldCh
             <option value="Crew">Crew</option>
             <option value="Other">Other</option>
           </select>
-          {errors.department && <span className="text-red-400 text-xs mt-1 block">{errors.department}</span>}
+          {errors.department && <span className="text-red-500 text-xs mt-1 block font-semibold">{errors.department}</span>}
         </div>
 
         {/* Position */}
         <div>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">Position</label>
+          <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">Position</label>
           <input 
             type="text"
             name="position" 
             value={formData.position} 
             onChange={onChange}
             placeholder="Director of Photography"
-            className={`w-full bg-slate-950/70 border rounded-xl px-3.5 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-500 ${
-              errors.position || isProfileRejected ? 'border-red-500/50' : 'border-slate-800'
+            className={`w-full bg-white border rounded-xl px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#4f46e5] focus:ring-1 focus:ring-[#4f46e5]/20 ${
+              errors.position || isProfileRejected ? 'border-red-500/50' : 'border-slate-200'
             }`}
           />
-          {errors.position && <span className="text-red-400 text-xs mt-1 block">{errors.position}</span>}
+          {errors.position && <span className="text-red-500 text-xs mt-1 block font-semibold">{errors.position}</span>}
         </div>
       </div>
 
       {/* Experience Summary */}
       <div>
-        <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">Experience Summary</label>
+        <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">Experience Summary</label>
         <textarea 
           name="experience" 
           value={formData.experience} 
           onChange={onChange}
           rows={3}
           placeholder="List major projects, years of active production work, and equipment proficiency..."
-          className={`w-full bg-slate-950/70 border rounded-xl px-3.5 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-500 resize-none ${
-            errors.experience ? 'border-red-500/50' : 'border-slate-800'
+          className={`w-full bg-white border rounded-xl px-3.5 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#4f46e5] focus:ring-1 focus:ring-[#4f46e5]/20 resize-none ${
+            errors.experience ? 'border-red-500/50' : 'border-slate-200'
           }`}
         />
-        {errors.experience && <span className="text-red-400 text-xs mt-1 block">{errors.experience}</span>}
+        {errors.experience && <span className="text-red-500 text-xs mt-1 block font-semibold">{errors.experience}</span>}
       </div>
     </div>
   );
