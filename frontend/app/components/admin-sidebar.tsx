@@ -2,19 +2,13 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, CheckSquare, Users, Shield, LogOut } from 'lucide-react';
+import { LayoutDashboard, CheckSquare, Users, Shield } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useRouter } from 'next/navigation';
+import LogoutButton from '@/app/components/LogoutButton';
 
 export default function AdminSidebar() {
   const pathname = usePathname();
-  const logout = useAuthStore((state) => state.logout);
-  const router = useRouter();
-
-  const handleLogout = () => {
-    logout();
-    router.push('/login');
-  };
 
   const navItems = [
     { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
@@ -53,13 +47,7 @@ export default function AdminSidebar() {
       </nav>
 
       <div className="p-4 border-t border-slate-900">
-        <button
-          onClick={handleLogout}
-          className="flex w-full items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-400 hover:bg-red-950/30 hover:text-red-400 transition"
-        >
-          <LogOut className="w-5 h-5" />
-          Logout
-        </button>
+        <LogoutButton className="flex w-full items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-400 hover:bg-red-950/30 hover:text-red-400 transition" />
       </div>
     </div>
   );

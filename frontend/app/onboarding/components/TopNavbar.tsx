@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Clapperboard, HelpCircle, ChevronDown, LogOut } from 'lucide-react';
-import { authService } from '@/services/authService';
+import { Clapperboard, HelpCircle, ChevronDown } from 'lucide-react';
+
+import { useAuthStore } from '@/store/useAuthStore';
+import LogoutButton from '@/app/components/LogoutButton';
 
 interface TopNavbarProps {
   formData: any;
@@ -9,13 +10,7 @@ interface TopNavbarProps {
 }
 
 export default function TopNavbar({ formData, currentUser }: TopNavbarProps) {
-  const router = useRouter();
   const [showUserDropdown, setShowUserDropdown] = useState(false);
-
-  const handleLogoutClick = () => {
-    authService.logout();
-    router.push('/login');
-  };
 
   return (
     <header className="w-full h-20 border-b border-slate-200/80 bg-white/80 backdrop-blur pr-6 flex items-center justify-between sticky top-0 z-30 shrink-0">
@@ -72,12 +67,7 @@ export default function TopNavbar({ formData, currentUser }: TopNavbarProps) {
 
           {showUserDropdown && (
             <div className="absolute right-0 mt-2 w-48 bg-white border border-slate-200 rounded-xl shadow-xl py-1 z-50">
-              <button
-                onClick={handleLogoutClick}
-                className="w-full text-left px-4 py-2 text-xs text-red-600 hover:bg-slate-50 flex items-center gap-2 font-medium"
-              >
-                <LogOut className="w-4 h-4" /> Log Out
-              </button>
+              <LogoutButton className="w-full text-left px-4 py-2 text-xs text-red-600 hover:bg-slate-50 flex items-center gap-2 font-medium" />
             </div>
           )}
         </div>

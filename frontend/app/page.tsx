@@ -32,6 +32,7 @@ import {
   Shirt,
   Info
 } from 'lucide-react';
+import LogoutButton from '@/app/components/LogoutButton';
 
 export default function DashboardHome() {
   const router = useRouter();
@@ -595,12 +596,12 @@ export default function DashboardHome() {
             >
               <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} /> Check Approval Status
             </button>
-            <button
-              onClick={logout}
+            <LogoutButton
               className="py-2.5 px-4 bg-slate-950 border border-slate-800 hover:bg-slate-900 rounded-lg text-slate-300 font-semibold text-sm transition-colors cursor-pointer"
+              showIcon={false}
             >
               Sign Out
-            </button>
+            </LogoutButton>
           </div>
         </div>
       </div>
@@ -731,12 +732,12 @@ export default function DashboardHome() {
               {user.contractorType} • {user.systemRole}
             </span>
           </div>
-          <button 
-            onClick={logout}
+          <LogoutButton 
             className="w-full py-2 px-3 bg-red-950/10 border border-red-900/20 hover:bg-red-950/20 rounded-lg text-red-400 text-xs font-semibold flex items-center justify-center gap-2 transition-colors cursor-pointer"
+            iconClassName="w-3 h-3"
           >
-            <LogOut size={12} /> Sign Out
-          </button>
+            Sign Out
+          </LogoutButton>
         </div>
       </aside>
 
