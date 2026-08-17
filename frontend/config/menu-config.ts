@@ -11,14 +11,12 @@ export const USER_MENU_ITEMS = [
     label: 'Costumes & Assets', 
     href: '/costumes', 
     permission: 'costumes.view', 
-    contractorType: 'Supplier',
     icon: Shirt 
   },
   { 
     label: 'Cast Assignments', 
     href: '/crew', 
     permission: 'productions.view', 
-    contractorType: 'Cast',
     icon: Users 
   },
   { 

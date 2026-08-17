@@ -11,6 +11,7 @@ import {
   UploadedFile,
   BadRequestException,
   Query,
+  ForbiddenException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -21,7 +22,6 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { UsersService } from './users.service';
-import { UpdateOnboardingDto } from './dto/update-onboarding.dto';
 import { UpdateOnboardingProgressDto } from './dto/update-onboarding-progress.dto';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { PermissionsGuard } from '../auth/guards/permissions.guard';
@@ -126,26 +126,12 @@ export class UsersController {
   @Get(':id')
   @ApiOperation({ summary: 'Fetch user profile details by ID' })
   @ApiResponse({ status: 200, description: 'User document details.' })
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id') id: string, @Req() req: any) {
+    const isSelf = req.user._id.toString() === id;
+    const hasViewPerm = req.user.permissions && req.user.permissions.includes('users.view');
+    if (!isSelf && !hasViewPerm) {
+      throw new ForbiddenException('Access denied: Cannot view another user\'s profile');
+    }
     return this.usersService.findOne(id);
-  }
-
-  @Patch(':id/onboard')
-  @Permissions('users.approve')
-  @ApiOperation({
-    summary:
-      'Evaluate and transition contractor onboarding status and assign systemRole',
-  })
-  @ApiResponse({ status: 200, description: 'Updated user onboarding record.' })
-  updateOnboarding(
-    @Param('id') id: string,
-    @Body() updateDto: UpdateOnboardingDto,
-    @Req() req: any,
-  ) {
-    return this.usersService.updateOnboarding(
-      id,
-      updateDto,
-      req.user._id.toString(),
-    );
   }
 }

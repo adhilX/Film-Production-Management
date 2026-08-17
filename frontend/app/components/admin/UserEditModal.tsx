@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { X, Save, AlertTriangle } from 'lucide-react';
 import { adminService } from '@/services/adminService';
+import { authService } from '@/services/authService';
 import { useAuthStore } from '@/store/useAuthStore';
 
 interface UserEditModalProps {
@@ -15,8 +16,7 @@ export default function UserEditModal({ isOpen, onClose, user, onSave }: UserEdi
     name: '',
     email: '',
     contractorType: '',
-    systemRole: 'User',
-    roleId: '',
+    systemRoleId: '',
     onboardingStatus: 'approved',
     isActive: true,
   });
@@ -33,8 +33,7 @@ export default function UserEditModal({ isOpen, onClose, user, onSave }: UserEdi
           name: user.name || '',
           email: user.email || '',
           contractorType: user.contractorType || '',
-          systemRole: user.systemRole || 'User',
-          roleId: user.roleId || '',
+          systemRoleId: user.systemRoleId?._id || user.systemRoleId || '',
           onboardingStatus: user.onboardingStatus || 'approved',
           isActive: user.isActive !== undefined ? user.isActive : true,
         });
@@ -43,8 +42,7 @@ export default function UserEditModal({ isOpen, onClose, user, onSave }: UserEdi
           name: '',
           email: '',
           contractorType: '',
-          systemRole: 'User',
-          roleId: '',
+          systemRoleId: '',
           onboardingStatus: 'approved',
           isActive: true,
         });
@@ -68,17 +66,6 @@ export default function UserEditModal({ isOpen, onClose, user, onSave }: UserEdi
       finalValue = (e.target as HTMLInputElement).checked;
     }
     
-    // Auto-map system role if custom role dropdown changes
-    if (name === 'roleId') {
-      const selected = roles.find(r => r._id === value);
-      if (selected) {
-        if (selected.name === 'Admin') setFormData(prev => ({ ...prev, roleId: value, systemRole: 'Admin' }));
-        else if (selected.name.includes('Manager')) setFormData(prev => ({ ...prev, roleId: value, systemRole: 'Manager' }));
-        else setFormData(prev => ({ ...prev, roleId: value, systemRole: 'User' }));
-        return;
-      }
-    }
-
     setFormData(prev => ({ ...prev, [name]: finalValue }));
   };
 
@@ -91,11 +78,12 @@ export default function UserEditModal({ isOpen, onClose, user, onSave }: UserEdi
       if (user) {
         await adminService.updateUser(user._id, formData);
         
-        // Doc 5 sync: Check if the updated user was the current logged-in user to refresh permissions
+        // Doc 5 sync: Refresh local store user profile on current logged-in user profile update
         const currentUser = useAuthStore.getState().user;
         const currentUserId = currentUser ? (currentUser.id || (currentUser as any)._id) : null;
         if (currentUserId && currentUserId === user._id) {
-          await useAuthStore.getState().checkStatus();
+          const freshProfile = await authService.getProfile(currentUserId);
+          useAuthStore.setState({ user: freshProfile });
         }
       } else {
         await adminService.createUser(formData);
@@ -172,37 +160,6 @@ export default function UserEditModal({ isOpen, onClose, user, onSave }: UserEdi
               </div>
               
               <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">System Role</label>
-                <select
-                  name="systemRole"
-                  value={formData.systemRole}
-                  onChange={handleChange}
-                  className="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-200 focus:outline-none focus:border-amber-500/50 transition appearance-none"
-                >
-                  <option value="User">User (Standard)</option>
-                  <option value="Manager">Manager</option>
-                  <option value="Admin">Admin</option>
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Assigned RBAC Role</label>
-              <select
-                name="roleId"
-                value={formData.roleId}
-                onChange={handleChange}
-                className="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-200 focus:outline-none focus:border-amber-500/50 transition appearance-none"
-              >
-                <option value="">-- No Specific Role --</option>
-                {roles.map(r => (
-                  <option key={r._id} value={r._id}>{r.name}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
                 <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Onboarding Status</label>
                 <select
                   name="onboardingStatus"
@@ -216,14 +173,29 @@ export default function UserEditModal({ isOpen, onClose, user, onSave }: UserEdi
                   <option value="approved">Approved</option>
                 </select>
               </div>
-              
-              <div className="flex items-center gap-3 pt-6">
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" name="isActive" checked={formData.isActive} onChange={handleChange} className="sr-only peer" />
-                  <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
-                  <span className="ml-3 text-sm font-medium text-slate-300">Account Active</span>
-                </label>
-              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Assigned System Role</label>
+              <select
+                name="systemRoleId"
+                value={formData.systemRoleId}
+                onChange={handleChange}
+                className="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-200 focus:outline-none focus:border-amber-500/50 transition appearance-none"
+              >
+                <option value="">-- No Specific Role (Pending) --</option>
+                {roles.map(r => (
+                  <option key={r._id} value={r._id}>{r.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex items-center gap-3 py-2">
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" name="isActive" checked={formData.isActive} onChange={handleChange} className="sr-only peer" />
+                <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
+                <span className="ml-3 text-sm font-medium text-slate-300">Account Active</span>
+              </label>
             </div>
 
             {!user && (

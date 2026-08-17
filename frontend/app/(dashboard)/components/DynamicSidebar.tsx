@@ -43,16 +43,13 @@ export default function DynamicSidebar() {
     return user.permissions ? user.permissions.includes(permission) : false;
   };
 
-  // Filter based on permissions and contractor type
+  // Filter based on permissions
   const visibleItems = USER_MENU_ITEMS.filter(item => {
     // Wait, requirement: if user?.onboardingStatus !== 'approved' return false
     if (user?.status !== 'Approved') return false; 
     
     // Check permission string
     if (!hasPermission(item.permission)) return false;
-
-    // Check specific role restriction if applied
-    if (item.contractorType && user.contractorType !== item.contractorType) return false;
 
     return true;
   });

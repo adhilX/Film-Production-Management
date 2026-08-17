@@ -8,6 +8,7 @@ import Pagination from '@/app/components/Pagination';
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<any[]>([]);
+  const [roles, setRoles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState('all');
@@ -49,8 +50,18 @@ export default function AdminUsersPage() {
     }
   };
 
+  const fetchRoles = async () => {
+    try {
+      const data = await adminService.getRoles();
+      setRoles(data || []);
+    } catch (error) {
+      console.error('Failed to fetch roles:', error);
+    }
+  };
+
   useEffect(() => {
     fetchUsers();
+    fetchRoles();
   }, [page, debouncedSearch]);
 
   const handleEdit = (user: any) => {
@@ -64,7 +75,7 @@ export default function AdminUsersPage() {
   };
 
   const filteredUsers = users.filter(user => {
-    const matchesRole = filterRole === 'all' || user.systemRole === filterRole;
+    const matchesRole = filterRole === 'all' || user.systemRoleId?._id === filterRole;
     return matchesRole;
   });
 
@@ -107,8 +118,9 @@ export default function AdminUsersPage() {
           className="bg-slate-950/50 border border-slate-800 rounded-xl px-4 py-2 text-slate-300 focus:outline-none focus:border-amber-500/50 transition w-full sm:w-auto appearance-none"
         >
           <option value="all">All Roles</option>
-          <option value="User">Standard User</option>
-          <option value="Manager">Manager</option>
+          {roles.map((r) => (
+            <option key={r._id} value={r._id}>{r.name}</option>
+          ))}
         </select>
       </div>
 
@@ -165,14 +177,16 @@ export default function AdminUsersPage() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
-                        {user.systemRole === 'Admin' ? (
+                        {user.systemRoleId?.name === 'Super Admin' || user.systemRoleId?.name === 'Production Admin' ? (
                           <span className="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]" />
-                        ) : user.systemRole === 'Manager' ? (
+                        ) : ['Production Manager', 'Finance Manager', 'Location Manager', 'Costume Manager'].includes(user.systemRoleId?.name || '') ? (
                           <span className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.8)]" />
+                        ) : user.systemRoleId?.name === 'Cast' || user.systemRoleId?.name === 'Crew' ? (
+                          <span className="w-2 h-2 rounded-full bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.8)]" />
                         ) : (
                           <span className="w-2 h-2 rounded-full bg-slate-500" />
                         )}
-                        <span className="font-medium text-slate-300">{user.systemRole}</span>
+                        <span className="font-medium text-slate-300">{user.systemRoleId?.name || 'Pending'}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4">

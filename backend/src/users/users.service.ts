@@ -15,7 +15,6 @@ import {
   DocumentRecord,
   DocumentRecordDocument,
 } from './schemas/document-record.schema';
-import { UpdateOnboardingDto } from './dto/update-onboarding.dto';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 
 @Injectable()
@@ -226,103 +225,5 @@ export class UsersService {
     return this.getMe(userId);
   }
 
-  async updateOnboarding(
-    id: string,
-    updateDto: UpdateOnboardingDto,
-    actorId: string,
-  ): Promise<User> {
-    const user = await this.userModel.findById(id).exec();
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
 
-    const currentStatus = user.status;
-    const nextStatus = updateDto.status;
-
-    // Validate 5-state state machine transitions
-    const allowedTransitions: Record<string, string[]> = {
-      Draft: ['Pending'],
-      Pending: ['UnderReview', 'Approved', 'Rejected', 'Changes Requested'],
-      UnderReview: ['Approved', 'Rejected', 'Changes Requested'],
-      Approved: ['UnderReview', 'Rejected'],
-      Rejected: ['UnderReview', 'Pending'],
-      'Changes Requested': ['Pending', 'UnderReview'],
-    };
-
-    if (
-      currentStatus !== nextStatus &&
-      !allowedTransitions[currentStatus]?.includes(nextStatus)
-    ) {
-      throw new BadRequestException(
-        `Invalid state transition: Cannot change status from ${currentStatus} to ${nextStatus}`,
-      );
-    }
-
-    // Document Validation before Approval
-    if (nextStatus === 'Approved') {
-      const userProfile = await this.userProfileModel
-        .findOne({ userId: user._id })
-        .exec();
-      if (!userProfile) {
-        throw new BadRequestException(
-          'Cannot approve user: User profile is missing.',
-        );
-      }
-
-      const taxFormCount = userProfile.taxFormUrl ? 1 : 0;
-      const identityDocCount = userProfile.identityDocs?.length || 0;
-
-      if (taxFormCount < 1 || identityDocCount < 2) {
-        throw new BadRequestException(
-          `Cannot approve user: Missing required onboarding documents (Requires at least 1 tax form and 2 identity documents). Current: Tax Forms: ${taxFormCount}, Identity Docs: ${identityDocCount}`,
-        );
-      }
-    }
-
-    const oldOnboardingStatus = user.onboardingStatus;
-    user.status = nextStatus;
-
-    // Transition Logic
-    if (nextStatus === 'Approved') {
-      user.isActive = true;
-      user.onboardingStatus = 'approved';
-      user.adminFeedback = '';
-
-      if (!updateDto.systemRoleId) {
-        throw new BadRequestException('systemRoleId is required for Approval');
-      }
-      user.systemRoleId = new Types.ObjectId(updateDto.systemRoleId);
-    } else if (nextStatus === 'Changes Requested') {
-      user.isActive = false;
-      user.onboardingStatus = 'changes-requested';
-      user.systemRoleId = null;
-      user.adminFeedback =
-        updateDto.adminFeedback ||
-        'Please review and update your onboarding details.';
-    } else {
-      user.isActive = false;
-      if (nextStatus === 'Pending' || nextStatus === 'UnderReview') {
-        user.onboardingStatus = 'pending-review';
-      } else if (nextStatus === 'Draft') {
-        user.onboardingStatus = 'in-progress';
-      }
-    }
-
-    await user.save();
-
-    // Create Audit Log
-    if (oldOnboardingStatus !== user.onboardingStatus) {
-      await this.auditLogsService.create(
-        actorId,
-        user._id.toString(),
-        'USER_ONBOARDING_STATUS_CHANGE',
-        {
-          oldStatus: oldOnboardingStatus,
-          newStatus: user.onboardingStatus,
-        },
-      );
-    }
-
-    return this.findOne(id);
-  }
 }
