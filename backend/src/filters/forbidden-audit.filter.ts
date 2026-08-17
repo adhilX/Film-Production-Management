@@ -1,4 +1,9 @@
-import { ExceptionFilter, Catch, ArgumentsHost, ForbiddenException } from '@nestjs/common';
+import {
+  ExceptionFilter,
+  Catch,
+  ArgumentsHost,
+  ForbiddenException,
+} from '@nestjs/common';
 import { Request, Response } from 'express';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 
@@ -12,7 +17,7 @@ export class ForbiddenAuditFilter implements ExceptionFilter {
     const request = ctx.getRequest<Request>();
     const status = exception.getStatus();
     const user = (request as any).user;
-    
+
     // Log the forbidden access attempt if the user is authenticated
     if (user && user._id) {
       try {

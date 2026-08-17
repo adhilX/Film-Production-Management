@@ -7,7 +7,10 @@ import { AuthModule } from '../auth/auth.module';
 import { AuditLogsModule } from '../audit-logs/audit-logs.module';
 
 import { User, UserSchema } from '../users/schemas/user.schema';
-import { UserProfile, UserProfileSchema } from '../users/schemas/user-profile.schema';
+import {
+  UserProfile,
+  UserProfileSchema,
+} from '../users/schemas/user-profile.schema';
 import { Role, RoleSchema } from '../auth/schemas/role.schema';
 
 @Module({

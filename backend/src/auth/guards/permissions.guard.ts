@@ -28,7 +28,7 @@ export class PermissionsGuard implements CanActivate {
 
     const request = context.switchToHttp().getRequest();
     const url = request.url || '';
-    
+
     // Onboarding Gate Bypass: Allow exceptions for onboarding and profile retrieval routes
     const isOnboardingRoute =
       url.includes('/users/onboarding') ||
@@ -58,7 +58,9 @@ export class PermissionsGuard implements CanActivate {
         `Target Permissions: [${required.join(', ')}], Timestamp: ${timestamp}, Onboarding Status: ${user.onboardingStatus}`,
         'Access Denied (Onboarding Gate Enforced)',
       );
-      throw new ForbiddenException('Access denied: Onboarding must be approved to access this resource.');
+      throw new ForbiddenException(
+        'Access denied: Onboarding must be approved to access this resource.',
+      );
     }
 
     // Admin has all permissions automatically

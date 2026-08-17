@@ -1,9 +1,23 @@
-import { Controller, Get, Patch, Post, Body, Param, UseGuards, Req } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Patch,
+  Post,
+  Body,
+  Param,
+  UseGuards,
+  Req,
+} from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { AdminGuard } from '../auth/guards/admin.guard';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { Permissions } from '../auth/decorators/permissions.decorator';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 
 @ApiTags('Admin')
 @ApiBearerAuth()
@@ -31,13 +45,21 @@ export class AdminController {
   @Patch('applications/:id/evaluate')
   @Permissions('users.approve')
   @ApiOperation({ summary: 'Approve or request changes for an application' })
-  @ApiResponse({ status: 200, description: 'Application evaluated successfully.' })
+  @ApiResponse({
+    status: 200,
+    description: 'Application evaluated successfully.',
+  })
   evaluateApplication(
     @Param('id') id: string,
     @Req() req: any,
-    @Body() payload: { status: string; roleId?: string; adminFeedback?: string },
+    @Body()
+    payload: { status: string; roleId?: string; adminFeedback?: string },
   ) {
-    return this.adminService.evaluateApplication(id, req.user._id.toString(), payload);
+    return this.adminService.evaluateApplication(
+      id,
+      req.user._id.toString(),
+      payload,
+    );
   }
 
   // --- Granular User Operations ---
@@ -68,14 +90,21 @@ export class AdminController {
   @Post('roles')
   @Permissions('roles.manage')
   @ApiOperation({ summary: 'Create a new system role' })
-  createRole(@Req() req: any, @Body() payload: { name: string; permissions: string[] }) {
+  createRole(
+    @Req() req: any,
+    @Body() payload: { name: string; permissions: string[] },
+  ) {
     return this.adminService.createRole(req.user._id.toString(), payload);
   }
 
   @Patch('roles/:id')
   @Permissions('roles.manage')
   @ApiOperation({ summary: 'Update a system role' })
-  updateRole(@Param('id') id: string, @Req() req: any, @Body() payload: { permissions: string[] }) {
+  updateRole(
+    @Param('id') id: string,
+    @Req() req: any,
+    @Body() payload: { permissions: string[] },
+  ) {
     return this.adminService.updateRole(req.user._id.toString(), id, payload);
   }
 
@@ -91,7 +120,10 @@ export class AdminController {
   @Post('permissions')
   @Permissions('roles.manage')
   @ApiOperation({ summary: 'Create a new global permission string' })
-  createPermission(@Req() req: any, @Body() payload: { name: string; description?: string; group?: string }) {
+  createPermission(
+    @Req() req: any,
+    @Body() payload: { name: string; description?: string; group?: string },
+  ) {
     return this.adminService.createPermission(req.user._id.toString(), payload);
   }
 }

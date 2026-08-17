@@ -6,7 +6,9 @@ import { JwtService } from './jwt.service';
 @Module({
   imports: [
     NestJwtModule.register({
-      secret: process.env.JWT_SECRET || 'super_secret_film_production_management_key_123!',
+      secret:
+        process.env.JWT_SECRET ||
+        'super_secret_film_production_management_key_123!',
       signOptions: { expiresIn: '1d' },
     }),
   ],

@@ -25,4 +25,5 @@ export class DocumentRecord {
   status: string;
 }
 
-export const DocumentRecordSchema = SchemaFactory.createForClass(DocumentRecord);
+export const DocumentRecordSchema =
+  SchemaFactory.createForClass(DocumentRecord);

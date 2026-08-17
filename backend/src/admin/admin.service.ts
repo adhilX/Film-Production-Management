@@ -1,10 +1,20 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { User, UserDocument } from '../users/schemas/user.schema';
-import { UserProfile, UserProfileDocument } from '../users/schemas/user-profile.schema';
+import {
+  UserProfile,
+  UserProfileDocument,
+} from '../users/schemas/user-profile.schema';
 import { Role, RoleDocument } from '../auth/schemas/role.schema';
-import { Permission, PermissionDocument } from '../auth/schemas/permission.schema';
+import {
+  Permission,
+  PermissionDocument,
+} from '../auth/schemas/permission.schema';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import * as bcrypt from 'bcryptjs';
 
@@ -12,9 +22,11 @@ import * as bcrypt from 'bcryptjs';
 export class AdminService {
   constructor(
     @InjectModel(User.name) private userModel: Model<UserDocument>,
-    @InjectModel(UserProfile.name) private userProfileModel: Model<UserProfileDocument>,
+    @InjectModel(UserProfile.name)
+    private userProfileModel: Model<UserProfileDocument>,
     @InjectModel(Role.name) private roleModel: Model<RoleDocument>,
-    @InjectModel(Permission.name) private permissionModel: Model<PermissionDocument>,
+    @InjectModel(Permission.name)
+    private permissionModel: Model<PermissionDocument>,
     private auditLogsService: AuditLogsService,
   ) {}
 
@@ -32,7 +44,7 @@ export class AdminService {
       .populate('profile')
       .select('-passwordHash')
       .exec();
-      
+
     if (!user) {
       throw new NotFoundException('User not found');
     }
@@ -78,13 +90,13 @@ export class AdminService {
       }
 
       user.systemRole = systemRole;
-      
+
       if (roleId) {
         user.roleId = new Types.ObjectId(roleId);
       } else {
         const dbRole = await this.roleModel.findOne({ name: roleName }).exec();
         if (dbRole) {
-          user.roleId = dbRole._id as Types.ObjectId;
+          user.roleId = dbRole._id;
         }
       }
     } else if (status === 'changes-requested') {
@@ -92,7 +104,8 @@ export class AdminService {
       user.onboardingStatus = 'changes-requested';
       user.status = 'Changes Requested';
       user.roleId = null;
-      user.adminFeedback = adminFeedback || 'Please review and update your onboarding details.';
+      user.adminFeedback =
+        adminFeedback || 'Please review and update your onboarding details.';
     } else {
       throw new BadRequestException('Invalid evaluation status');
     }
@@ -103,11 +116,13 @@ export class AdminService {
     await this.auditLogsService.create(
       adminId,
       user._id.toString(),
-      status === 'approved' ? 'USER_ONBOARDING_APPROVED' : 'USER_ONBOARDING_CHANGES_REQUESTED',
+      status === 'approved'
+        ? 'USER_ONBOARDING_APPROVED'
+        : 'USER_ONBOARDING_CHANGES_REQUESTED',
       {
         oldStatus,
         newStatus: user.onboardingStatus,
-      }
+      },
     );
 
     return user;
@@ -124,7 +139,7 @@ export class AdminService {
       onboardingStatus: payload.onboardingStatus || 'approved',
       isActive: payload.isActive !== undefined ? payload.isActive : true,
     });
-    
+
     if (payload.roleId) {
       user.roleId = new Types.ObjectId(payload.roleId);
     }
@@ -139,7 +154,7 @@ export class AdminService {
       adminId,
       user._id.toString(),
       'USER_CREATED',
-      { newStatus: 'Account Created Manually' }
+      { newStatus: 'Account Created Manually' },
     );
 
     return user;
@@ -152,15 +167,16 @@ export class AdminService {
     }
 
     const oldStatus = user.onboardingStatus;
-    
+
     if (payload.email) user.email = payload.email;
     if (payload.name) user.name = payload.name;
     if (payload.contractorType) user.contractorType = payload.contractorType;
     if (payload.systemRole) user.systemRole = payload.systemRole;
     if (payload.status) user.status = payload.status;
-    if (payload.onboardingStatus) user.onboardingStatus = payload.onboardingStatus;
+    if (payload.onboardingStatus)
+      user.onboardingStatus = payload.onboardingStatus;
     if (payload.isActive !== undefined) user.isActive = payload.isActive;
-    
+
     if (payload.roleId) {
       user.roleId = new Types.ObjectId(payload.roleId);
     } else if (payload.roleId === null) {
@@ -173,7 +189,7 @@ export class AdminService {
       adminId,
       user._id.toString(),
       'USER_UPDATED',
-      { oldStatus, newStatus: user.onboardingStatus }
+      { oldStatus, newStatus: user.onboardingStatus },
     );
 
     return user;
@@ -185,10 +201,13 @@ export class AdminService {
     return this.roleModel.find().populate('permissions').exec();
   }
 
-  async createRole(adminId: string, payload: { name: string; permissions: string[] }): Promise<Role> {
+  async createRole(
+    adminId: string,
+    payload: { name: string; permissions: string[] },
+  ): Promise<Role> {
     const role = new this.roleModel({
       name: payload.name,
-      permissions: payload.permissions.map(id => new Types.ObjectId(id)),
+      permissions: payload.permissions.map((id) => new Types.ObjectId(id)),
     });
     await role.save();
 
@@ -196,26 +215,30 @@ export class AdminService {
       adminId,
       role._id.toString(),
       'ROLE_CREATED',
-      { newStatus: `Created Role: ${role.name}` }
+      { newStatus: `Created Role: ${role.name}` },
     );
 
     return role.populate('permissions');
   }
 
-  async updateRole(adminId: string, roleId: string, payload: { permissions: string[] }): Promise<Role> {
+  async updateRole(
+    adminId: string,
+    roleId: string,
+    payload: { permissions: string[] },
+  ): Promise<Role> {
     const role = await this.roleModel.findById(roleId).exec();
     if (!role) {
       throw new NotFoundException('Role not found');
     }
 
-    role.permissions = payload.permissions.map(id => new Types.ObjectId(id));
+    role.permissions = payload.permissions.map((id) => new Types.ObjectId(id));
     await role.save();
 
     await this.auditLogsService.create(
       adminId,
       role._id.toString(),
       'ROLE_UPDATED',
-      { newStatus: `Updated permissions for Role: ${role.name}` }
+      { newStatus: `Updated permissions for Role: ${role.name}` },
     );
 
     return role.populate('permissions');
@@ -231,7 +254,9 @@ export class AdminService {
     adminId: string,
     payload: { name: string; description?: string; group?: string },
   ): Promise<Permission> {
-    const existing = await this.permissionModel.findOne({ name: payload.name.trim() }).exec();
+    const existing = await this.permissionModel
+      .findOne({ name: payload.name.trim() })
+      .exec();
     if (existing) {
       throw new BadRequestException('Permission already exists');
     }
@@ -247,7 +272,7 @@ export class AdminService {
       adminId,
       permission._id.toString(),
       'PERMISSION_CREATED',
-      { newStatus: `Created Global Permission: ${permission.name}` }
+      { newStatus: `Created Global Permission: ${permission.name}` },
     );
 
     return permission;

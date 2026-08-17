@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import { InjectModel, InjectConnection } from '@nestjs/mongoose';
 import { Model, Connection, Types } from 'mongoose';
 import { Location, LocationDocument } from './schemas/location.schema';
@@ -15,13 +19,16 @@ export class LocationsService {
   ) {}
 
   async create(createDto: CreateLocationDto): Promise<Location> {
-    const { productionId, name, address, startDate, endDate, status } = createDto;
+    const { productionId, name, address, startDate, endDate, status } =
+      createDto;
 
     const start = new Date(startDate);
     const end = new Date(endDate);
 
     if (start >= end) {
-      throw new UnprocessableEntityException('Start date must be before end date');
+      throw new UnprocessableEntityException(
+        'Start date must be before end date',
+      );
     }
 
     // Default status to 'Requested' if not provided
@@ -38,13 +45,13 @@ export class LocationsService {
 
     if (bookingStatus === 'Booked') {
       // Overlap check
-      const overlapping = await this.locationModel.findOne({
-        name,
-        status: 'Booked',
-        $or: [
-          { startDate: { $lt: end }, endDate: { $gt: start } },
-        ],
-      }).exec();
+      const overlapping = await this.locationModel
+        .findOne({
+          name,
+          status: 'Booked',
+          $or: [{ startDate: { $lt: end }, endDate: { $gt: start } }],
+        })
+        .exec();
 
       if (overlapping) {
         throw new UnprocessableEntityException(
@@ -58,7 +65,9 @@ export class LocationsService {
   }
 
   async findAll(productionId: string): Promise<Location[]> {
-    return this.locationModel.find({ productionId: new Types.ObjectId(productionId) }).exec();
+    return this.locationModel
+      .find({ productionId: new Types.ObjectId(productionId) })
+      .exec();
   }
 
   async findOne(id: string): Promise<Location> {
@@ -98,18 +107,23 @@ export class LocationsService {
     try {
       if (nextStatus === 'Booked') {
         // Atomic conflict check: find overlapping Booked schedules for the same location name
-        const overlapping = await this.locationModel.findOne(
-          {
-            name: location.name,
-            status: 'Booked',
-            _id: { $ne: location._id },
-            $or: [
-              { startDate: { $lt: location.endDate }, endDate: { $gt: location.startDate } },
-            ],
-          },
-          null,
-          session ? { session } : {},
-        ).exec();
+        const overlapping = await this.locationModel
+          .findOne(
+            {
+              name: location.name,
+              status: 'Booked',
+              _id: { $ne: location._id },
+              $or: [
+                {
+                  startDate: { $lt: location.endDate },
+                  endDate: { $gt: location.startDate },
+                },
+              ],
+            },
+            null,
+            session ? { session } : {},
+          )
+          .exec();
 
         if (overlapping) {
           throw new UnprocessableEntityException(

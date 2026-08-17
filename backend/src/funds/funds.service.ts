@@ -1,7 +1,14 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectModel, InjectConnection } from '@nestjs/mongoose';
 import { Model, Connection, Types } from 'mongoose';
-import { FundRequest, FundRequestDocument } from './schemas/fund-request.schema';
+import {
+  FundRequest,
+  FundRequestDocument,
+} from './schemas/fund-request.schema';
 import { CreateFundRequestDto } from './dto/create-fund-request.dto';
 import { UpdateFundStatusDto } from './dto/update-fund-status.dto';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
@@ -9,7 +16,8 @@ import { AuditLogsService } from '../audit-logs/audit-logs.service';
 @Injectable()
 export class FundsService {
   constructor(
-    @InjectModel(FundRequest.name) private fundRequestModel: Model<FundRequestDocument>,
+    @InjectModel(FundRequest.name)
+    private fundRequestModel: Model<FundRequestDocument>,
     @InjectConnection() private readonly connection: Connection,
     private readonly auditLogsService: AuditLogsService,
   ) {}
@@ -37,7 +45,7 @@ export class FundsService {
       'Pending',
       undefined,
       'FUNDS',
-      { amount: fund.amount, justification: fund.justification }
+      { amount: fund.amount, justification: fund.justification },
     );
 
     return fund;
@@ -75,7 +83,9 @@ export class FundsService {
     }
 
     if (nextStatus === 'Rejected' && !rejectionReason) {
-      throw new BadRequestException('Rejection reason is required when rejecting a fund request');
+      throw new BadRequestException(
+        'Rejection reason is required when rejecting a fund request',
+      );
     }
 
     // Try Mongoose Transaction
@@ -93,12 +103,17 @@ export class FundsService {
       if (nextStatus === 'Approved') {
         fund.approvedBy = new Types.ObjectId(userId);
       }
-      
-      const action = nextStatus === 'Approved' ? 'FUND_APPROVED' : nextStatus === 'Rejected' ? 'FUND_REJECTED' : 'FUND_STATUS_CHANGE';
+
+      const action =
+        nextStatus === 'Approved'
+          ? 'FUND_APPROVED'
+          : nextStatus === 'Rejected'
+            ? 'FUND_REJECTED'
+            : 'FUND_STATUS_CHANGE';
       const metadata = {
         requestId: fund._id.toString(),
         amount: fund.amount,
-        ...(rejectionReason && { rejectionReason })
+        ...(rejectionReason && { rejectionReason }),
       };
 
       if (session) {

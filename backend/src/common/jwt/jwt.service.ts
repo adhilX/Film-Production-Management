@@ -10,9 +10,13 @@ export class JwtService implements IJwtService {
 
   async generateAccessToken(payload: JwtPayload): Promise<string> {
     const accessTokenSecret =
-      process.env.JWT_SECRET || 'super_secret_film_production_management_key_123!';
+      process.env.JWT_SECRET ||
+      'super_secret_film_production_management_key_123!';
     const expiresIn = process.env.JWT_EXPIRES_IN || '15m';
-    const options: JwtSignOptions = { secret: accessTokenSecret, expiresIn: expiresIn as unknown as JwtSignOptions['expiresIn'] };
+    const options: JwtSignOptions = {
+      secret: accessTokenSecret,
+      expiresIn: expiresIn as unknown as JwtSignOptions['expiresIn'],
+    };
     return this._nestJwtService.signAsync({ ...payload }, options);
   }
 
@@ -20,11 +24,16 @@ export class JwtService implements IJwtService {
     const refreshTokenSecret =
       process.env.JWT_REFRESH_SECRET || 'super_secret_refresh_key_456!';
     const expiresIn = process.env.JWT_REFRESH_EXPIRES_IN || '7d';
-    const options: JwtSignOptions = { secret: refreshTokenSecret, expiresIn: expiresIn as unknown as JwtSignOptions['expiresIn'] };
+    const options: JwtSignOptions = {
+      secret: refreshTokenSecret,
+      expiresIn: expiresIn as unknown as JwtSignOptions['expiresIn'],
+    };
     return this._nestJwtService.signAsync({ ...payload }, options);
   }
 
-  async generateTokens(payload: JwtPayload): Promise<{ access_token: string; refresh_token: string }> {
+  async generateTokens(
+    payload: JwtPayload,
+  ): Promise<{ access_token: string; refresh_token: string }> {
     const [access_token, refresh_token] = await Promise.all([
       this.generateAccessToken(payload),
       this.generateRefreshToken(payload),
@@ -34,9 +43,12 @@ export class JwtService implements IJwtService {
 
   async verifyAccessToken(token: string): Promise<JwtPayload> {
     const accessTokenSecret =
-      process.env.JWT_SECRET || 'super_secret_film_production_management_key_123!';
+      process.env.JWT_SECRET ||
+      'super_secret_film_production_management_key_123!';
     try {
-      return await this._nestJwtService.verifyAsync<JwtPayload>(token, { secret: accessTokenSecret });
+      return await this._nestJwtService.verifyAsync<JwtPayload>(token, {
+        secret: accessTokenSecret,
+      });
     } catch (err) {
       throw new UnauthorizedException(AUTH_MESSAGES.TOKEN_EXPIRED);
     }
@@ -46,7 +58,9 @@ export class JwtService implements IJwtService {
     const refreshTokenSecret =
       process.env.JWT_REFRESH_SECRET || 'super_secret_refresh_key_456!';
     try {
-      return await this._nestJwtService.verifyAsync<JwtPayload>(token, { secret: refreshTokenSecret });
+      return await this._nestJwtService.verifyAsync<JwtPayload>(token, {
+        secret: refreshTokenSecret,
+      });
     } catch (err) {
       throw new UnauthorizedException(AUTH_MESSAGES.TOKEN_EXPIRED);
     }

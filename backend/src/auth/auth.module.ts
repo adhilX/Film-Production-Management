@@ -6,7 +6,10 @@ import { AuthGuard } from './guards/auth.guard';
 import { PermissionsGuard } from './guards/permissions.guard';
 import { User, UserSchema } from '../users/schemas/user.schema';
 import { Role, RoleSchema } from './schemas/role.schema';
-import { CastCrew, CastCrewSchema } from '../productions/schemas/cast-crew.schema';
+import {
+  CastCrew,
+  CastCrewSchema,
+} from '../productions/schemas/cast-crew.schema';
 import { Permission, PermissionSchema } from './schemas/permission.schema';
 
 @Global()

@@ -1,4 +1,13 @@
-import { IsOptional, IsString, IsNumber, IsBoolean, IsArray, ValidateNested, Min, Max } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  IsNumber,
+  IsBoolean,
+  IsArray,
+  ValidateNested,
+  Min,
+  Max,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -60,7 +69,11 @@ export class ProfileDataDto {
   @IsString()
   contractorType?: string;
 
-  @ApiProperty({ type: BankDetailsDto, required: false, description: 'Bank Account Information' })
+  @ApiProperty({
+    type: BankDetailsDto,
+    required: false,
+    description: 'Bank Account Information',
+  })
   @IsOptional()
   @ValidateNested()
   @Type(() => BankDetailsDto)
@@ -76,7 +89,11 @@ export class ProfileDataDto {
   @IsString()
   governmentIdType?: string;
 
-  @ApiProperty({ type: [String], required: false, description: 'Uploaded Identity Document URLs' })
+  @ApiProperty({
+    type: [String],
+    required: false,
+    description: 'Uploaded Identity Document URLs',
+  })
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
@@ -99,14 +116,23 @@ export class ProfileDataDto {
 }
 
 export class UpdateOnboardingProgressDto {
-  @ApiProperty({ minimum: 1, maximum: 6, required: false, description: 'Current active onboarding step number' })
+  @ApiProperty({
+    minimum: 1,
+    maximum: 6,
+    required: false,
+    description: 'Current active onboarding step number',
+  })
   @IsOptional()
   @IsNumber()
   @Min(1)
   @Max(6)
   currentStep?: number;
 
-  @ApiProperty({ type: ProfileDataDto, required: false, description: 'Onboarding profile values' })
+  @ApiProperty({
+    type: ProfileDataDto,
+    required: false,
+    description: 'Onboarding profile values',
+  })
   @IsOptional()
   @ValidateNested()
   @Type(() => ProfileDataDto)

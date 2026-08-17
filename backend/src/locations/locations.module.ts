@@ -6,7 +6,9 @@ import { Location, LocationSchema } from './schemas/location.schema';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: Location.name, schema: LocationSchema }]),
+    MongooseModule.forFeature([
+      { name: Location.name, schema: LocationSchema },
+    ]),
   ],
   controllers: [LocationsController],
   providers: [LocationsService],

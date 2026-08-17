@@ -1,5 +1,20 @@
-import { Controller, Post, Body, HttpCode, HttpStatus, UseGuards, Req, Res, UnauthorizedException } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  Controller,
+  Post,
+  Body,
+  HttpCode,
+  HttpStatus,
+  UseGuards,
+  Req,
+  Res,
+  UnauthorizedException,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { SignupDto } from './dto/signup.dto';
@@ -10,7 +25,7 @@ import { AuthGuard } from './guards/auth.guard';
 @ApiTags('Authentication')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) { }
+  constructor(private readonly authService: AuthService) {}
 
   private setRefreshTokenCookie(res: Response, token: string) {
     res.cookie('refresh_token', token, {
@@ -24,17 +39,32 @@ export class AuthController {
 
   @Post('signup')
   @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: 'Register a new contractor application (Draft status)' })
-  @ApiResponse({ status: 201, description: 'User successfully registered in Draft state.' })
+  @ApiOperation({
+    summary: 'Register a new contractor application (Draft status)',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'User successfully registered in Draft state.',
+  })
   signup(@Body() signupDto: SignupDto) {
     return this.authService.signup(signupDto);
   }
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Authenticate user credentials and set HttpOnly refresh_token cookie' })
-  @ApiResponse({ status: 200, description: 'Authentication successful with access_token and user profile.' })
-  @ApiResponse({ status: 401, description: 'Invalid credentials or inactive account.' })
+  @ApiOperation({
+    summary:
+      'Authenticate user credentials and set HttpOnly refresh_token cookie',
+  })
+  @ApiResponse({
+    status: 200,
+    description:
+      'Authentication successful with access_token and user profile.',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Invalid credentials or inactive account.',
+  })
   async login(
     @Body() loginDto: LoginDto,
     @Res({ passthrough: true }) res: Response,
@@ -47,9 +77,17 @@ export class AuthController {
 
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Rotate refresh token via HttpOnly cookie or request body' })
-  @ApiResponse({ status: 200, description: 'New access_token generated and HttpOnly cookie updated.' })
-  @ApiResponse({ status: 401, description: 'Invalid or expired refresh token.' })
+  @ApiOperation({
+    summary: 'Rotate refresh token via HttpOnly cookie or request body',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'New access_token generated and HttpOnly cookie updated.',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Invalid or expired refresh token.',
+  })
   async refreshToken(
     @Req() req: Request,
     @Body() dto: RefreshTokenDto,
@@ -68,11 +106,11 @@ export class AuthController {
   @UseGuards(AuthGuard)
   @ApiBearerAuth('JWT-auth')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Log out user and clear HttpOnly refresh_token cookie' })
+  @ApiOperation({
+    summary: 'Log out user and clear HttpOnly refresh_token cookie',
+  })
   @ApiResponse({ status: 200, description: 'Successfully logged out.' })
-  async logout(
-    @Res({ passthrough: true }) res: Response,
-  ) {
+  async logout(@Res({ passthrough: true }) res: Response) {
     res.clearCookie('refresh_token', { path: '/api/auth' });
     return { message: 'Logged out successfully' };
   }

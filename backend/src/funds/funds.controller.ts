@@ -1,5 +1,19 @@
-import { Controller, Get, Post, Patch, Body, Param, UseGuards, Req } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Body,
+  Param,
+  UseGuards,
+  Req,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+} from '@nestjs/swagger';
 import { FundsService } from './funds.service';
 import { CreateFundRequestDto } from './dto/create-fund-request.dto';
 import { UpdateFundStatusDto } from './dto/update-fund-status.dto';
@@ -13,12 +27,15 @@ import { CheckProduction } from '../auth/decorators/check-production.decorator';
 @UseGuards(AuthGuard)
 @CheckProduction()
 export class FundsController {
-  constructor(private readonly fundsService: FundsService) { }
+  constructor(private readonly fundsService: FundsService) {}
 
   @Post()
   @Permissions('funds.request')
   @ApiOperation({ summary: 'Submit a budget / fund request for a production' })
-  @ApiResponse({ status: 201, description: 'Fund request submitted successfully.' })
+  @ApiResponse({
+    status: 201,
+    description: 'Fund request submitted successfully.',
+  })
   create(
     @Param('productionId') productionId: string,
     @Body() createDto: CreateFundRequestDto,
@@ -37,7 +54,9 @@ export class FundsController {
 
   @Patch(':id/status')
   @Permissions('funds.approve')
-  @ApiOperation({ summary: 'Approve or reject a fund request (recorded in audit logs)' })
+  @ApiOperation({
+    summary: 'Approve or reject a fund request (recorded in audit logs)',
+  })
   @ApiResponse({ status: 200, description: 'Fund status updated.' })
   updateStatus(
     @Param('id') id: string,

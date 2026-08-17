@@ -1,14 +1,26 @@
-import { CanActivate, ExecutionContext, Injectable, UnauthorizedException, ForbiddenException,} from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  Injectable,
+  UnauthorizedException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { User, UserDocument } from '../../users/schemas/user.schema';
 import { Role, RoleDocument } from '../schemas/role.schema';
-import { CastCrew, CastCrewDocument } from '../../productions/schemas/cast-crew.schema';
+import {
+  CastCrew,
+  CastCrewDocument,
+} from '../../productions/schemas/cast-crew.schema';
 import { PERMISSIONS_KEY } from '../decorators/permissions.decorator';
 import { CHECK_PRODUCTION_KEY } from '../decorators/check-production.decorator';
 import { JwtService } from '../../common/jwt/jwt.service';
-import { GENERAL_MESSAGES, USER_MESSAGES } from '../../common/constants/messages.constant';
+import {
+  GENERAL_MESSAGES,
+  USER_MESSAGES,
+} from '../../common/constants/messages.constant';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -17,7 +29,8 @@ export class AuthGuard implements CanActivate {
     private readonly _jwtService: JwtService,
     @InjectModel(User.name) private readonly _userModel: Model<UserDocument>,
     @InjectModel(Role.name) private readonly _roleModel: Model<RoleDocument>,
-    @InjectModel(CastCrew.name) private readonly _castCrewModel: Model<CastCrewDocument>,
+    @InjectModel(CastCrew.name)
+    private readonly _castCrewModel: Model<CastCrewDocument>,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -31,14 +44,15 @@ export class AuthGuard implements CanActivate {
     const token = authHeader.split(' ')[1];
     const payload = await this._jwtService.verifyAccessToken(token);
 
-    const user = await this._userModel.findById(payload.userId)
+    const user = await this._userModel
+      .findById(payload.userId)
       .populate({
         path: 'roleId',
-        populate: { path: 'permissions' }
+        populate: { path: 'permissions' },
       })
       .populate({
         path: 'role',
-        populate: { path: 'permissions' }
+        populate: { path: 'permissions' },
       })
       .exec();
     if (!user) {
@@ -46,12 +60,23 @@ export class AuthGuard implements CanActivate {
     }
 
     // Allow inactive users to retrieve their own user profile or check their onboarding status
-    const isSelfProfileRequest = request.url.includes(`/users/${user._id.toString()}`);
+    const isSelfProfileRequest = request.url.includes(
+      `/users/${user._id.toString()}`,
+    );
     const isStatusRequest = request.url.endsWith('/users/me/status');
-    const isOnboardingRequest = request.url.endsWith('/users/me') || request.url.includes('/users/onboarding') || request.url.includes('/users/upload');
+    const isOnboardingRequest =
+      request.url.endsWith('/users/me') ||
+      request.url.includes('/users/onboarding') ||
+      request.url.includes('/users/upload');
     const isLogoutRequest = request.url.includes('/auth/logout');
 
-    if (!user.isActive && !isSelfProfileRequest && !isStatusRequest && !isOnboardingRequest && !isLogoutRequest) {
+    if (
+      !user.isActive &&
+      !isSelfProfileRequest &&
+      !isStatusRequest &&
+      !isOnboardingRequest &&
+      !isLogoutRequest
+    ) {
       console.log(`[AuthGuard] Inactive account: ${user._id}`);
       throw new ForbiddenException(USER_MESSAGES.INACTIVE_ACCOUNT);
     }
@@ -65,13 +90,20 @@ export class AuthGuard implements CanActivate {
 
     if (requiredPermissions && requiredPermissions.length > 0) {
       if (user.systemRole !== 'Admin') {
-        const userRole = await this._roleModel.findById(user.roleId).populate('permissions').exec();
-        const userPermissions = (userRole?.permissions as any[] || []).map((p) => p.name);
+        const userRole = await this._roleModel
+          .findById(user.roleId)
+          .populate('permissions')
+          .exec();
+        const userPermissions = ((userRole?.permissions as any[]) || []).map(
+          (p) => p.name,
+        );
         const hasAllPermissions = requiredPermissions.every((perm) =>
           userPermissions.includes(perm),
         );
         if (!hasAllPermissions) {
-          console.log(`[AuthGuard] Missing permissions for ${user._id}. Required: ${requiredPermissions}, Has: ${userPermissions}`);
+          console.log(
+            `[AuthGuard] Missing permissions for ${user._id}. Required: ${requiredPermissions}, Has: ${userPermissions}`,
+          );
           throw new ForbiddenException(GENERAL_MESSAGES.FORBIDDEN);
         }
       }
@@ -89,13 +121,21 @@ export class AuthGuard implements CanActivate {
           request.body.productionId ||
           request.query.productionId;
 
-        if (!productionId && request.params.id && request.url.includes('/productions/')) {
+        if (
+          !productionId &&
+          request.params.id &&
+          request.url.includes('/productions/')
+        ) {
           productionId = request.params.id;
         }
 
         if (!productionId) {
-          console.log(`[AuthGuard] No productionId provided for ${request.url}`);
-          throw new ForbiddenException('Production ID is required for resource scope check');
+          console.log(
+            `[AuthGuard] No productionId provided for ${request.url}`,
+          );
+          throw new ForbiddenException(
+            'Production ID is required for resource scope check',
+          );
         }
 
         let prodObjId;
@@ -105,13 +145,17 @@ export class AuthGuard implements CanActivate {
           throw new ForbiddenException('Invalid Production ID format');
         }
 
-        const isAssigned = await this._castCrewModel.findOne({
-          userId: user._id,
-          productionId: prodObjId,
-        }).exec();
+        const isAssigned = await this._castCrewModel
+          .findOne({
+            userId: user._id,
+            productionId: prodObjId,
+          })
+          .exec();
 
         if (!isAssigned) {
-          throw new ForbiddenException('Access denied: You are not assigned to this production');
+          throw new ForbiddenException(
+            'Access denied: You are not assigned to this production',
+          );
         }
       }
     }

@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Production, ProductionDocument } from './schemas/production.schema';
@@ -12,13 +16,19 @@ import { CreateCharacterDto } from './dto/create-character.dto';
 @Injectable()
 export class ProductionsService {
   constructor(
-    @InjectModel(Production.name) private productionModel: Model<ProductionDocument>,
+    @InjectModel(Production.name)
+    private productionModel: Model<ProductionDocument>,
     @InjectModel(CastCrew.name) private castCrewModel: Model<CastCrewDocument>,
-    @InjectModel(Character.name) private characterModel: Model<CharacterDocument>,
+    @InjectModel(Character.name)
+    private characterModel: Model<CharacterDocument>,
     @InjectModel(User.name) private userModel: Model<UserDocument>,
   ) {}
 
-  async create(createDto: CreateProductionDto, creatorId: string, systemRole: string): Promise<Production> {
+  async create(
+    createDto: CreateProductionDto,
+    creatorId: string,
+    systemRole: string,
+  ): Promise<Production> {
     const prod = new this.productionModel(createDto);
     await prod.save();
 
@@ -26,7 +36,8 @@ export class ProductionsService {
     const castCrew = new this.castCrewModel({
       userId: new Types.ObjectId(creatorId),
       productionId: prod._id,
-      roleInProduction: systemRole === 'Admin' ? 'Super Admin' : 'Production Manager',
+      roleInProduction:
+        systemRole === 'Admin' ? 'Super Admin' : 'Production Manager',
     });
     await castCrew.save();
 
@@ -39,7 +50,9 @@ export class ProductionsService {
     }
 
     // Filter productions by user assignments
-    const mappings = await this.castCrewModel.find({ userId: new Types.ObjectId(userId) }).exec();
+    const mappings = await this.castCrewModel
+      .find({ userId: new Types.ObjectId(userId) })
+      .exec();
     const productionIds = mappings.map((m) => m.productionId);
     return this.productionModel.find({ _id: { $in: productionIds } }).exec();
   }
@@ -52,7 +65,10 @@ export class ProductionsService {
     return prod;
   }
 
-  async assignCastCrew(productionId: string, assignDto: AssignCastCrewDto): Promise<CastCrew> {
+  async assignCastCrew(
+    productionId: string,
+    assignDto: AssignCastCrewDto,
+  ): Promise<CastCrew> {
     const { userId, roleInProduction, characterId } = assignDto;
 
     // Verify user exists and is active
@@ -76,10 +92,10 @@ export class ProductionsService {
       if (!char) {
         throw new NotFoundException('Character not found');
       }
-      charObjId = char._id as Types.ObjectId;
+      charObjId = char._id;
 
       // Update Character Assignments
-      if (!char.assignments.some(id => id.toString() === userId)) {
+      if (!char.assignments.some((id) => id.toString() === userId)) {
         char.assignments.push(new Types.ObjectId(userId));
         await char.save();
       }
@@ -104,7 +120,10 @@ export class ProductionsService {
       .exec();
   }
 
-  async createCharacter(productionId: string, createDto: CreateCharacterDto): Promise<Character> {
+  async createCharacter(
+    productionId: string,
+    createDto: CreateCharacterDto,
+  ): Promise<Character> {
     const prod = await this.productionModel.findById(productionId).exec();
     if (!prod) {
       throw new NotFoundException('Production not found');
@@ -121,6 +140,9 @@ export class ProductionsService {
   }
 
   async getCharacters(productionId: string): Promise<Character[]> {
-    return this.characterModel.find({ productionId: new Types.ObjectId(productionId) }).populate('assignments', '-passwordHash').exec();
+    return this.characterModel
+      .find({ productionId: new Types.ObjectId(productionId) })
+      .populate('assignments', '-passwordHash')
+      .exec();
   }
 }

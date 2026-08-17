@@ -1,5 +1,18 @@
-import { Controller, Get, Post, Body, Param, UseGuards, Req } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  UseGuards,
+  Req,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+} from '@nestjs/swagger';
 import { ProductionsService } from './productions.service';
 import { CreateProductionDto } from './dto/create-production.dto';
 import { AssignCastCrewDto } from './dto/assign-cast-crew.dto';
@@ -13,18 +26,24 @@ import { CheckProduction } from '../auth/decorators/check-production.decorator';
 @Controller('productions')
 @UseGuards(AuthGuard)
 export class ProductionsController {
-  constructor(private readonly productionsService: ProductionsService) { }
+  constructor(private readonly productionsService: ProductionsService) {}
 
   @Post()
   @Permissions('productions.create')
   @ApiOperation({ summary: 'Create a new film production project' })
   @ApiResponse({ status: 201, description: 'Production created successfully.' })
   create(@Body() createDto: CreateProductionDto, @Req() req: any) {
-    return this.productionsService.create(createDto, req.user._id, req.user.systemRole);
+    return this.productionsService.create(
+      createDto,
+      req.user._id,
+      req.user.systemRole,
+    );
   }
 
   @Get()
-  @ApiOperation({ summary: 'List film productions accessible by the authenticated user' })
+  @ApiOperation({
+    summary: 'List film productions accessible by the authenticated user',
+  })
   @ApiResponse({ status: 200, description: 'Array of accessible productions.' })
   findAll(@Req() req: any) {
     return this.productionsService.findAll(req.user._id, req.user.systemRole);
@@ -41,15 +60,22 @@ export class ProductionsController {
   @Post(':productionId/cast-crew')
   @CheckProduction()
   @Permissions('productions.create')
-  @ApiOperation({ summary: 'Assign a user / contractor to a production cast-crew role' })
+  @ApiOperation({
+    summary: 'Assign a user / contractor to a production cast-crew role',
+  })
   @ApiResponse({ status: 201, description: 'Cast/Crew assignment saved.' })
-  assignCastCrew(@Param('productionId') productionId: string, @Body() assignDto: AssignCastCrewDto) {
+  assignCastCrew(
+    @Param('productionId') productionId: string,
+    @Body() assignDto: AssignCastCrewDto,
+  ) {
     return this.productionsService.assignCastCrew(productionId, assignDto);
   }
 
   @Get(':productionId/cast-crew')
   @CheckProduction()
-  @ApiOperation({ summary: 'List assigned cast & crew members for a production' })
+  @ApiOperation({
+    summary: 'List assigned cast & crew members for a production',
+  })
   @ApiResponse({ status: 200, description: 'Array of cast/crew mappings.' })
   getCastCrew(@Param('productionId') productionId: string) {
     return this.productionsService.getCastCrew(productionId);
@@ -60,7 +86,10 @@ export class ProductionsController {
   @Permissions('productions.create')
   @ApiOperation({ summary: 'Create a script character entry for a production' })
   @ApiResponse({ status: 201, description: 'Script character created.' })
-  createCharacter(@Param('productionId') productionId: string, @Body() createDto: CreateCharacterDto) {
+  createCharacter(
+    @Param('productionId') productionId: string,
+    @Body() createDto: CreateCharacterDto,
+  ) {
     return this.productionsService.createCharacter(productionId, createDto);
   }
 

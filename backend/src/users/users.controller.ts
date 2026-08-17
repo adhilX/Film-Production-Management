@@ -1,5 +1,23 @@
-import { Controller, Get, Post, Patch, Body, Param, UseGuards, Req, UseInterceptors, UploadedFile, BadRequestException, Query } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Body,
+  Param,
+  UseGuards,
+  Req,
+  UseInterceptors,
+  UploadedFile,
+  BadRequestException,
+  Query,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+} from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { UsersService } from './users.service';
@@ -35,14 +53,20 @@ export class UsersController {
 
   @Get('me')
   @ApiOperation({ summary: 'Get current user detail profile' })
-  @ApiResponse({ status: 200, description: 'User profile with onboarding details.' })
+  @ApiResponse({
+    status: 200,
+    description: 'User profile with onboarding details.',
+  })
   getMe(@Req() req: any) {
     return this.usersService.getMe(req.user._id.toString());
   }
 
   @Get('me/status')
   @ApiOperation({ summary: 'Get current user onboarding/system status' })
-  @ApiResponse({ status: 200, description: 'Onboarding and system status of current user.' })
+  @ApiResponse({
+    status: 200,
+    description: 'Onboarding and system status of current user.',
+  })
   getMeStatus(@Req() req: any) {
     const user = req.user;
     return {
@@ -56,7 +80,10 @@ export class UsersController {
 
   @Patch('onboarding')
   @ApiOperation({ summary: 'Update progress step and onboarding profile data' })
-  @ApiResponse({ status: 200, description: 'Updated onboarding progress record.' })
+  @ApiResponse({
+    status: 200,
+    description: 'Updated onboarding progress record.',
+  })
   updateOnboardingProgress(
     @Req() req: any,
     @Body() dto: UpdateOnboardingProgressDto,
@@ -69,18 +96,26 @@ export class UsersController {
   }
 
   @Post('upload')
-  @UseInterceptors(FileInterceptor('file', {
-    storage: memoryStorage(),
-  }))
-  async uploadFile(@UploadedFile() file: any, @Req() req: any, @Body('documentType') documentType: string) {
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: memoryStorage(),
+    }),
+  )
+  async uploadFile(
+    @UploadedFile() file: any,
+    @Req() req: any,
+    @Body('documentType') documentType: string,
+  ) {
     if (!file) {
       throw new BadRequestException('No file uploaded');
     }
-    
+
     // Upload the file stream to Cloudinary
-    const cloudinaryResponse = await this.cloudinaryService.uploadFile(file, 'cine-factory/documents').catch(() => {
-      throw new BadRequestException('Invalid file type or upload failed.');
-    });
+    const cloudinaryResponse = await this.cloudinaryService
+      .uploadFile(file, 'cine-factory/documents')
+      .catch(() => {
+        throw new BadRequestException('Invalid file type or upload failed.');
+      });
 
     return {
       fileUrl: cloudinaryResponse.secure_url,
@@ -96,9 +131,20 @@ export class UsersController {
 
   @Patch(':id/onboard')
   @Permissions('users.approve')
-  @ApiOperation({ summary: 'Evaluate and transition contractor onboarding status and assign systemRole' })
+  @ApiOperation({
+    summary:
+      'Evaluate and transition contractor onboarding status and assign systemRole',
+  })
   @ApiResponse({ status: 200, description: 'Updated user onboarding record.' })
-  updateOnboarding(@Param('id') id: string, @Body() updateDto: UpdateOnboardingDto, @Req() req: any) {
-    return this.usersService.updateOnboarding(id, updateDto, req.user._id.toString());
+  updateOnboarding(
+    @Param('id') id: string,
+    @Body() updateDto: UpdateOnboardingDto,
+    @Req() req: any,
+  ) {
+    return this.usersService.updateOnboarding(
+      id,
+      updateDto,
+      req.user._id.toString(),
+    );
   }
 }

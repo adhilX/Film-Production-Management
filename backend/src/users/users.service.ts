@@ -1,10 +1,20 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { User, UserDocument } from './schemas/user.schema';
 import { Role, RoleDocument } from '../auth/schemas/role.schema';
-import { UserProfile, UserProfileDocument } from './schemas/user-profile.schema';
-import { DocumentRecord, DocumentRecordDocument } from './schemas/document-record.schema';
+import {
+  UserProfile,
+  UserProfileDocument,
+} from './schemas/user-profile.schema';
+import {
+  DocumentRecord,
+  DocumentRecordDocument,
+} from './schemas/document-record.schema';
 import { UpdateOnboardingDto } from './dto/update-onboarding.dto';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 
@@ -13,14 +23,26 @@ export class UsersService {
   constructor(
     @InjectModel(User.name) private userModel: Model<UserDocument>,
     @InjectModel(Role.name) private roleModel: Model<RoleDocument>,
-    @InjectModel(UserProfile.name) private userProfileModel: Model<UserProfileDocument>,
-    @InjectModel(DocumentRecord.name) private documentRecordModel: Model<DocumentRecordDocument>,
+    @InjectModel(UserProfile.name)
+    private userProfileModel: Model<UserProfileDocument>,
+    @InjectModel(DocumentRecord.name)
+    private documentRecordModel: Model<DocumentRecordDocument>,
     private auditLogsService: AuditLogsService,
   ) {}
 
-  async findAll(page = 1, limit = 10, search = ''): Promise<{ users: User[]; total: number; page: number; pages: number; limit: number }> {
+  async findAll(
+    page = 1,
+    limit = 10,
+    search = '',
+  ): Promise<{
+    users: User[];
+    total: number;
+    page: number;
+    pages: number;
+    limit: number;
+  }> {
     const query: any = { systemRole: { $ne: 'Admin' } };
-    
+
     if (search) {
       const escapedSearch = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       query.$or = [
@@ -37,7 +59,7 @@ export class UsersService {
       .find(query)
       .populate({
         path: 'roleId',
-        populate: { path: 'permissions' }
+        populate: { path: 'permissions' },
       })
       .select('-passwordHash')
       .skip(skip)
@@ -54,10 +76,14 @@ export class UsersService {
   }
 
   async findOne(id: string): Promise<User> {
-    const user = await this.userModel.findById(id).populate({
-      path: 'roleId',
-      populate: { path: 'permissions' }
-    }).select('-passwordHash').exec();
+    const user = await this.userModel
+      .findById(id)
+      .populate({
+        path: 'roleId',
+        populate: { path: 'permissions' },
+      })
+      .select('-passwordHash')
+      .exec();
     if (!user) {
       throw new NotFoundException('User not found');
     }
@@ -70,7 +96,7 @@ export class UsersService {
       .populate('profile')
       .populate({
         path: 'roleId',
-        populate: { path: 'permissions' }
+        populate: { path: 'permissions' },
       })
       .select('-passwordHash')
       .exec();
@@ -80,7 +106,11 @@ export class UsersService {
     return user;
   }
 
-  async createDocumentRecord(data: { ownerId: string; documentType: string; fileUrl: string }): Promise<any> {
+  async createDocumentRecord(data: {
+    ownerId: string;
+    documentType: string;
+    fileUrl: string;
+  }): Promise<any> {
     const record = new this.documentRecordModel({
       ownerId: new Types.ObjectId(data.ownerId),
       documentType: data.documentType,
@@ -108,16 +138,23 @@ export class UsersService {
         user.status = 'Pending';
         user.adminFeedback = ''; // Clear out the admin feedback upon resubmission
         if (oldStatus !== 'pending-review') {
-          await this.auditLogsService.create(userId, userId, 'USER_ONBOARDING_STATUS_CHANGE', {
-            oldStatus,
-            newStatus: 'pending-review',
-          });
+          await this.auditLogsService.create(
+            userId,
+            userId,
+            'USER_ONBOARDING_STATUS_CHANGE',
+            {
+              oldStatus,
+              newStatus: 'pending-review',
+            },
+          );
         }
       }
     }
 
     if (profileData) {
-      let profile = await this.userProfileModel.findOne({ userId: user._id }).exec();
+      let profile = await this.userProfileModel
+        .findOne({ userId: user._id })
+        .exec();
       if (!profile) {
         profile = new this.userProfileModel({ userId: user._id });
       }
@@ -189,7 +226,11 @@ export class UsersService {
     return this.getMe(userId);
   }
 
-  async updateOnboarding(id: string, updateDto: UpdateOnboardingDto, actorId: string): Promise<User> {
+  async updateOnboarding(
+    id: string,
+    updateDto: UpdateOnboardingDto,
+    actorId: string,
+  ): Promise<User> {
     const user = await this.userModel.findById(id).exec();
     if (!user) {
       throw new NotFoundException('User not found');
@@ -208,7 +249,10 @@ export class UsersService {
       'Changes Requested': ['Pending', 'UnderReview'],
     };
 
-    if (currentStatus !== nextStatus && !allowedTransitions[currentStatus]?.includes(nextStatus)) {
+    if (
+      currentStatus !== nextStatus &&
+      !allowedTransitions[currentStatus]?.includes(nextStatus)
+    ) {
       throw new BadRequestException(
         `Invalid state transition: Cannot change status from ${currentStatus} to ${nextStatus}`,
       );
@@ -216,11 +260,15 @@ export class UsersService {
 
     // Document Validation before Approval
     if (nextStatus === 'Approved') {
-      const userProfile = await this.userProfileModel.findOne({ userId: user._id }).exec();
+      const userProfile = await this.userProfileModel
+        .findOne({ userId: user._id })
+        .exec();
       if (!userProfile) {
-        throw new BadRequestException('Cannot approve user: User profile is missing.');
+        throw new BadRequestException(
+          'Cannot approve user: User profile is missing.',
+        );
       }
-      
+
       const taxFormCount = userProfile.taxFormUrl ? 1 : 0;
       const identityDocCount = userProfile.identityDocs?.length || 0;
 
@@ -262,13 +310,15 @@ export class UsersService {
       user.systemRole = systemRole;
       const dbRole = await this.roleModel.findOne({ name: roleName }).exec();
       if (dbRole) {
-        user.roleId = dbRole._id as Types.ObjectId;
+        user.roleId = dbRole._id;
       }
     } else if (nextStatus === 'Changes Requested') {
       user.isActive = false;
       user.onboardingStatus = 'changes-requested';
       user.roleId = null;
-      user.adminFeedback = updateDto.adminFeedback || 'Please review and update your onboarding details.';
+      user.adminFeedback =
+        updateDto.adminFeedback ||
+        'Please review and update your onboarding details.';
     } else {
       user.isActive = false;
       if (nextStatus === 'Pending' || nextStatus === 'UnderReview') {
@@ -282,10 +332,15 @@ export class UsersService {
 
     // Create Audit Log
     if (oldOnboardingStatus !== user.onboardingStatus) {
-      await this.auditLogsService.create(actorId, user._id.toString(), 'USER_ONBOARDING_STATUS_CHANGE', {
-        oldStatus: oldOnboardingStatus,
-        newStatus: user.onboardingStatus,
-      });
+      await this.auditLogsService.create(
+        actorId,
+        user._id.toString(),
+        'USER_ONBOARDING_STATUS_CHANGE',
+        {
+          oldStatus: oldOnboardingStatus,
+          newStatus: user.onboardingStatus,
+        },
+      );
     }
 
     return this.findOne(id);

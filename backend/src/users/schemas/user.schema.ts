@@ -20,7 +20,17 @@ export class User {
 
   @Prop({
     required: true,
-    enum: ['Freelancer', 'Cast', 'Crew', 'Supplier', 'Agent', 'Cast-Crew Agent', 'TCS Team', 'Production Company', 'None'],
+    enum: [
+      'Freelancer',
+      'Cast',
+      'Crew',
+      'Supplier',
+      'Agent',
+      'Cast-Crew Agent',
+      'TCS Team',
+      'Production Company',
+      'None',
+    ],
     default: 'None',
   })
   contractorType: string;
@@ -34,7 +44,14 @@ export class User {
 
   @Prop({
     required: true,
-    enum: ['Draft', 'Pending', 'UnderReview', 'Approved', 'Rejected', 'Changes Requested'],
+    enum: [
+      'Draft',
+      'Pending',
+      'UnderReview',
+      'Approved',
+      'Rejected',
+      'Changes Requested',
+    ],
     default: 'Draft',
   })
   status: string;
@@ -81,8 +98,8 @@ UserSchema.virtual('role', {
 
 UserSchema.virtual('permissions').get(function (this: UserDocument) {
   const role = this.role || this.roleId;
-  if (role && (role as any).permissions) {
-    return ((role as any).permissions as any[] || [])
+  if (role && role.permissions) {
+    return ((role.permissions as any[]) || [])
       .map((p: any) => p.name || p.toString())
       .filter(Boolean);
   }

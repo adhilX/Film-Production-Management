@@ -48,20 +48,24 @@ async function bootstrap() {
   // OpenAPI Swagger Configuration
   const swaggerConfig = new DocumentBuilder()
     .setTitle('Film Production Management API')
-    .setDescription('Core Backend Infrastructure, Authorization, Location Bookings, and Fund Management')
+    .setDescription(
+      'Core Backend Infrastructure, Authorization, Location Bookings, and Fund Management',
+    )
     .setVersion('1.0')
     .addBearerAuth(
       { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
       'JWT-auth',
     )
     .build();
-  
+
   const document = SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup('api/docs', app, document);
 
   const port = process.env.PORT || 3001;
   await app.listen(port);
   console.log(`Backend server successfully running on port ${port}`);
-  console.log(`Swagger Documentation available at http://localhost:${port}/api/docs`);
+  console.log(
+    `Swagger Documentation available at http://localhost:${port}/api/docs`,
+  );
 }
 bootstrap();

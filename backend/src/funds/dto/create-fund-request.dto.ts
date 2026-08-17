@@ -1,4 +1,10 @@
-import { IsNotEmpty, IsNumber, IsString, Min, MaxLength } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsNumber,
+  IsString,
+  Min,
+  MaxLength,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateFundRequestDto {
@@ -8,7 +14,10 @@ export class CreateFundRequestDto {
   @IsNotEmpty()
   amount: number;
 
-  @ApiProperty({ example: 'Camera lenses rental and transport logistics', description: 'Operational justification' })
+  @ApiProperty({
+    example: 'Camera lenses rental and transport logistics',
+    description: 'Operational justification',
+  })
   @IsString()
   @IsNotEmpty()
   @MaxLength(500)

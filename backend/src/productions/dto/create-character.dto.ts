@@ -7,7 +7,11 @@ export class CreateCharacterDto {
   @IsNotEmpty()
   name: string;
 
-  @ApiProperty({ example: 'Lead protagonist, Na’vi clan leader', required: false, description: 'Character description / backstory' })
+  @ApiProperty({
+    example: 'Lead protagonist, Na’vi clan leader',
+    required: false,
+    description: 'Character description / backstory',
+  })
   @IsString()
   @IsOptional()
   description?: string;
