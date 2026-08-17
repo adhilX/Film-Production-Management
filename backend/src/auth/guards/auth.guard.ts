@@ -46,8 +46,9 @@ export class AuthGuard implements CanActivate {
     const isSelfProfileRequest = request.url.includes(`/users/${user._id.toString()}`);
     const isStatusRequest = request.url.endsWith('/users/me/status');
     const isOnboardingRequest = request.url.endsWith('/users/me') || request.url.includes('/users/onboarding') || request.url.includes('/users/upload');
+    const isLogoutRequest = request.url.includes('/auth/logout');
 
-    if (!user.isActive && !isSelfProfileRequest && !isStatusRequest && !isOnboardingRequest) {
+    if (!user.isActive && !isSelfProfileRequest && !isStatusRequest && !isOnboardingRequest && !isLogoutRequest) {
       throw new ForbiddenException(USER_MESSAGES.INACTIVE_ACCOUNT);
     }
 

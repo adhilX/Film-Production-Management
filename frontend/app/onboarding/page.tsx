@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { authService } from '@/services/authService';
+import { useAuthStore } from '@/store/useAuthStore';
 import { 
   Sparkles, 
   User, 
@@ -13,7 +14,8 @@ import {
   ArrowRight, 
   ArrowLeft,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  LogOut
 } from 'lucide-react';
 
 import Stepper from './components/Stepper';
@@ -277,9 +279,22 @@ export default function OnboardingPage() {
             <h1 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-amber-400 via-amber-200 to-slate-200 bg-clip-text text-transparent">
               Contractor Registration & Onboarding
             </h1>
-            <span className="text-xs font-semibold px-3 py-1 bg-amber-950/80 border border-amber-800/80 text-amber-300 rounded-full">
-              Step {step} of 6
-            </span>
+            <div className="flex items-center gap-3">
+              <button 
+                onClick={() => {
+                  useAuthStore.getState().logout();
+                  router.push('/login');
+                }}
+                className="p-1.5 bg-slate-800/50 hover:bg-slate-800 border border-slate-700/50 rounded-full text-slate-400 hover:text-red-400 transition"
+                title="Log Out"
+                type="button"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+              <span className="text-xs font-semibold px-3 py-1 bg-amber-950/80 border border-amber-800/80 text-amber-300 rounded-full">
+                Step {step} of 6
+              </span>
+            </div>
           </div>
           <p className="text-slate-400 text-xs mb-6 font-mono">
             CINE-FACTORY LOGISTICS: Complete all six steps to submit your contractor application for approval.

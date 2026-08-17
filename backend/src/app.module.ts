@@ -8,6 +8,8 @@ import { FundsModule } from './funds/funds.module';
 import { AuditLogsModule } from './audit-logs/audit-logs.module';
 import { JwtModule } from './common/jwt/jwt.module';
 
+import { AdminModule } from './admin/admin.module';
+
 @Module({
   imports: [
     MongooseModule.forRoot(
@@ -16,6 +18,7 @@ import { JwtModule } from './common/jwt/jwt.module';
     JwtModule,
     AuthModule,
     UsersModule,
+    AdminModule,
     ProductionsModule,
     LocationsModule,
     FundsModule,
