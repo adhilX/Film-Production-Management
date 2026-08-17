@@ -4,6 +4,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { UsersService } from './users.service';
 import { UpdateOnboardingDto } from './dto/update-onboarding.dto';
+import { UpdateOnboardingProgressDto } from './dto/update-onboarding-progress.dto';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { Permissions } from '../auth/decorators/permissions.decorator';
 import { CloudinaryService } from '../common/cloudinary/cloudinary.service';
@@ -33,7 +34,7 @@ export class UsersController {
   }
 
   @Get('me')
-  @ApiOperation({ summary: 'Get current logged-in user profile details' })
+  @ApiOperation({ summary: 'Get current user detail profile' })
   @ApiResponse({ status: 200, description: 'User profile with onboarding details.' })
   getMe(@Req() req: any) {
     return this.usersService.getMe(req.user._id.toString());
@@ -56,11 +57,14 @@ export class UsersController {
   @Patch('onboarding')
   @ApiOperation({ summary: 'Update progress step and onboarding profile data' })
   @ApiResponse({ status: 200, description: 'Updated onboarding progress record.' })
-  updateOnboardingProgress(@Req() req: any, @Body() body: { currentStep?: number; profileData?: any }) {
+  updateOnboardingProgress(
+    @Req() req: any,
+    @Body() dto: UpdateOnboardingProgressDto,
+  ) {
     return this.usersService.updateOnboardingProgress(
       req.user._id.toString(),
-      body.currentStep,
-      body.profileData,
+      dto.currentStep,
+      dto.profileData,
     );
   }
 
