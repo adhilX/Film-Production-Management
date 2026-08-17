@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { axiosClient as api } from '@/lib/axios';
+import { adminService } from '@/services/adminService';
 import { Activity, Clock, Search, Shield, User, FileText } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -13,9 +13,9 @@ export default function AdminAuditLogsPage() {
   const fetchLogs = async () => {
     try {
       setLoading(true);
-      const res = await api.get('/audit-logs');
+      const data = await adminService.getAuditLogs();
       // Sort logs by timestamp descending if not already sorted by backend
-      const sortedLogs = res.data.sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      const sortedLogs = data.sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
       setLogs(sortedLogs);
     } catch (error) {
       console.error('Failed to fetch audit logs:', error);

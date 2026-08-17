@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { LayoutDashboard, Users, Clock, AlertTriangle } from 'lucide-react';
-import { axiosClient as api } from '@/lib/axios';
+import { adminService } from '@/services/adminService';
 import Link from 'next/link';
 
 export default function AdminDashboard() {
@@ -16,12 +16,11 @@ export default function AdminDashboard() {
   useEffect(() => {
     const fetchMetrics = async () => {
       try {
-        const [pendingRes, usersRes] = await Promise.all([
-          api.get('/admin/applications'),
-          api.get('/users'), // Reusing the global user list
+        const [pendingApps, usersList] = await Promise.all([
+          adminService.getApplications(),
+          adminService.getUsers(),
         ]);
 
-        const pendingApps = pendingRes.data;
         const now = new Date().getTime();
         const staleApps = pendingApps.filter((app: any) => {
           const updatedAt = new Date(app.updatedAt).getTime();
@@ -31,7 +30,7 @@ export default function AdminDashboard() {
         setMetrics({
           pending: pendingApps.length,
           stalePending: staleApps.length,
-          totalUsers: usersRes.data.length,
+          totalUsers: usersList.length,
         });
       } catch (error) {
         console.error('Failed to load admin metrics', error);

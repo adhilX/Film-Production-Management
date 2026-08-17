@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { axiosClient as api } from '@/lib/axios';
+import { adminService } from '@/services/adminService';
 import { User, CheckCircle2, XCircle, Search, Edit, UserPlus } from 'lucide-react';
 import UserEditModal from '@/app/components/admin/UserEditModal';
 
@@ -18,8 +18,8 @@ export default function AdminUsersPage() {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const res = await api.get('/users');
-      setUsers(res.data);
+      const data = await adminService.getUsers();
+      setUsers(data);
     } catch (error) {
       console.error('Failed to fetch users:', error);
     } finally {

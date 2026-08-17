@@ -6,6 +6,7 @@ import { AuthGuard } from './guards/auth.guard';
 import { User, UserSchema } from '../users/schemas/user.schema';
 import { Role, RoleSchema } from './schemas/role.schema';
 import { CastCrew, CastCrewSchema } from '../productions/schemas/cast-crew.schema';
+import { Permission, PermissionSchema } from './schemas/permission.schema';
 
 @Global()
 @Module({
@@ -14,6 +15,7 @@ import { CastCrew, CastCrewSchema } from '../productions/schemas/cast-crew.schem
       { name: User.name, schema: UserSchema },
       { name: Role.name, schema: RoleSchema },
       { name: CastCrew.name, schema: CastCrewSchema },
+      { name: Permission.name, schema: PermissionSchema },
     ]),
   ],
   controllers: [AuthController],

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { X, Save, AlertTriangle } from 'lucide-react';
-import { axiosClient as api } from '@/lib/axios';
+import { adminService } from '@/services/adminService';
 
 interface UserEditModalProps {
   isOpen: boolean;
@@ -53,8 +53,8 @@ export default function UserEditModal({ isOpen, onClose, user, onSave }: UserEdi
 
   const fetchRoles = async () => {
     try {
-      const res = await api.get('/admin/roles');
-      setRoles(res.data);
+      const data = await adminService.getRoles();
+      setRoles(data);
     } catch (err) {
       console.error('Failed to fetch roles:', err);
     }
@@ -88,9 +88,9 @@ export default function UserEditModal({ isOpen, onClose, user, onSave }: UserEdi
 
     try {
       if (user) {
-        await api.patch(`/admin/users/${user._id}`, formData);
+        await adminService.updateUser(user._id, formData);
       } else {
-        await api.post('/admin/users', formData);
+        await adminService.createUser(formData);
       }
       onSave();
       onClose();

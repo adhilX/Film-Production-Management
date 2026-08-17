@@ -61,8 +61,8 @@ export class AuthGuard implements CanActivate {
 
     if (requiredPermissions && requiredPermissions.length > 0) {
       if (user.systemRole !== 'Admin') {
-        const userRole = await this._roleModel.findById(user.roleId).exec();
-        const userPermissions = userRole?.permissions || [];
+        const userRole = await this._roleModel.findById(user.roleId).populate('permissions').exec();
+        const userPermissions = (userRole?.permissions as any[] || []).map((p) => p.name);
         const hasAllPermissions = requiredPermissions.every((perm) =>
           userPermissions.includes(perm),
         );

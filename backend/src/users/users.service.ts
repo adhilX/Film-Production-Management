@@ -19,11 +19,17 @@ export class UsersService {
   ) {}
 
   async findAll(): Promise<User[]> {
-    return this.userModel.find().populate('roleId').select('-passwordHash').exec();
+    return this.userModel.find().populate({
+      path: 'roleId',
+      populate: { path: 'permissions' }
+    }).select('-passwordHash').exec();
   }
 
   async findOne(id: string): Promise<User> {
-    const user = await this.userModel.findById(id).populate('roleId').select('-passwordHash').exec();
+    const user = await this.userModel.findById(id).populate({
+      path: 'roleId',
+      populate: { path: 'permissions' }
+    }).select('-passwordHash').exec();
     if (!user) {
       throw new NotFoundException('User not found');
     }
@@ -34,7 +40,10 @@ export class UsersService {
     const user = await this.userModel
       .findById(userId)
       .populate('profile')
-      .populate('roleId')
+      .populate({
+        path: 'roleId',
+        populate: { path: 'permissions' }
+      })
       .select('-passwordHash')
       .exec();
     if (!user) {

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { axiosClient as api } from '@/lib/axios';
+import { adminService } from '@/services/adminService';
 import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
 import { FileText, ArrowRight, Clock } from 'lucide-react';
@@ -14,19 +14,19 @@ export default function ApprovalsQueue() {
   useEffect(() => {
     const fetchApps = async () => {
       try {
-        const res = await api.get('/admin/applications');
-        let data = res.data;
+        const data = await adminService.getApplications();
+        let filteredData = data;
 
         // Check URL params for stale filter
         const params = new URLSearchParams(window.location.search);
         if (params.get('filter') === 'stale' || filterStale) {
           const now = new Date().getTime();
-          data = data.filter((app: any) => {
+          filteredData = filteredData.filter((app: any) => {
             const updatedAt = new Date(app.updatedAt).getTime();
             return (now - updatedAt) > (3 * 24 * 60 * 60 * 1000);
           });
         }
-        setApplications(data);
+        setApplications(filteredData);
       } catch (err) {
         console.error('Failed to load applications', err);
       } finally {

@@ -4,6 +4,7 @@ import { Model, Types } from 'mongoose';
 import { User, UserDocument } from '../users/schemas/user.schema';
 import { UserProfile, UserProfileDocument } from '../users/schemas/user-profile.schema';
 import { Role, RoleDocument } from '../auth/schemas/role.schema';
+import { Permission, PermissionDocument } from '../auth/schemas/permission.schema';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import * as bcrypt from 'bcryptjs';
 
@@ -13,6 +14,7 @@ export class AdminService {
     @InjectModel(User.name) private userModel: Model<UserDocument>,
     @InjectModel(UserProfile.name) private userProfileModel: Model<UserProfileDocument>,
     @InjectModel(Role.name) private roleModel: Model<RoleDocument>,
+    @InjectModel(Permission.name) private permissionModel: Model<PermissionDocument>,
     private auditLogsService: AuditLogsService,
   ) {}
 
@@ -180,13 +182,13 @@ export class AdminService {
   // --- System Settings (RBAC Management) ---
 
   async getRoles(): Promise<Role[]> {
-    return this.roleModel.find().exec();
+    return this.roleModel.find().populate('permissions').exec();
   }
 
   async createRole(adminId: string, payload: { name: string; permissions: string[] }): Promise<Role> {
     const role = new this.roleModel({
       name: payload.name,
-      permissions: payload.permissions,
+      permissions: payload.permissions.map(id => new Types.ObjectId(id)),
     });
     await role.save();
 
@@ -197,7 +199,7 @@ export class AdminService {
       { newStatus: `Created Role: ${role.name}` }
     );
 
-    return role;
+    return role.populate('permissions');
   }
 
   async updateRole(adminId: string, roleId: string, payload: { permissions: string[] }): Promise<Role> {
@@ -206,7 +208,7 @@ export class AdminService {
       throw new NotFoundException('Role not found');
     }
 
-    role.permissions = payload.permissions;
+    role.permissions = payload.permissions.map(id => new Types.ObjectId(id));
     await role.save();
 
     await this.auditLogsService.create(
@@ -216,6 +218,38 @@ export class AdminService {
       { newStatus: `Updated permissions for Role: ${role.name}` }
     );
 
-    return role;
+    return role.populate('permissions');
+  }
+
+  // --- Global Permissions Management ---
+
+  async getPermissions(): Promise<Permission[]> {
+    return this.permissionModel.find().exec();
+  }
+
+  async createPermission(
+    adminId: string,
+    payload: { name: string; description?: string; group?: string },
+  ): Promise<Permission> {
+    const existing = await this.permissionModel.findOne({ name: payload.name.trim() }).exec();
+    if (existing) {
+      throw new BadRequestException('Permission already exists');
+    }
+
+    const permission = new this.permissionModel({
+      name: payload.name.trim(),
+      description: payload.description,
+      group: payload.group || 'Custom Perms',
+    });
+    await permission.save();
+
+    await this.auditLogsService.create(
+      adminId,
+      permission._id.toString(),
+      'PERMISSION_CREATED',
+      { newStatus: `Created Global Permission: ${permission.name}` }
+    );
+
+    return permission;
   }
 }

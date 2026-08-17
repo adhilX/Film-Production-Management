@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { axiosClient as api } from '@/lib/axios';
+import { adminService } from '@/services/adminService';
 import { CheckCircle2, XCircle, ArrowLeft, Building2, UserCircle, Briefcase, FileText, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 
@@ -22,12 +22,12 @@ export default function ApprovalDetails() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [appRes, rolesRes] = await Promise.all([
-          api.get(`/admin/applications/${id}`),
-          api.get('/admin/roles')
+        const [appData, rolesData] = await Promise.all([
+          adminService.getApplication(id as string),
+          adminService.getRoles()
         ]);
-        setUser(appRes.data);
-        setRoles(rolesRes.data || []);
+        setUser(appData);
+        setRoles(rolesData || []);
       } catch (err) {
         console.error('Failed to load application details', err);
       } finally {
@@ -40,7 +40,7 @@ export default function ApprovalDetails() {
   const handleDecision = async (status: 'approved' | 'changes-requested') => {
     setSubmitting(true);
     try {
-      await api.patch(`/admin/applications/${id}/evaluate`, {
+      await adminService.evaluateApplication(id as string, {
         status,
         roleId: roleOverride || undefined,
         adminFeedback: status === 'changes-requested' ? feedback : undefined,

@@ -96,6 +96,20 @@ axiosClient.interceptors.response.use(
       }
     }
 
+    // Sync permissions on 403 Forbidden to update cached UI permissions
+    if (error.response?.status === 403) {
+      const user = useAuthStore.getState().user;
+      if (user) {
+        axiosClient.get(`/users/${user.id || (user as any)._id}`)
+          .then((res) => {
+            useAuthStore.getState().setAuth(res.data, useAuthStore.getState().accessToken || '');
+          })
+          .catch((e) => {
+            console.error('Failed to sync permissions on 403', e);
+          });
+      }
+    }
+
     return Promise.reject(error);
   },
 );

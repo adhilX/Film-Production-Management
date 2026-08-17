@@ -78,4 +78,20 @@ export class AdminController {
   updateRole(@Param('id') id: string, @Req() req: any, @Body() payload: { permissions: string[] }) {
     return this.adminService.updateRole(req.user._id.toString(), id, payload);
   }
+
+  // --- Global Permissions Management ---
+
+  @Get('permissions')
+  @Permissions('roles.view')
+  @ApiOperation({ summary: 'Get all system permissions' })
+  getPermissions() {
+    return this.adminService.getPermissions();
+  }
+
+  @Post('permissions')
+  @Permissions('roles.manage')
+  @ApiOperation({ summary: 'Create a new global permission string' })
+  createPermission(@Req() req: any, @Body() payload: { name: string; description?: string; group?: string }) {
+    return this.adminService.createPermission(req.user._id.toString(), payload);
+  }
 }

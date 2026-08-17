@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { X, Save, AlertTriangle, ShieldAlert } from 'lucide-react';
-import { axiosClient as api } from '@/lib/axios';
+import { adminService } from '@/services/adminService';
 
 interface RoleEditModalProps {
   isOpen: boolean;
@@ -9,44 +9,10 @@ interface RoleEditModalProps {
   onSave: () => void;
 }
 
-const PERMISSION_GROUPS = [
-  {
-    name: 'User & Auth Perms',
-    permissions: [
-      { id: 'users.view', label: 'View Users' },
-      { id: 'users.create', label: 'Create Users' },
-      { id: 'users.update', label: 'Update Users' },
-      { id: 'users.approve', label: 'Approve Onboarding' },
-      { id: 'roles.view', label: 'View Roles' },
-      { id: 'roles.manage', label: 'Manage Roles & RBAC' },
-      { id: 'audit_logs.view', label: 'View Audit Logs' },
-    ]
-  },
-  {
-    name: 'Production Perms',
-    permissions: [
-      { id: 'productions.view', label: 'View Productions' },
-      { id: 'productions.create', label: 'Create Productions' },
-      { id: 'productions.update', label: 'Edit Productions' },
-      { id: 'locations.view', label: 'View Locations' },
-      { id: 'locations.create', label: 'Book Locations' },
-      { id: 'inventory.view', label: 'View Inventory' },
-      { id: 'inventory.manage', label: 'Manage Inventory' },
-    ]
-  },
-  {
-    name: 'Financial Perms',
-    permissions: [
-      { id: 'funds.view', label: 'View Fund Requests' },
-      { id: 'funds.create', label: 'Submit Fund Requests' },
-      { id: 'funds.approve', label: 'Approve Fund Requests' },
-    ]
-  }
-];
-
 export default function RoleEditModal({ isOpen, onClose, role, onSave }: RoleEditModalProps) {
   const [name, setName] = useState('');
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
+  const [permissionGroups, setPermissionGroups] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -54,13 +20,48 @@ export default function RoleEditModal({ isOpen, onClose, role, onSave }: RoleEdi
     if (isOpen) {
       if (role) {
         setName(role.name || '');
-        setSelectedPermissions(role.permissions || []);
+        const initialPerms = (role.permissions || []).map((p: any) => typeof p === 'object' ? (p._id || p.id) : p);
+        setSelectedPermissions(initialPerms);
       } else {
         setName('');
         setSelectedPermissions([]);
       }
     }
   }, [isOpen, role]);
+
+  useEffect(() => {
+    if (isOpen) {
+      const fetchPermissions = async () => {
+        try {
+          const data = await adminService.getPermissions();
+          const grouped: Record<string, any[]> = {};
+          
+          data.forEach((perm: any) => {
+            const groupName = perm.group || 'Custom Perms';
+            if (!grouped[groupName]) {
+              grouped[groupName] = [];
+            }
+            grouped[groupName].push({
+              id: perm._id || perm.id,
+              label: perm.description || perm.name,
+            });
+          });
+
+          const groupsArray = Object.keys(grouped).map(name => ({
+            name,
+            permissions: grouped[name]
+          }));
+
+          setPermissionGroups(groupsArray);
+        } catch (err) {
+          console.error('Failed to load permissions:', err);
+          setError('Failed to load permissions list from the backend.');
+        }
+      };
+
+      fetchPermissions();
+    }
+  }, [isOpen]);
 
   const togglePermission = (permId: string) => {
     setSelectedPermissions(prev => 
@@ -77,14 +78,14 @@ export default function RoleEditModal({ isOpen, onClose, role, onSave }: RoleEdi
 
     try {
       if (role) {
-        await api.patch(`/admin/roles/${role._id}`, { permissions: selectedPermissions });
+        await adminService.updateRole(role._id, { permissions: selectedPermissions });
       } else {
-        await api.post('/admin/roles', { name, permissions: selectedPermissions });
+        await adminService.createRole({ name, permissions: selectedPermissions });
       }
       onSave();
       onClose();
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to save role.');
+      setError(err.response?.data?.error || err.response?.data?.message || 'Failed to save role.');
     } finally {
       setLoading(false);
     }
@@ -139,13 +140,13 @@ export default function RoleEditModal({ isOpen, onClose, role, onSave }: RoleEdi
             <div>
               <h3 className="text-sm font-semibold text-slate-200 mb-4">Permission Matrix</h3>
               <div className="space-y-6">
-                {PERMISSION_GROUPS.map((group) => (
+                {permissionGroups.map((group) => (
                   <div key={group.name} className="bg-slate-950/50 rounded-xl border border-slate-800 overflow-hidden">
                     <div className="bg-slate-800/50 px-4 py-2 border-b border-slate-800">
                       <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider">{group.name}</h4>
                     </div>
                     <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {group.permissions.map(perm => (
+                      {group.permissions.map((perm: any) => (
                         <label key={perm.id} className="flex items-center gap-3 cursor-pointer group/label">
                           <div className="relative flex items-center">
                             <input 

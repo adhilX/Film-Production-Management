@@ -70,3 +70,10 @@ UserSchema.virtual('profile', {
   foreignField: 'userId',
   justOne: true,
 });
+
+UserSchema.virtual('permissions').get(function (this: UserDocument) {
+  if (this.roleId && (this.roleId as any).permissions) {
+    return (this.roleId as any).permissions.map((p: any) => p.name || p.toString());
+  }
+  return [];
+});

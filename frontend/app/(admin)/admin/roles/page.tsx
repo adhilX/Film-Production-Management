@@ -1,13 +1,19 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { axiosClient as api } from '@/lib/axios';
-import { Shield, Plus, Edit2, ShieldCheck, ShieldAlert } from 'lucide-react';
+import { adminService } from '@/services/adminService';
+import { Shield, Plus } from 'lucide-react';
 import RoleEditModal from '@/app/components/admin/RoleEditModal';
+import PermissionMatrix from '@/app/components/admin/PermissionMatrix';
+import SystemRolesTab from '@/app/components/admin/SystemRolesTab';
+import PermissionsTab from '@/app/components/admin/PermissionsTab';
 
 export default function AdminRolesPage() {
   const [roles, setRoles] = useState<any[]>([]);
+  const [permissions, setPermissions] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState<'matrix' | 'roles' | 'permissions'>('matrix');
   const [loading, setLoading] = useState(true);
+  const [permLoading, setPermLoading] = useState(false);
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -16,8 +22,8 @@ export default function AdminRolesPage() {
   const fetchRoles = async () => {
     try {
       setLoading(true);
-      const res = await api.get('/admin/roles');
-      setRoles(res.data);
+      const data = await adminService.getRoles();
+      setRoles(data);
     } catch (error) {
       console.error('Failed to fetch roles:', error);
     } finally {
@@ -25,8 +31,21 @@ export default function AdminRolesPage() {
     }
   };
 
+  const fetchPermissions = async () => {
+    try {
+      setPermLoading(true);
+      const data = await adminService.getPermissions();
+      setPermissions(data);
+    } catch (error) {
+      console.error('Failed to fetch permissions:', error);
+    } finally {
+      setPermLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchRoles();
+    fetchPermissions();
   }, []);
 
   const handleEdit = (role: any) => {
@@ -40,7 +59,8 @@ export default function AdminRolesPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8">
+    <div className="max-w-none w-full space-y-8">
+      {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-amber-400 to-amber-200 bg-clip-text text-transparent flex items-center gap-3">
@@ -48,81 +68,86 @@ export default function AdminRolesPage() {
             System Settings (RBAC)
           </h1>
           <p className="text-slate-400 mt-2 text-sm">
-            Manage Roles and configure the granular Permission Matrix across all domains.
+            Configure roles, granular permissions, and control access levels across the system.
           </p>
         </div>
-        
-        <button 
-          onClick={handleCreate}
-          className="flex items-center gap-2 px-5 py-2.5 bg-amber-600 hover:bg-amber-500 text-slate-950 font-bold rounded-xl shadow-lg shadow-amber-900/20 transition"
-        >
-          <Plus className="w-5 h-5" />
-          Create Role
-        </button>
-      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {loading ? (
-          [1, 2, 3].map(i => (
-            <div key={i} className="bg-slate-900/40 border border-slate-800 rounded-2xl p-6 h-64 animate-pulse flex flex-col items-center justify-center gap-4">
-               <div className="w-12 h-12 border-2 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
-            </div>
-          ))
-        ) : (
-          roles.map((role) => {
-            const isAdmin = role.name === 'Admin';
-            const isManager = role.name.includes('Manager');
-            
-            return (
-              <div key={role._id} className="bg-slate-900/40 border border-slate-800/80 rounded-2xl overflow-hidden hover:border-amber-500/30 transition group flex flex-col">
-                <div className={`p-6 border-b border-slate-800 ${isAdmin ? 'bg-red-950/10' : isManager ? 'bg-blue-950/10' : ''}`}>
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${isAdmin ? 'bg-red-500/20 text-red-400' : isManager ? 'bg-blue-500/20 text-blue-400' : 'bg-slate-800 text-slate-400'}`}>
-                        {isAdmin ? <ShieldAlert className="w-6 h-6" /> : <ShieldCheck className="w-6 h-6" />}
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-bold text-slate-100">{role.name}</h3>
-                        <p className="text-xs text-slate-500 font-mono">{role.permissions?.length || 0} Permissions</p>
-                      </div>
-                    </div>
-                    
-                    <button 
-                      onClick={() => handleEdit(role)}
-                      className="p-2 text-slate-500 hover:text-amber-400 hover:bg-amber-400/10 rounded-xl transition"
-                      title="Edit Permission Matrix"
-                    >
-                      <Edit2 className="w-5 h-5" />
-                    </button>
-                  </div>
-                </div>
-                
-                <div className="p-6 bg-slate-950/20 flex-1">
-                  <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Granted Permissions</h4>
-                  {role.permissions && role.permissions.length > 0 ? (
-                    <div className="flex flex-wrap gap-2">
-                      {role.permissions.slice(0, 8).map((perm: string) => (
-                        <span key={perm} className="px-2 py-1 bg-slate-800 text-slate-300 rounded text-[10px] font-mono border border-slate-700">
-                          {perm}
-                        </span>
-                      ))}
-                      {role.permissions.length > 8 && (
-                        <span className="px-2 py-1 bg-amber-950/30 text-amber-500 rounded text-[10px] font-mono border border-amber-900/50">
-                          +{role.permissions.length - 8} more
-                        </span>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="text-sm text-slate-500 italic">No explicit permissions granted.</div>
-                  )}
-                </div>
-              </div>
-            );
-          })
+        {activeTab === 'roles' && (
+          <button
+            onClick={handleCreate}
+            className="flex items-center gap-2 px-5 py-2.5 bg-amber-600 hover:bg-amber-500 text-slate-950 font-bold rounded-xl shadow-lg shadow-amber-900/20 transition"
+          >
+            <Plus className="w-5 h-5" />
+            Create Role
+          </button>
         )}
       </div>
 
-      <RoleEditModal 
+      {/* Tabs Selector */}
+      <div className="flex border-b border-slate-800 gap-4">
+        <button
+          onClick={() => setActiveTab('matrix')}
+          className={`pb-4 px-2 font-semibold text-sm border-b-2 transition ${
+            activeTab === 'matrix'
+              ? 'border-amber-500 text-amber-400 font-bold'
+              : 'border-transparent text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          Permission Matrix (Grid View)
+        </button>
+        <button
+          onClick={() => setActiveTab('roles')}
+          className={`pb-4 px-2 font-semibold text-sm border-b-2 transition ${
+            activeTab === 'roles'
+              ? 'border-amber-500 text-amber-400 font-bold'
+              : 'border-transparent text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          System Roles ({roles.length})
+        </button>
+        <button
+          onClick={() => setActiveTab('permissions')}
+          className={`pb-4 px-2 font-semibold text-sm border-b-2 transition ${
+            activeTab === 'permissions'
+              ? 'border-amber-500 text-amber-400 font-bold'
+              : 'border-transparent text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          Permissions List ({permissions.length})
+        </button>
+      </div>
+
+      {/* TAB 1: PERMISSION MATRIX */}
+      {activeTab === 'matrix' && (
+        <PermissionMatrix
+          roles={roles}
+          permissions={permissions}
+          onRefreshRoles={fetchRoles}
+          loading={loading || permLoading}
+        />
+      )}
+
+      {/* TAB 2: SYSTEM ROLES */}
+      {activeTab === 'roles' && (
+        <SystemRolesTab
+          roles={roles}
+          loading={loading}
+          onEditRole={handleEdit}
+        />
+      )}
+
+      {/* TAB 3: PERMISSIONS LIST */}
+      {activeTab === 'permissions' && (
+        <PermissionsTab
+          permissions={permissions}
+          roles={roles}
+          permLoading={permLoading}
+          onRefreshPermissions={fetchPermissions}
+        />
+      )}
+
+      {/* Role edit/create modal */}
+      <RoleEditModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         role={selectedRole}
