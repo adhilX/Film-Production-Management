@@ -3,9 +3,30 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { adminService } from '@/services/adminService';
-import { CheckCircle2, XCircle, ArrowLeft, Building2, UserCircle, Briefcase, FileText, AlertTriangle } from 'lucide-react';
+import { 
+  CheckCircle2, 
+  XCircle, 
+  ArrowLeft, 
+  Building2, 
+  UserCircle, 
+  Briefcase, 
+  FileText, 
+  AlertTriangle, 
+  Download, 
+  ExternalLink,
+  User,
+  Mail,
+  Phone,
+  Building,
+  CreditCard,
+  IdCard,
+  Video,
+  Award,
+  Shield,
+  Check,
+  Loader2
+} from 'lucide-react';
 import Link from 'next/link';
-import DocumentPreview from '@/app/components/DocumentPreview';
 
 export default function ApprovalDetails() {
   const { id } = useParams();
@@ -57,7 +78,7 @@ export default function ApprovalDetails() {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-full">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-amber-500"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600"></div>
       </div>
     );
   }
@@ -67,195 +88,365 @@ export default function ApprovalDetails() {
   const profile = user.profile || {};
 
   return (
-    <div className="animate-in fade-in duration-300 pb-20">
-      <div className="mb-6">
-        <Link href="/approvals" className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-amber-500 transition mb-4">
-          <ArrowLeft className="w-4 h-4" />
-          Back to Queue
-        </Link>
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-slate-100 flex items-center gap-3">
-            Application Review
-          </h1>
-          <span className="px-3 py-1 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-full text-xs font-semibold">
-            {user.contractorType}
-          </span>
+    <div className="animate-in fade-in duration-300 min-h-full bg-[#f8fafc] text-slate-800 p-6 md:p-8 -m-6 md:-m-8 flex flex-col gap-6 font-sans">
+      
+      {/* Top Header Navigation */}
+      <div className="flex items-center justify-between">
+        <button
+          onClick={() => router.back()}
+          className="flex items-center gap-2 text-slate-700 hover:text-indigo-600 transition text-xs font-bold cursor-pointer bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-sm"
+        >
+          <ArrowLeft className="w-4 h-4" /> Back to Queue
+        </button>
+      </div>
+
+      {/* Main Container Card (Submission summary box) */}
+      <div className="bg-white border border-slate-200/80 rounded-3xl shadow-sm p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6 relative overflow-hidden">
+        <div className="flex items-center gap-4 z-10">
+          <div className="w-12 h-12 bg-emerald-500 rounded-full flex items-center justify-center text-white shrink-0 shadow-lg shadow-emerald-500/20">
+            <Check className="w-6 h-6 stroke-[3]" />
+          </div>
+          <div className="space-y-1.5">
+            <span className="inline-block text-[9px] font-extrabold tracking-widest text-emerald-600 bg-emerald-50 border border-emerald-100 px-2.5 py-1 rounded-md uppercase font-mono">
+              Completed & Submitted
+            </span>
+            <h2 className="text-xl sm:text-2xl font-black text-slate-950 tracking-tight">Onboarding Submission Details</h2>
+            <p className="text-xs text-slate-500 max-w-md leading-relaxed">
+              Review the verification information and compliance assets currently active for this profile.
+            </p>
+          </div>
+        </div>
+
+        <div className="shrink-0 select-none hidden sm:block z-10">
+          <svg className="w-36 h-24 text-indigo-600" viewBox="0 0 160 110" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="50" y="20" width="60" height="80" rx="8" fill="#e0e7ff" stroke="#4f46e5" strokeWidth="2" />
+            <rect x="56" y="28" width="48" height="66" rx="4" fill="#ffffff" />
+            <rect x="70" y="14" width="20" height="8" rx="2" fill="#4f46e5" />
+            <path d="M62 40 L65 43 L72 36" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            <line x1="78" y1="39" x2="98" y2="39" stroke="#cbd5e1" strokeWidth="2" strokeLinecap="round" />
+            <path d="M62 54 L65 57 L72 50" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            <line x1="78" y1="53" x2="98" y2="53" stroke="#cbd5e1" strokeWidth="2" strokeLinecap="round" />
+            <path d="M62 68 L65 71 L72 64" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            <line x1="78" y1="67" x2="98" y2="67" stroke="#cbd5e1" strokeWidth="2" strokeLinecap="round" />
+            <circle cx="108" cy="88" r="12" fill="#10b981" />
+            <path d="M103 88 L106 91 L113 84" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column: Details */}
-        <div className="lg:col-span-2 space-y-6">
-          
-          {/* Section 1: Personal Info */}
-          <div className="bg-slate-950 border border-slate-800 rounded-2xl p-6">
-            <h2 className="text-lg font-semibold text-slate-200 border-b border-slate-800 pb-3 mb-4 flex items-center gap-2">
-              <UserCircle className="w-5 h-5 text-amber-500" />
-              Applicant Profile
-            </h2>
-            <div className="flex items-start gap-6">
-              <div className="w-24 h-24 rounded-2xl bg-slate-900 border border-slate-700 overflow-hidden shrink-0">
-                {profile.photoUrl ? (
-                  <img src={profile.photoUrl} alt="Profile" className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-slate-600 font-bold text-xl">{user.name.charAt(0)}</div>
-                )}
+      {/* Details Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        
+        {/* Column 1: Classification */}
+        <div className="space-y-3">
+          <span className="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400">1. Classification</span>
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between p-3.5 bg-white border border-slate-200/80 rounded-2xl shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-indigo-50 text-indigo-650 rounded-xl">
+                  <User className="w-4 h-4" />
+                </div>
+                <span className="text-[11px] font-bold text-slate-500">Contractor Type</span>
               </div>
-              <div className="space-y-4 flex-1">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <span className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">Full Name</span>
-                    <span className="text-sm text-slate-200">{user.name}</span>
+              <span className="text-[11px] font-extrabold text-slate-800">{user.contractorType || 'N/A'}</span>
+            </div>
+
+            <div className="flex items-center justify-between p-3.5 bg-white border border-slate-200/80 rounded-2xl shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-indigo-50 text-indigo-650 rounded-xl">
+                  <Building2 className="w-4 h-4" />
+                </div>
+                <span className="text-[11px] font-bold text-slate-500">Department</span>
+              </div>
+              <span className="text-[11px] font-extrabold text-slate-800">{profile.department || 'N/A'}</span>
+            </div>
+
+            <div className="flex items-center justify-between p-3.5 bg-white border border-slate-200/80 rounded-2xl shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-indigo-50 text-indigo-650 rounded-xl">
+                  <Award className="w-4 h-4" />
+                </div>
+                <span className="text-[11px] font-bold text-slate-500">Position / Title</span>
+              </div>
+              <span className="text-[11px] font-extrabold text-slate-800">{profile.position || 'N/A'}</span>
+            </div>
+
+            <div className="flex items-center justify-between p-3.5 bg-white border border-slate-200/80 rounded-2xl shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-indigo-50 text-indigo-650 rounded-xl">
+                  <Shield className="w-4 h-4" />
+                </div>
+                <span className="text-[11px] font-bold text-slate-500">Experience & Credits</span>
+              </div>
+              <span className="text-[11px] font-extrabold text-slate-800 max-w-[140px] truncate" title={profile.experience?.join('\n')}>
+                {profile.experience?.join(', ') || 'N/A'}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Column 2: Profile / Contact */}
+        <div className="space-y-3">
+          <span className="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400">2. Profile & Contact</span>
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between p-3.5 bg-white border border-slate-200/80 rounded-2xl shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-50 text-blue-650 rounded-xl">
+                  <User className="w-4 h-4" />
+                </div>
+                <span className="text-[11px] font-bold text-slate-500">Full Name</span>
+              </div>
+              <span className="text-[11px] font-extrabold text-slate-800">{user.name || 'N/A'}</span>
+            </div>
+
+            <div className="flex items-center justify-between p-3.5 bg-white border border-slate-200/80 rounded-2xl shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-50 text-blue-650 rounded-xl">
+                  <Mail className="w-4 h-4" />
+                </div>
+                <span className="text-[11px] font-bold text-slate-500">Email Address</span>
+              </div>
+              <span className="text-[11px] font-extrabold text-slate-800 max-w-[130px] truncate" title={user.email}>{user.email || 'N/A'}</span>
+            </div>
+
+            <div className="flex items-center justify-between p-3.5 bg-white border border-slate-200/80 rounded-2xl shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-50 text-blue-650 rounded-xl">
+                  <Phone className="w-4 h-4" />
+                </div>
+                <span className="text-[11px] font-bold text-slate-500">Phone Number</span>
+              </div>
+              <span className="text-[11px] font-extrabold text-slate-800">{profile.phoneNumber || 'N/A'}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Column 3: Financial & Tax */}
+        <div className="space-y-3">
+          <span className="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400">3. Financial & Tax</span>
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between p-3.5 bg-white border border-slate-200/80 rounded-2xl shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-indigo-50 text-indigo-650 rounded-xl">
+                  <Building className="w-4 h-4" />
+                </div>
+                <span className="text-[11px] font-bold text-slate-500">Bank Name</span>
+              </div>
+              <span className="text-[11px] font-extrabold text-slate-800">{profile.bankDetails?.bankName || 'N/A'}</span>
+            </div>
+
+            <div className="flex items-center justify-between p-3.5 bg-white border border-slate-200/80 rounded-2xl shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-indigo-50 text-indigo-650 rounded-xl">
+                  <CreditCard className="w-4 h-4" />
+                </div>
+                <span className="text-[11px] font-bold text-slate-500">Account Number</span>
+              </div>
+              <span className="text-[11px] font-extrabold text-slate-800 font-mono">{profile.bankDetails?.accountNumber || 'N/A'}</span>
+            </div>
+
+            <div className="flex items-center justify-between p-3.5 bg-white border border-slate-200/80 rounded-2xl shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-indigo-50 text-indigo-650 rounded-xl">
+                  <FileText className="w-4 h-4" />
+                </div>
+                <span className="text-[11px] font-bold text-slate-500">Routing Number</span>
+              </div>
+              <span className="text-[11px] font-extrabold text-slate-800 font-mono">{profile.bankDetails?.routingNumber || 'N/A'}</span>
+            </div>
+
+            {/* Tax Document Section */}
+            <div className="space-y-2 pt-1.5">
+              <span className="block text-[10px] font-extrabold uppercase tracking-wider text-slate-450">Tax Document</span>
+              {profile.taxFormUrl ? (
+                <div className="flex items-center justify-between p-3.5 bg-white border border-slate-200/80 rounded-2xl shadow-sm">
+                  <div className="flex items-center gap-2.5">
+                    <FileText className="w-5 h-5 text-red-500 shrink-0" />
+                    <div className="min-w-0">
+                      <span className="block text-[10px] font-bold text-slate-800 truncate">Tax Form Document</span>
+                      <span className="block text-[9px] text-slate-400 mt-0.5">Uploaded & Verified</span>
+                    </div>
                   </div>
-                  <div>
-                    <span className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">Email</span>
-                    <span className="text-sm text-slate-200">{user.email}</span>
-                  </div>
-                  <div>
-                    <span className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">Phone Number</span>
-                    <span className="text-sm text-slate-200">{profile.phoneNumber || 'N/A'}</span>
-                  </div>
-                  <div>
-                    <span className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">Department</span>
-                    <span className="text-sm text-slate-200">{profile.department || 'N/A'}</span>
-                  </div>
+                  <a 
+                    href={profile.taxFormUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="p-1.5 bg-slate-50 border border-slate-200 rounded-lg hover:bg-slate-100 transition shrink-0"
+                  >
+                    <Download className="w-3.5 h-3.5 text-indigo-600" />
+                  </a>
+                </div>
+              ) : (
+                <div className="p-3 bg-red-50 text-red-650 rounded-2xl text-xs text-center border border-red-100 font-bold">Missing</div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Column 4: Identification */}
+        <div className="space-y-3">
+          <span className="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400">4. Identification</span>
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between p-3.5 bg-white border border-slate-200/80 rounded-2xl shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-50 text-blue-650 rounded-xl">
+                  <IdCard className="w-4 h-4" />
+                </div>
+                <span className="text-[11px] font-bold text-slate-500">Government ID Type</span>
+              </div>
+              <span className="text-[11px] font-extrabold text-slate-800">{profile.governmentIdType || 'N/A'}</span>
+            </div>
+
+            {/* ID Document Previews */}
+            <div className="space-y-2 pt-1.5">
+              <span className="block text-[10px] font-extrabold uppercase tracking-wider text-slate-450">Uploaded ID Documents</span>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="bg-white border border-slate-200/80 rounded-2xl p-2 flex flex-col justify-between shadow-sm min-h-[110px]">
+                  <span className="text-[9px] font-bold text-slate-400">ID Front View</span>
+                  {profile.identityDocs?.[0] ? (
+                    <div className="relative group overflow-hidden rounded-lg border border-slate-100 h-14 mt-1.5">
+                      <img src={profile.identityDocs[0]} alt="ID Front" className="w-full h-full object-cover" />
+                      <a 
+                        href={profile.identityDocs[0]} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </a>
+                    </div>
+                  ) : (
+                    <span className="text-[10px] text-slate-400 mt-2 block text-center">Missing</span>
+                  )}
+                </div>
+
+                <div className="bg-white border border-slate-200/80 rounded-2xl p-2 flex flex-col justify-between shadow-sm min-h-[110px]">
+                  <span className="text-[9px] font-bold text-slate-400">ID Back View</span>
+                  {profile.identityDocs?.[1] ? (
+                    <div className="relative group overflow-hidden rounded-lg border border-slate-100 h-14 mt-1.5">
+                      <img src={profile.identityDocs[1]} alt="ID Back" className="w-full h-full object-cover" />
+                      <a 
+                        href={profile.identityDocs[1]} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </a>
+                    </div>
+                  ) : (
+                    <span className="text-[10px] text-slate-400 mt-2 block text-center">Missing</span>
+                  )}
                 </div>
               </div>
             </div>
           </div>
-
-          {/* Section 2: Identity Docs */}
-          <div className="bg-slate-950 border border-slate-800 rounded-2xl p-6">
-            <h2 className="text-lg font-semibold text-slate-200 border-b border-slate-800 pb-3 mb-4 flex items-center gap-2">
-              <Building2 className="w-5 h-5 text-amber-500" />
-              Identity Verification ({profile.governmentIdType})
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <span className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Front Side</span>
-                {profile.identityDocs?.[0] ? (
-                  <DocumentPreview fileUrl={profile.identityDocs[0]} maxHeight={180} alt="ID Front" className="border-slate-850 bg-slate-900" />
-                ) : (
-                  <div className="h-48 bg-slate-900 rounded-xl border border-slate-800 flex items-center justify-center text-slate-600 text-sm">
-                    Missing
-                  </div>
-                )}
-              </div>
-              <div>
-                <span className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Back Side</span>
-                {profile.identityDocs?.[1] ? (
-                  <DocumentPreview fileUrl={profile.identityDocs[1]} maxHeight={180} alt="ID Back" className="border-slate-850 bg-slate-900" />
-                ) : (
-                  <div className="h-48 bg-slate-900 rounded-xl border border-slate-800 flex items-center justify-center text-slate-600 text-sm">
-                    Missing
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
         </div>
 
-        {/* Right Column: Financial & Decision */}
-        <div className="space-y-6">
-          
-          {/* Section 3: Financials */}
-          <div className="bg-slate-950 border border-slate-800 rounded-2xl p-6">
-            <h2 className="text-lg font-semibold text-slate-200 border-b border-slate-800 pb-3 mb-4 flex items-center gap-2">
-              <Briefcase className="w-5 h-5 text-amber-500" />
-              Financial & Tax
-            </h2>
-            <div className="space-y-4">
-              <div>
-                <span className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Bank Name</span>
-                <span className="text-sm text-slate-200">{profile.bankDetails?.bankName || 'N/A'}</span>
+      </div>
+
+      {/* Agreements & Signature Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        {/* Agreements column */}
+        <div className="space-y-3">
+          <span className="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Agreements</span>
+          <div className="space-y-3">
+            <div className="flex items-center gap-3.5 p-3.5 bg-white border border-slate-200/80 rounded-2xl shadow-sm">
+              <div className="w-6 h-6 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+                <Check className="w-3.5 h-3.5 stroke-[3]" />
               </div>
-              <div>
-                <span className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Account Number</span>
-                <span className="text-sm font-mono text-slate-200">{profile.bankDetails?.accountNumber || 'N/A'}</span>
+              <div className="text-xs">
+                <span className="block font-bold text-slate-800">NDA & Secrecy Agreement</span>
+                <span className="block text-[10px] text-slate-450 mt-0.5 font-medium">Electronically reviewed and signed</span>
               </div>
-              <div>
-                <span className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Tax Document</span>
-                {profile.taxFormUrl ? (
-                  <DocumentPreview fileUrl={profile.taxFormUrl} maxHeight={160} alt="Tax Document" className="border-slate-850 bg-slate-900" />
-                ) : (
-                  <div className="h-40 bg-slate-900 rounded-xl border border-slate-800 flex items-center justify-center text-slate-600 text-sm">
-                    Missing
-                  </div>
-                )}
+            </div>
+
+            <div className="flex items-center gap-3.5 p-3.5 bg-white border border-slate-200/80 rounded-2xl shadow-sm">
+              <div className="w-6 h-6 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+                <Check className="w-3.5 h-3.5 stroke-[3]" />
+              </div>
+              <div className="text-xs">
+                <span className="block font-bold text-slate-800">Terms of Engagement</span>
+                <span className="block text-[10px] text-slate-450 mt-0.5 font-medium">Electronically reviewed and accepted</span>
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Decision Panel */}
-          <div className="bg-slate-950 border border-amber-500/30 rounded-2xl p-6 shadow-[0_0_15px_rgba(245,158,11,0.05)]">
-            <h2 className="text-lg font-semibold text-slate-200 border-b border-slate-800 pb-3 mb-4">
-              Decision Panel
-            </h2>
-            
-            <div className="space-y-6">
-              <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Assign System Role (Required)</label>
-                <select 
-                  value={roleOverride}
-                  onChange={(e) => setRoleOverride(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:border-amber-500 outline-none"
-                  required
-                >
-                  <option value="">Select a Role...</option>
-                  {roles.map(r => (
-                    <option key={r._id} value={r._id}>{r.name}</option>
-                  ))}
-                </select>
-                <p className="text-[10px] text-slate-500 mt-1">You must explicitly assign a role to approve.</p>
+        {/* Digital Signature column */}
+        <div className="space-y-3">
+          <span className="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Digital Signature Preview</span>
+          <div className="bg-white border border-slate-200/80 rounded-2xl p-4 flex items-center justify-center min-h-[110px] shadow-sm relative overflow-hidden">
+            {profile.signatureData ? (
+              <div className="w-full h-16 bg-slate-50/50 rounded-xl p-1 flex items-center justify-center overflow-hidden border border-slate-100">
+                <img src={profile.signatureData} alt="Signature" className="h-full object-contain mix-blend-multiply opacity-90" />
               </div>
-
-              <div className="space-y-3 pt-2">
-                <button 
-                  onClick={() => setShowApproveModal(true)}
-                  disabled={submitting || !roleOverride}
-                  className="w-full py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 disabled:opacity-50"
-                >
-                  <CheckCircle2 className="w-5 h-5" />
-                  Approve & Activate Account
-                </button>
-                
-                <button 
-                  onClick={() => setShowFeedbackModal(true)}
-                  disabled={submitting}
-                  className="w-full py-3 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-red-400 font-semibold rounded-xl transition flex items-center justify-center gap-2 disabled:opacity-50"
-                >
-                  <XCircle className="w-5 h-5" />
-                  Request Changes...
-                </button>
-              </div>
-            </div>
+            ) : (
+              <span className="text-xs text-slate-400">No digital signature recorded.</span>
+            )}
           </div>
+        </div>
+
+      </div>
+
+      {/* Decision Controls Action Panel */}
+      <div className="bg-white border border-slate-200/80 rounded-2xl p-5 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm">
+        <div className="flex items-center gap-3 w-full md:w-auto">
+          <label className="block text-[10px] font-black uppercase tracking-wider text-slate-500 whitespace-nowrap">Assign System Role:</label>
+          <select 
+            value={roleOverride}
+            onChange={(e) => setRoleOverride(e.target.value)}
+            className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-700 font-bold focus:outline-none focus:border-indigo-600"
+            required
+          >
+            <option value="">Select a Role...</option>
+            {roles.map(r => (
+              <option key={r._id} value={r._id}>{r.name}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="flex gap-3 w-full md:w-auto justify-end">
+          <button 
+            onClick={() => setShowFeedbackModal(true)}
+            disabled={submitting}
+            className="flex items-center gap-1.5 py-3 px-5 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl text-slate-600 text-xs font-bold transition shadow-xs disabled:opacity-50 cursor-pointer"
+          >
+            <XCircle className="w-4 h-4 text-red-500" /> Request Changes
+          </button>
           
+          <button 
+            onClick={() => setShowApproveModal(true)}
+            disabled={submitting || !roleOverride}
+            className="flex items-center gap-1.5 py-3 px-6 bg-indigo-650 hover:bg-indigo-700 text-white text-xs font-extrabold rounded-xl transition shadow-md shadow-indigo-600/10 disabled:opacity-50 cursor-pointer"
+          >
+            <CheckCircle2 className="w-4 h-4" /> Approve & Activate Profile
+          </button>
         </div>
       </div>
 
       {/* Feedback Modal */}
       {showFeedbackModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-6 shadow-2xl">
-            <h3 className="text-lg font-bold text-slate-100 flex items-center gap-2 mb-2">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-sm p-4">
+          <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-md p-6 shadow-2xl animate-in zoom-in-95 duration-200">
+            <h3 className="text-base font-black text-slate-950 flex items-center gap-2 mb-2">
               <AlertTriangle className="text-red-500 w-5 h-5" />
               Request Changes
             </h3>
-            <p className="text-sm text-slate-400 mb-4">
+            <p className="text-xs text-slate-550 mb-4 leading-relaxed">
               Specify what needs to be fixed. The applicant will be notified and sent back to the onboarding form.
             </p>
             <textarea
               value={feedback}
               onChange={(e) => setFeedback(e.target.value)}
               placeholder="e.g. The photo uploaded for the Front ID is blurry. Please re-upload a clear copy."
-              className="w-full h-32 bg-slate-950 border border-slate-800 rounded-xl p-3 text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-red-500 resize-none mb-4"
+              className="w-full h-32 bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-indigo-600 resize-none mb-4"
             />
             <div className="flex gap-3">
               <button 
                 onClick={() => setShowFeedbackModal(false)}
-                className="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium rounded-lg transition"
+                className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold rounded-lg transition"
               >
                 Cancel
               </button>
@@ -265,9 +456,9 @@ export default function ApprovalDetails() {
                   handleDecision('changes-requested');
                 }}
                 disabled={!feedback.trim() || submitting}
-                className="flex-1 py-2.5 bg-red-500 hover:bg-red-400 disabled:bg-red-500/50 disabled:text-red-200/50 text-white font-semibold rounded-lg transition"
+                className="flex-1 py-2.5 bg-red-600 hover:bg-red-750 disabled:opacity-50 text-white text-xs font-bold rounded-lg transition"
               >
-                Confirm & Reject
+                Confirm & Send Feedback
               </button>
             </div>
           </div>
@@ -276,22 +467,22 @@ export default function ApprovalDetails() {
 
       {/* Approve Confirmation Modal */}
       {showApproveModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-6 shadow-2xl">
-            <h3 className="text-lg font-bold text-emerald-400 flex items-center gap-2 mb-4">
-              <CheckCircle2 className="w-5 h-5" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-sm p-4">
+          <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-md p-6 shadow-2xl animate-in zoom-in-95 duration-200">
+            <h3 className="text-base font-black text-slate-950 flex items-center gap-2 mb-3">
+              <CheckCircle2 className="w-5 h-5 text-emerald-600" />
               Confirm Approval
             </h3>
-            <p className="text-sm text-slate-300 mb-6 leading-relaxed">
+            <p className="text-xs text-slate-550 mb-5 leading-relaxed">
               Are you sure you want to approve this applicant? They will be granted system access with the role of:{' '}
-              <span className="font-bold text-emerald-400 border border-emerald-500/30 bg-emerald-500/10 px-2 py-1 rounded-md">
+              <span className="font-extrabold text-emerald-700 border border-emerald-500/25 bg-emerald-50 px-2 py-1 rounded-md">
                 {roles.find(r => r._id === roleOverride)?.name || 'Unknown Role'}
               </span>
             </p>
             <div className="flex gap-3">
               <button 
                 onClick={() => setShowApproveModal(false)}
-                className="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium rounded-lg transition"
+                className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold rounded-lg transition"
               >
                 Cancel
               </button>
@@ -301,7 +492,7 @@ export default function ApprovalDetails() {
                   handleDecision('approved');
                 }}
                 disabled={submitting || !roleOverride}
-                className="flex-1 py-2.5 bg-emerald-500 hover:bg-emerald-400 disabled:bg-emerald-500/50 disabled:text-emerald-950/50 text-slate-950 font-bold rounded-lg transition"
+                className="flex-1 py-2.5 bg-indigo-650 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-extrabold rounded-lg transition"
               >
                 Confirm & Approve
               </button>
@@ -309,6 +500,7 @@ export default function ApprovalDetails() {
           </div>
         </div>
       )}
+
     </div>
   );
 }

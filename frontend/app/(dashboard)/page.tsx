@@ -6,6 +6,7 @@ import { adminService } from '@/services/adminService';
 import Link from 'next/link';
 import { useAuthStore } from '@/store/useAuthStore';
 import OverviewModule from '@/components/modules/OverviewModule';
+import LogoutButton from '@/app/components/LogoutButton';
 
 export default function DashboardPage() {
   const user = useAuthStore(state => state.user);
@@ -67,6 +68,7 @@ export default function DashboardPage() {
           </h1>
           <p className="text-slate-400 mt-2">System overview and high-level metrics.</p>
         </div>
+        <LogoutButton className="flex items-center gap-2 py-2 px-4 bg-red-950/20 border border-red-900/30 hover:bg-red-950/40 text-red-400 text-xs font-semibold rounded-xl transition-colors cursor-pointer" />
       </div>
 
       {loading ? (

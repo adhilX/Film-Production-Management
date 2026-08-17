@@ -9,6 +9,7 @@ import { PermissionGuard } from '@/app/components/permission-guard';
 import type { Production, CastCrew, Character } from '@/app/types';
 import productionsService from '@/services/productionsService';
 import adminService from '@/services/adminService';
+import LogoutButton from '@/app/components/LogoutButton';
 
 export default function OverviewModule() {
   const { token } = useAuth();
@@ -133,24 +134,27 @@ export default function OverviewModule() {
           <h2 className="text-2xl font-bold text-slate-100">Project Overview</h2>
           <p className="text-xs text-slate-400 mt-1">Management metrics for active productions.</p>
         </div>
-        <PermissionGuard permission="productions.create">
-          <form onSubmit={handleCreateProduction} className="flex gap-2 items-center">
-            <input 
-              type="text" 
-              placeholder="New Production Title"
-              value={newProdTitle}
-              onChange={(e) => setNewProdTitle(e.target.value)}
-              required
-              className="bg-slate-900 border border-slate-850 rounded-lg py-1.5 px-3 text-xs focus:outline-none focus:border-purple-500"
-            />
-            <button 
-              type="submit"
-              className="py-1.5 px-3 bg-purple-600 hover:bg-purple-500 rounded-lg text-white text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer shadow-[0_0_10px_rgba(147,51,234,0.2)]"
-            >
-              <Plus size={14} /> Create
-            </button>
-          </form>
-        </PermissionGuard>
+        <div className="flex items-center gap-4">
+          <PermissionGuard permission="productions.create">
+            <form onSubmit={handleCreateProduction} className="flex gap-2 items-center">
+              <input 
+                type="text" 
+                placeholder="New Production Title"
+                value={newProdTitle}
+                onChange={(e) => setNewProdTitle(e.target.value)}
+                required
+                className="bg-slate-900 border border-slate-850 rounded-lg py-1.5 px-3 text-xs focus:outline-none focus:border-purple-500"
+              />
+              <button 
+                type="submit"
+                className="py-1.5 px-3 bg-purple-600 hover:bg-purple-500 rounded-lg text-white text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer shadow-[0_0_10px_rgba(147,51,234,0.2)]"
+              >
+                <Plus size={14} /> Create
+              </button>
+            </form>
+          </PermissionGuard>
+          <LogoutButton className="flex items-center gap-2 py-1.5 px-3 bg-red-950/20 border border-red-900/30 hover:bg-red-950/40 text-red-400 text-xs font-semibold rounded-lg transition-colors cursor-pointer" />
+        </div>
       </div>
 
       {selectedProduction ? (

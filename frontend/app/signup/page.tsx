@@ -337,7 +337,9 @@ export default function SignupPage() {
                   >
                     <option value="Freelancer">Freelancer</option>
                     <option value="Cast">Cast</option>
+                    <option value="Crew">Crew</option>
                     <option value="Supplier">Supplier</option>
+                    <option value="Agent">Agent</option>
                     <option value="Cast-Crew Agent">Cast-Crew Agent</option>
                     <option value="TCS Team">TCS Team</option>
                     <option value="Production Company">Production Company</option>

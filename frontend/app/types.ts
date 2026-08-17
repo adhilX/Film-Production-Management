@@ -9,7 +9,7 @@ export interface User {
   _id?: string;
   email: string;
   name: string;
-  contractorType: 'Freelancer' | 'Cast' | 'Crew' | 'Supplier' | 'Agent' | 'Production Company' | 'None';
+  contractorType: 'Freelancer' | 'Cast' | 'Crew' | 'Supplier' | 'Agent' | 'Cast-Crew Agent' | 'TCS Team' | 'Production Company' | 'None';
   systemRoleId?: string | { _id: string; name: string } | null;
   status: 'Draft' | 'Pending' | 'UnderReview' | 'Approved' | 'Rejected';
   isActive: boolean;
@@ -19,8 +19,20 @@ export interface Production {
   _id: string;
   title: string;
   description?: string;
-  status: string;
+  genre: string;
+  language: string;
+  format: string;
+  logline?: string;
+  synopsis?: string;
+  startDate: string;
+  endDate: string;
+  budget: number;
+  productionManager: string | User;
+  status: 'Draft' | 'Active' | 'On Hold' | 'Completed' | 'Cancelled';
+  createdAt?: string;
+  updatedAt?: string;
 }
+
 
 export interface Character {
   _id: string;

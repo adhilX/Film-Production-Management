@@ -1,11 +1,6 @@
 import { create } from 'zustand';
+import { Production } from '@/app/types';
 
-interface Production {
-  _id: string;
-  title: string;
-  description?: string;
-  status: string;
-}
 
 interface ProductionState {
   productions: Production[];

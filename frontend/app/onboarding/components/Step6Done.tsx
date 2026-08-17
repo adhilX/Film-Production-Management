@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { ClipboardList, Clock, FileText, CheckCircle2, Edit, Mail, AlertCircle, RefreshCw } from 'lucide-react';
+import LogoutButton from '@/app/components/LogoutButton';
 
 interface Step6DoneProps {
   status?: string;
@@ -150,10 +151,11 @@ export default function Step6Done({ status = 'in-progress', adminFeedback, onEdi
           </>
         )}
 
-        <div className="mt-5 pt-4 border-t border-slate-200 flex justify-center">
+        <div className="mt-5 pt-4 border-t border-slate-200 flex justify-center gap-4">
           <Link href="/onboarding/details" className="flex items-center gap-1.5 px-5 py-2 rounded-xl border border-indigo-200 bg-white text-indigo-600 text-xs font-bold shadow-sm hover:bg-indigo-50 transition">
             <FileText className="w-3.5 h-3.5" /> View Application Details
           </Link>
+          <LogoutButton className="flex items-center gap-1.5 px-5 py-2 rounded-xl border border-red-200 bg-white text-red-600 text-xs font-bold shadow-sm hover:bg-red-50 transition cursor-pointer" />
         </div>
       </div>
     </div>

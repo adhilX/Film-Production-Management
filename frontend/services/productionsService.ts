@@ -7,10 +7,15 @@ export const productionsService = {
     const res = await axiosClient.get<Production[]>('/productions');
     return res.data;
   },
-  async createProduction(payload: { title: string; description: string }): Promise<Production> {
+  async createProduction(payload: Partial<Production>): Promise<Production> {
     const res = await axiosClient.post<Production>('/productions', payload);
     return res.data;
   },
+  async updateProduction(productionId: string, payload: Partial<Production>): Promise<Production> {
+    const res = await axiosClient.patch<Production>(`/productions/${productionId}`, payload);
+    return res.data;
+  },
+
 
   // Locations
   async getLocations(productionId: string): Promise<LocationBooking[]> {
@@ -57,6 +62,10 @@ export const productionsService = {
   },
   async assignCastCrew(productionId: string, payload: { userId: string; roleInProduction: string; characterId?: string }): Promise<CastCrew> {
     const res = await axiosClient.post<CastCrew>(`/productions/${productionId}/cast-crew`, payload);
+    return res.data;
+  },
+  async getEligibleManagers(): Promise<any[]> {
+    const res = await axiosClient.get<any[]>('/productions/managers');
     return res.data;
   },
 };

@@ -1,4 +1,4 @@
-import { ClipboardList, Users, MapPin, DollarSign, Shirt, FileLock2, UserCheck, Activity } from 'lucide-react';
+import { ClipboardList, Film, Users, MapPin, DollarSign, Shirt, FileLock2, UserCheck, Activity } from 'lucide-react';
 
 export const USER_MENU_ITEMS = [
   { 
@@ -7,6 +7,13 @@ export const USER_MENU_ITEMS = [
     permission: 'productions.view', 
     icon: ClipboardList 
   },
+  { 
+    label: 'Productions', 
+    href: '/productions', 
+    permission: 'productions.view', 
+    icon: Film 
+  },
+
   { 
     label: 'Costumes & Assets', 
     href: '/costumes', 

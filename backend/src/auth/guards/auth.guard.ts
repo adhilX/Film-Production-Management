@@ -91,20 +91,23 @@ export class AuthGuard implements CanActivate {
     );
 
     if (checkProduction) {
-      // Admins (identified by having 'roles.manage' permission) bypass production assignment check
-      const isAdmin = user.permissions && user.permissions.includes('roles.manage');
+      // Admins (identified by having 'roles.manage' or 'users.approve' permission) bypass production assignment check
+      const isAdmin =
+        user.permissions &&
+        (user.permissions.includes('roles.manage') ||
+          user.permissions.includes('users.approve'));
       if (!isAdmin) {
         let productionId =
-          request.params.productionId ||
-          request.body.productionId ||
-          request.query.productionId;
+          request.params?.productionId ||
+          request.body?.productionId ||
+          request.query?.productionId;
 
         if (
           !productionId &&
-          request.params.id &&
+          request.params?.id &&
           request.url.includes('/productions/')
         ) {
-          productionId = request.params.id;
+          productionId = request.params?.id;
         }
 
         if (!productionId) {

@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Patch,
   Body,
   Param,
   UseGuards,
@@ -15,6 +16,7 @@ import {
 } from '@nestjs/swagger';
 import { ProductionsService } from './productions.service';
 import { CreateProductionDto } from './dto/create-production.dto';
+import { UpdateProductionDto } from './dto/update-production.dto';
 import { AssignCastCrewDto } from './dto/assign-cast-crew.dto';
 import { CreateCharacterDto } from './dto/create-character.dto';
 import { AuthGuard } from '../auth/guards/auth.guard';
@@ -34,29 +36,59 @@ export class ProductionsController {
   @ApiOperation({ summary: 'Create a new film production project' })
   @ApiResponse({ status: 201, description: 'Production created successfully.' })
   create(@Body() createDto: CreateProductionDto, @Req() req: any) {
-    return this.productionsService.create(
-      createDto,
-      req.user._id,
-      req.user.permissions?.includes('roles.manage') || false,
-    );
+    const isAdmin =
+      req.user.permissions?.includes('roles.manage') ||
+      req.user.permissions?.includes('users.approve') ||
+      false;
+    return this.productionsService.create(createDto, req.user._id, isAdmin);
   }
 
   @Get()
+  @Permissions('productions.view')
   @ApiOperation({
     summary: 'List film productions accessible by the authenticated user',
   })
   @ApiResponse({ status: 200, description: 'Array of accessible productions.' })
   findAll(@Req() req: any) {
-    return this.productionsService.findAll(req.user._id, req.user.permissions?.includes('roles.manage') || false);
+    const isAdmin =
+      req.user.permissions?.includes('roles.manage') ||
+      req.user.permissions?.includes('users.approve') ||
+      false;
+    return this.productionsService.findAll(req.user._id, isAdmin);
+  }
+
+  @Get('managers')
+  @Permissions('productions.view')
+  @ApiOperation({ summary: 'List eligible active Production Managers' })
+  @ApiResponse({
+    status: 200,
+    description: 'Array of eligible active Production Managers.',
+  })
+  findEligibleManagers() {
+    return this.productionsService.findEligibleManagers();
   }
 
   @Get(':id')
   @CheckProduction()
+  @Permissions('productions.view')
   @ApiOperation({ summary: 'Fetch production details by ID (resource-scoped)' })
   @ApiResponse({ status: 200, description: 'Production document.' })
   findOne(@Param('id') id: string) {
     return this.productionsService.findOne(id);
   }
+
+  @Patch(':id')
+  @CheckProduction()
+  @Permissions('productions.update')
+  @ApiOperation({ summary: 'Update production details by ID (resource-scoped)' })
+  @ApiResponse({ status: 200, description: 'Updated production document.' })
+  update(
+    @Param('id') id: string,
+    @Body() updateDto: UpdateProductionDto,
+  ) {
+    return this.productionsService.update(id, updateDto);
+  }
+
 
   @Post(':productionId/cast-crew')
   @CheckProduction()
