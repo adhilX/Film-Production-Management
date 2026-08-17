@@ -422,7 +422,7 @@ export default function SignupPage() {
           <span>Secure Production Management Platform</span>
         </div>
         <div>
-          <span>© 2024 Tendagon. All rights reserved.</span>
+          <span>© 2026 Tendagon. All rights reserved.</span>
         </div>
       </footer>
     </div>

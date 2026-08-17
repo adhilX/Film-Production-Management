@@ -32,7 +32,7 @@ import Step2Information from './components/Step2Information';
 import Step3Financial from './components/Step3Financial';
 import Step4Identity from './components/Step4Identity';
 import Step5Contracts from './components/Step5Contracts';
-import Step6Review from './components/Step6Review';
+import Step6Done from './components/Step6Done';
 import { step1Schema, step2Schema, step3Schema, step4Schema, step5Schema, onboardingSchema } from '@/lib/validation';
 
 export default function OnboardingPage() {
@@ -299,10 +299,8 @@ export default function OnboardingPage() {
         }
       });
 
-      setSuccess('Application submitted successfully! Redirecting...');
-      setTimeout(() => {
-        router.push('/onboarding/status');
-      }, 1500);
+      setSuccess('Application submitted successfully!');
+      setStep(6);
     } catch (e: any) {
       setErrors({ api: e.response?.data?.message || 'An error occurred during onboarding submission.' });
     } finally {
@@ -315,8 +313,8 @@ export default function OnboardingPage() {
     { title: 'Your Information', desc: 'Personal & professional details', icon: User },
     { title: 'Financial', desc: 'Payment & bank details', icon: CreditCard },
     { title: 'Documents', desc: 'Upload required documents', icon: ShieldCheck },
-    { title: 'Sign', desc: 'Review & e-sign agreement', icon: FileSignature },
-    { title: 'Done', desc: 'Submit for review', icon: CheckCircle2 },
+    { title: 'Sign Agreement', desc: 'Review & e-sign agreement', icon: FileSignature },
+    { title: 'Done', desc: 'Submitted for review', icon: CheckCircle2 },
   ];
 
   const handleLogoutClick = () => {
@@ -749,68 +747,70 @@ export default function OnboardingPage() {
                   adminFeedback={adminFeedback}
                 />
               )}
-              {step === 6 && <Step6Review formData={formData} />}
+              {step === 6 && <Step6Done />}
             </div>
 
             {/* Stepper Footer Controls */}
-            <div className="p-6 bg-slate-50/50 border-t border-slate-200/85 flex items-center justify-between">
-              <div>
-                {step > 1 && (
-                  <button
-                    type="button"
-                    onClick={handleBack}
-                    disabled={loading}
-                    className="flex items-center gap-1.5 py-2 px-4 border border-slate-200 rounded-xl hover:bg-slate-100 text-slate-600 text-xs font-bold transition disabled:opacity-50"
-                  >
-                    <ArrowLeft className="w-3.5 h-3.5" /> Back
-                  </button>
-                )}
-              </div>
+            {step < 6 && (
+              <div className="p-6 bg-slate-50/50 border-t border-slate-200/85 flex items-center justify-between">
+                <div>
+                  {step > 1 && (
+                    <button
+                      type="button"
+                      onClick={handleBack}
+                      disabled={loading}
+                      className="flex items-center gap-1.5 py-2 px-4 border border-slate-200 rounded-xl hover:bg-slate-100 text-slate-600 text-xs font-bold transition disabled:opacity-50"
+                    >
+                      <ArrowLeft className="w-3.5 h-3.5" /> Back
+                    </button>
+                  )}
+                </div>
 
-              <div>
-                {step < 6 ? (
-                  <button
-                    type="button"
-                    onClick={handleNext}
-                    disabled={loading}
-                    className="flex items-center gap-2 py-2.5 px-6 bg-[#4f46e5] hover:bg-[#4338ca] text-white text-xs font-bold rounded-xl shadow-lg shadow-indigo-600/10 hover:shadow-indigo-600/20 transition duration-300 disabled:opacity-50 cursor-pointer animate-in fade-in"
-                  >
-                    {loading ? (
-                      <>
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        Saving...
-                      </>
-                    ) : (
-                      <>
-                        {step === 1 ? "Let's Get Started" : 'Continue'} <ArrowRight className="w-3.5 h-3.5" />
-                      </>
-                    )}
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={handleSubmit}
-                    disabled={loading}
-                    className="flex items-center gap-2 py-2.5 px-6 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-lg shadow-emerald-600/10 hover:shadow-emerald-600/20 transition disabled:opacity-50 cursor-pointer"
-                  >
-                    {loading ? (
-                      <>
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        Submitting Application...
-                      </>
-                    ) : (
-                      'Submit Application'
-                    )}
-                  </button>
-                )}
+                <div>
+                  {step < 5 ? (
+                    <button
+                      type="button"
+                      onClick={handleNext}
+                      disabled={loading}
+                      className="flex items-center gap-2 py-2.5 px-6 bg-[#4f46e5] hover:bg-[#4338ca] text-white text-xs font-bold rounded-xl shadow-lg shadow-indigo-600/10 hover:shadow-indigo-600/20 transition duration-300 disabled:opacity-50 cursor-pointer animate-in fade-in"
+                    >
+                      {loading ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          {step === 1 ? "Let's Get Started" : 'Continue'} <ArrowRight className="w-3.5 h-3.5" />
+                        </>
+                      )}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleSubmit}
+                      disabled={loading}
+                      className="flex items-center gap-2 py-2.5 px-6 bg-[#4f46e5] hover:bg-[#4338ca] text-white font-bold text-xs rounded-xl shadow-lg shadow-indigo-600/10 hover:shadow-indigo-600/20 transition disabled:opacity-50 cursor-pointer"
+                    >
+                      {loading ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          Submitting Application...
+                        </>
+                      ) : (
+                        'Submit Application'
+                      )}
+                    </button>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
 
           </div>
 
           {/* Footer Rights */}
           <footer className="text-center py-4 text-[11px] text-slate-400">
-            © 2024 Tendagon. All rights reserved.
+            © 2026 Tendagon. All rights reserved.
           </footer>
         </div>
       </main>
@@ -818,77 +818,126 @@ export default function OnboardingPage() {
       {/* 3. Right Sidebar Details Panel */}
       <aside className="w-full lg:w-[300px] bg-[#f8fafc] border-l border-slate-200/80 p-6 space-y-6 lg:fixed lg:top-20 lg:right-0 lg:bottom-0 lg:h-[calc(100vh-80px)] lg:overflow-y-auto z-20">
         
-        {/* Card 1: Overall Progress */}
-        <div className="bg-white border border-slate-200/80 rounded-2xl p-5 space-y-4">
-          <div className="flex justify-between items-center text-xs">
-            <span className="font-bold text-slate-800">Overall Progress</span>
-            <span className="font-extrabold font-mono transition-colors duration-500" style={{ color: progressColor }}>{progressPercentage}%</span>
-          </div>
-
-          <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-            <div 
-              className="h-full transition-all duration-500 rounded-full"
-              style={{ width: `${progressPercentage}%`, backgroundColor: progressColor }}
-            />
-          </div>
-
-          <span className="block text-[11px] text-slate-400 font-medium">
-            {step} of 6 steps completed
-          </span>
-        </div>
-
-        {/* Card 2: What to Expect list */}
-        <div className="bg-white border border-slate-200/80 rounded-2xl p-5 space-y-4">
-          <h4 className="text-xs font-bold text-slate-800">What to Expect</h4>
-          
-          <div className="space-y-4">
-            
-            {/* Expect 1 */}
-            <div className="flex gap-3 items-start">
-              <div className="p-2 bg-[#e0e7ff] text-[#4f46e5] rounded-xl shrink-0">
-                <Clock className="w-4 h-4" />
+        {step === 6 ? (
+          <>
+            <div className="bg-white border border-slate-200/80 rounded-2xl p-5 space-y-4">
+              <h4 className="text-xs font-bold text-slate-800 border-b border-slate-100 pb-3">Application Summary</h4>
+              <div className="space-y-3">
+                <div>
+                  <span className="block text-[10px] font-semibold text-slate-400 mb-0.5">Contractor Type</span>
+                  <span className="text-xs font-bold text-slate-800">{formData.contractorType || 'N/A'}</span>
+                </div>
+                <div>
+                  <span className="block text-[10px] font-semibold text-slate-400 mb-0.5">Department</span>
+                  <span className="text-xs font-bold text-slate-800">{formData.department || 'N/A'}</span>
+                </div>
+                <div>
+                  <span className="block text-[10px] font-semibold text-slate-400 mb-0.5">Position</span>
+                  <span className="text-xs font-bold text-slate-800">{formData.position || 'N/A'}</span>
+                </div>
+                <div>
+                  <span className="block text-[10px] font-semibold text-slate-400 mb-0.5">Experience</span>
+                  <span className="text-xs font-bold text-slate-800">{formData.experience || 'N/A'}</span>
+                </div>
               </div>
-              <div>
-                <span className="block text-xs font-bold text-slate-800 font-sans">Takes about 10–15 minutes</span>
-                <p className="text-[10px] text-slate-405 leading-normal mt-0.5">Complete all steps at your own pace.</p>
+              <div className="pt-3 border-t border-slate-100">
+                <button className="text-[11px] font-bold text-[#4f46e5] hover:text-indigo-700 transition">View Full Details &rarr;</button>
               </div>
             </div>
 
-            {/* Expect 2 */}
-            <div className="flex gap-3 items-start">
-              <div className="p-2 bg-emerald-50 text-emerald-650 rounded-xl shrink-0">
-                <Shield className="w-4 h-4" />
-              </div>
-              <div>
-                <span className="block text-xs font-bold text-slate-800">Secure & Confidential</span>
-                <p className="text-[10px] text-slate-405 leading-normal mt-0.5">Your information is safe with us.</p>
-              </div>
+            <div className="bg-white border border-slate-200/80 rounded-2xl p-5 space-y-2 text-left">
+              <h4 className="text-xs font-bold text-slate-800">Need Help?</h4>
+              <p className="text-[11px] text-slate-500 leading-relaxed">If you have any questions about your application, feel free to reach out.</p>
+              <button className="w-full mt-2 py-2 bg-indigo-50 text-[#4f46e5] hover:bg-indigo-100 text-xs font-bold rounded-xl transition">
+                Contact Support &rarr;
+              </button>
             </div>
 
-            {/* Expect 3 */}
-            <div className="flex gap-3 items-start">
-              <div className="p-2 bg-teal-50 text-teal-650 rounded-xl shrink-0">
-                <Save className="w-4 h-4" />
+            <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 flex gap-3">
+              <div className="p-2 bg-white rounded-xl shadow-sm border border-slate-200 shrink-0 h-min">
+                <Bell className="w-4 h-4 text-slate-500" />
               </div>
               <div>
-                <span className="block text-xs font-bold text-slate-800">Save & Continue</span>
-                <p className="text-[10px] text-slate-405 leading-normal mt-0.5">You can save progress and continue later.</p>
+                <h4 className="text-xs font-bold text-slate-800 mb-1">Stay Updated</h4>
+                <p className="text-[10px] text-slate-500 leading-relaxed">We'll notify you here and via email once there is an update on your application.</p>
               </div>
             </div>
+          </>
+        ) : (
+          <>
+            {/* Card 1: Overall Progress */}
+            <div className="bg-white border border-slate-200/80 rounded-2xl p-5 space-y-4">
+              <div className="flex justify-between items-center text-xs">
+                <span className="font-bold text-slate-800">Overall Progress</span>
+                <span className="font-extrabold font-mono transition-colors duration-500" style={{ color: progressColor }}>{progressPercentage}%</span>
+              </div>
 
-            {/* Expect 4 */}
-            <div className="flex gap-3 items-start">
-              <div className="p-2 bg-indigo-50 text-indigo-650 rounded-xl shrink-0">
-                <Bell className="w-4 h-4" />
+              <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                <div 
+                  className="h-full transition-all duration-500 rounded-full"
+                  style={{ width: `${progressPercentage}%`, backgroundColor: progressColor }}
+                />
               </div>
-              <div>
-                <span className="block text-xs font-bold text-slate-800">Get Notified</span>
-                <p className="text-[10px] text-slate-405 leading-normal mt-0.5">We'll notify you once your onboarding is reviewed.</p>
-              </div>
+
+              <span className="block text-[11px] text-slate-400 font-medium">
+                {step} of 5 steps completed
+              </span>
             </div>
 
-          </div>
-        </div>
+            {/* Card 2: What to Expect list */}
+            <div className="bg-white border border-slate-200/80 rounded-2xl p-5 space-y-4">
+              <h4 className="text-xs font-bold text-slate-800">What to Expect</h4>
+              
+              <div className="space-y-4">
+                
+                {/* Expect 1 */}
+                <div className="flex gap-3 items-start">
+                  <div className="p-2 bg-[#e0e7ff] text-[#4f46e5] rounded-xl shrink-0">
+                    <Clock className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <span className="block text-xs font-bold text-slate-800 font-sans">Takes about 10–15 minutes</span>
+                    <p className="text-[10px] text-slate-405 leading-normal mt-0.5">Complete all steps at your own pace.</p>
+                  </div>
+                </div>
+
+                {/* Expect 2 */}
+                <div className="flex gap-3 items-start">
+                  <div className="p-2 bg-emerald-50 text-emerald-650 rounded-xl shrink-0">
+                    <Shield className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <span className="block text-xs font-bold text-slate-800">Secure & Confidential</span>
+                    <p className="text-[10px] text-slate-405 leading-normal mt-0.5">Your information is safe with us.</p>
+                  </div>
+                </div>
+
+                {/* Expect 3 */}
+                <div className="flex gap-3 items-start">
+                  <div className="p-2 bg-teal-50 text-teal-650 rounded-xl shrink-0">
+                    <Save className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <span className="block text-xs font-bold text-slate-800">Save & Continue</span>
+                    <p className="text-[10px] text-slate-405 leading-normal mt-0.5">You can save progress and continue later.</p>
+                  </div>
+                </div>
+
+                {/* Expect 4 */}
+                <div className="flex gap-3 items-start">
+                  <div className="p-2 bg-indigo-50 text-indigo-650 rounded-xl shrink-0">
+                    <Bell className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <span className="block text-xs font-bold text-slate-800">Get Notified</span>
+                    <p className="text-[10px] text-slate-405 leading-normal mt-0.5">We'll notify you once your onboarding is reviewed.</p>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </>
+        )}
 
         
       </aside>
