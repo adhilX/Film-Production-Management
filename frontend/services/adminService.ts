@@ -36,7 +36,7 @@ export const adminService = {
   },
   async evaluateApplication(
     id: string,
-    payload: { status: 'approved' | 'changes-requested'; roleId?: string; adminFeedback?: string }
+    payload: { status: 'approved' | 'changes-requested'; systemRoleId?: string; adminFeedback?: string }
   ): Promise<any> {
     const res = await axiosClient.patch<any>(`/admin/applications/${id}/evaluate`, payload);
     return res.data;

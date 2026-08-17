@@ -3,8 +3,8 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { InjectModel, InjectConnection } from '@nestjs/mongoose';
+import { Model, Types, Connection } from 'mongoose';
 import { User, UserDocument } from '../users/schemas/user.schema';
 import {
   UserProfile,
@@ -27,6 +27,7 @@ export class AdminService {
     @InjectModel(Role.name) private roleModel: Model<RoleDocument>,
     @InjectModel(Permission.name)
     private permissionModel: Model<PermissionDocument>,
+    @InjectConnection() private connection: Connection,
     private auditLogsService: AuditLogsService,
   ) {}
 
@@ -56,51 +57,109 @@ export class AdminService {
     adminId: string,
     payload: { status: string; systemRoleId?: string; adminFeedback?: string },
   ): Promise<User> {
-    const user = await this.userModel.findById(id).exec();
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-
-    const { status, systemRoleId, adminFeedback } = payload;
-    const oldStatus = user.onboardingStatus;
-
-    if (status === 'approved') {
-      user.isActive = true;
-      user.onboardingStatus = 'approved';
-      user.status = 'Approved';
-      user.adminFeedback = '';
-
-      if (!systemRoleId) {
-        throw new BadRequestException('systemRoleId is required for Approval');
+    let session: any = null;
+    const client = this.connection.getClient() as any;
+    const isStandalone = client?.topology?.description?.type === 'Single';
+    
+    if (!isStandalone) {
+      try {
+        session = await this.connection.startSession();
+        session.startTransaction();
+      } catch (e) {
+        session = null;
       }
-      user.systemRoleId = new Types.ObjectId(systemRoleId);
-    } else if (status === 'changes-requested') {
-      user.isActive = false;
-      user.onboardingStatus = 'changes-requested';
-      user.status = 'Changes Requested';
-      user.systemRoleId = null;
-      user.adminFeedback =
-        adminFeedback || 'Please review and update your onboarding details.';
-    } else {
-      throw new BadRequestException('Invalid evaluation status');
     }
+    
+    try {
+      const user = session 
+        ? await this.userModel.findById(id).session(session).exec()
+        : await this.userModel.findById(id).exec();
 
-    await user.save();
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
 
-    // Audit Log Creation
-    await this.auditLogsService.create(
-      adminId,
-      user._id.toString(),
-      status === 'approved'
-        ? 'USER_ONBOARDING_APPROVED'
-        : 'USER_ONBOARDING_CHANGES_REQUESTED',
-      {
-        oldStatus,
-        newStatus: user.onboardingStatus,
-      },
-    );
+      const { status, systemRoleId, adminFeedback } = payload;
+      const oldStatus = user.onboardingStatus;
 
-    return user;
+      if (status === 'approved') {
+        user.isActive = true;
+        user.onboardingStatus = 'approved';
+        user.status = 'Approved';
+        user.adminFeedback = '';
+
+        if (!systemRoleId) {
+          throw new BadRequestException('systemRoleId is required for Approval');
+        }
+
+        // Verify that the Role actually exists
+        const roleExists = session
+          ? await this.roleModel.findById(systemRoleId).session(session).exec()
+          : await this.roleModel.findById(systemRoleId).exec();
+
+        if (!roleExists) {
+          throw new BadRequestException('Invalid systemRoleId: Role does not exist in the database');
+        }
+
+        user.systemRoleId = new Types.ObjectId(systemRoleId);
+      } else if (status === 'changes-requested') {
+        user.isActive = false;
+        user.onboardingStatus = 'changes-requested';
+        user.status = 'Changes Requested';
+        // Note: We deliberately do NOT change systemRoleId on rejection
+        user.adminFeedback =
+          adminFeedback || 'Please review and update your onboarding details.';
+      } else {
+        throw new BadRequestException('Invalid evaluation status');
+      }
+
+      if (session) {
+        await user.save({ session });
+        await this.auditLogsService.create(
+          adminId,
+          user._id.toString(),
+          status === 'approved'
+            ? 'USER_ONBOARDING_APPROVED'
+            : 'USER_ONBOARDING_CHANGES_REQUESTED',
+          {
+            oldStatus,
+            newStatus: user.onboardingStatus,
+            assignedRole: systemRoleId || null,
+          },
+          undefined,
+          undefined,
+          session,
+        );
+        await session.commitTransaction();
+      } else {
+        await user.save();
+        await this.auditLogsService.create(
+          adminId,
+          user._id.toString(),
+          status === 'approved'
+            ? 'USER_ONBOARDING_APPROVED'
+            : 'USER_ONBOARDING_CHANGES_REQUESTED',
+          {
+            oldStatus,
+            newStatus: user.onboardingStatus,
+            assignedRole: systemRoleId || null,
+          },
+          undefined,
+          undefined,
+          undefined,
+        );
+      }
+      return user;
+    } catch (error) {
+      if (session) {
+        await session.abortTransaction();
+      }
+      throw error;
+    } finally {
+      if (session) {
+        session.endSession();
+      }
+    }
   }
 
   // --- Granular User Operations (CRUD) ---

@@ -18,13 +18,14 @@ import { FundsService } from './funds.service';
 import { CreateFundRequestDto } from './dto/create-fund-request.dto';
 import { UpdateFundStatusDto } from './dto/update-fund-status.dto';
 import { AuthGuard } from '../auth/guards/auth.guard';
+import { PermissionsGuard } from '../auth/guards/permissions.guard';
 import { Permissions } from '../auth/decorators/permissions.decorator';
 import { CheckProduction } from '../auth/decorators/check-production.decorator';
 
 @ApiTags('Budget & Funds')
 @ApiBearerAuth('JWT-auth')
 @Controller('productions/:productionId/funds')
-@UseGuards(AuthGuard)
+@UseGuards(AuthGuard, PermissionsGuard)
 @CheckProduction()
 export class FundsController {
   constructor(private readonly fundsService: FundsService) {}

@@ -10,7 +10,7 @@ export interface User {
   email: string;
   name: string;
   contractorType: 'Freelancer' | 'Cast' | 'Crew' | 'Supplier' | 'Agent' | 'Production Company' | 'None';
-  systemRole: 'Admin' | 'Manager' | 'User';
+  systemRoleId?: string | { _id: string; name: string } | null;
   status: 'Draft' | 'Pending' | 'UnderReview' | 'Approved' | 'Rejected';
   isActive: boolean;
 }
@@ -49,7 +49,6 @@ export interface LocationBooking {
 }
 
 export interface FundRequest {
-  [x: string]: string;
   _id: string;
   productionId: string;
   requestedBy: {
@@ -60,6 +59,8 @@ export interface FundRequest {
   amount: number;
   justification: string;
   status: 'Pending' | 'Approved' | 'Rejected';
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface AuditLog {

@@ -33,8 +33,8 @@ export const authService = {
   /**
    * Fetches current user onboarding status and active status
    */
-  async getStatus(): Promise<{ status: string; isActive: boolean; systemRole: string; onboardingStatus?: string; permissions?: string[] }> {
-    const response = await axiosClient.get<{ status: string; isActive: boolean; systemRole: string; onboardingStatus?: string; permissions?: string[] }>('/users/me/status');
+  async getStatus(): Promise<{ status: string; isActive: boolean; systemRoleId: string | null; onboardingStatus?: string; permissions?: string[] }> {
+    const response = await axiosClient.get<{ status: string; isActive: boolean; systemRoleId: string | null; onboardingStatus?: string; permissions?: string[] }>('/users/me/status');
     return response.data;
   },
 

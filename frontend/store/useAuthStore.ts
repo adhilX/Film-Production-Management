@@ -14,7 +14,7 @@ interface AuthState {
   logout: () => Promise<void>;
   refreshToken: () => Promise<string | null>;
   clearAuth: () => void;
-  checkStatus: () => Promise<{ status: string; isActive: boolean; systemRole: string; onboardingStatus?: string; permissions?: string[] } | null>;
+  checkStatus: () => Promise<{ status: string; isActive: boolean; systemRoleId: string | null; onboardingStatus?: string; permissions?: string[] } | null>;
 }
 
 const setAuthCookie = () => {
@@ -154,10 +154,12 @@ export const useAuthStore = create<AuthState>()(
           const currentUser = get().user;
           if (currentUser) {
             const hasPermissionsChanged = JSON.stringify(currentUser.permissions || []) !== JSON.stringify(statusData.permissions || []);
+            const currentRoleIdStr = currentUser.systemRoleId?._id || (typeof currentUser.systemRoleId === 'string' ? currentUser.systemRoleId : null);
+            const hasRoleIdChanged = currentRoleIdStr !== statusData.systemRoleId;
             if (
               currentUser.status !== statusData.status ||
               currentUser.isActive !== statusData.isActive ||
-              currentUser.systemRole !== statusData.systemRole ||
+              hasRoleIdChanged ||
               currentUser.onboardingStatus !== statusData.onboardingStatus ||
               hasPermissionsChanged
             ) {
@@ -165,7 +167,7 @@ export const useAuthStore = create<AuthState>()(
                 ...currentUser,
                 status: statusData.status,
                 isActive: statusData.isActive,
-                systemRole: statusData.systemRole,
+                systemRoleId: statusData.systemRoleId ? { _id: statusData.systemRoleId, name: currentUser.systemRoleId?.name || '' } : undefined,
                 onboardingStatus: statusData.onboardingStatus,
                 permissions: statusData.permissions || [],
               };

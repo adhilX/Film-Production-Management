@@ -24,13 +24,14 @@ import { UsersService } from './users.service';
 import { UpdateOnboardingDto } from './dto/update-onboarding.dto';
 import { UpdateOnboardingProgressDto } from './dto/update-onboarding-progress.dto';
 import { AuthGuard } from '../auth/guards/auth.guard';
+import { PermissionsGuard } from '../auth/guards/permissions.guard';
 import { Permissions } from '../auth/decorators/permissions.decorator';
 import { CloudinaryService } from '../common/cloudinary/cloudinary.service';
 
 @ApiTags('Users & Onboarding')
 @ApiBearerAuth('JWT-auth')
 @Controller('users')
-@UseGuards(AuthGuard)
+@UseGuards(AuthGuard, PermissionsGuard)
 export class UsersController {
   constructor(
     private readonly usersService: UsersService,

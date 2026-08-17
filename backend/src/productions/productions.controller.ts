@@ -18,13 +18,14 @@ import { CreateProductionDto } from './dto/create-production.dto';
 import { AssignCastCrewDto } from './dto/assign-cast-crew.dto';
 import { CreateCharacterDto } from './dto/create-character.dto';
 import { AuthGuard } from '../auth/guards/auth.guard';
+import { PermissionsGuard } from '../auth/guards/permissions.guard';
 import { Permissions } from '../auth/decorators/permissions.decorator';
 import { CheckProduction } from '../auth/decorators/check-production.decorator';
 
 @ApiTags('Productions Core')
 @ApiBearerAuth('JWT-auth')
 @Controller('productions')
-@UseGuards(AuthGuard)
+@UseGuards(AuthGuard, PermissionsGuard)
 export class ProductionsController {
   constructor(private readonly productionsService: ProductionsService) {}
 

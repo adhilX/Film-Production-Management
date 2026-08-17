@@ -18,13 +18,14 @@ import { LocationsService } from './locations.service';
 import { CreateLocationDto } from './dto/create-location.dto';
 import { UpdateLocationStatusDto } from './dto/update-location-status.dto';
 import { AuthGuard } from '../auth/guards/auth.guard';
+import { PermissionsGuard } from '../auth/guards/permissions.guard';
 import { Permissions } from '../auth/decorators/permissions.decorator';
 import { CheckProduction } from '../auth/decorators/check-production.decorator';
 
 @ApiTags('Location Bookings')
 @ApiBearerAuth('JWT-auth')
 @Controller('productions/:productionId/locations')
-@UseGuards(AuthGuard)
+@UseGuards(AuthGuard, PermissionsGuard)
 @CheckProduction()
 export class LocationsController {
   constructor(private readonly locationsService: LocationsService) {}

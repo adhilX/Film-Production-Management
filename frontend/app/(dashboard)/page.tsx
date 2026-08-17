@@ -42,7 +42,8 @@ export default function DashboardPage() {
       }
     };
 
-    if (user?.systemRole === 'Admin') {
+    const hasAdminPerm = user?.permissions?.includes('users.approve') || user?.permissions?.includes('roles.manage');
+    if (hasAdminPerm) {
       fetchMetrics();
     } else {
       setLoading(false);
@@ -51,7 +52,8 @@ export default function DashboardPage() {
 
   if (!user) return null;
 
-  if (user.systemRole !== 'Admin') {
+  const hasAdminPerm = user?.permissions?.includes('users.approve') || user?.permissions?.includes('roles.manage');
+  if (!hasAdminPerm) {
     return <OverviewModule />;
   }
 

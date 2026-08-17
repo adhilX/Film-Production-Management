@@ -7,12 +7,13 @@ import {
 } from '@nestjs/swagger';
 import { AuditLogsService } from './audit-logs.service';
 import { AuthGuard } from '../auth/guards/auth.guard';
+import { PermissionsGuard } from '../auth/guards/permissions.guard';
 import { Permissions } from '../auth/decorators/permissions.decorator';
 
 @ApiTags('Audit Logs')
 @ApiBearerAuth('JWT-auth')
 @Controller('audit-logs')
-@UseGuards(AuthGuard)
+@UseGuards(AuthGuard, PermissionsGuard)
 export class AuditLogsController {
   constructor(private readonly auditLogsService: AuditLogsService) {}
 

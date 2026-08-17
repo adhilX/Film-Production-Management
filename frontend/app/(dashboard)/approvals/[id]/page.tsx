@@ -17,6 +17,7 @@ export default function ApprovalDetails() {
   // Decision State
   const [feedback, setFeedback] = useState('');
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [showApproveModal, setShowApproveModal] = useState(false);
   const [roleOverride, setRoleOverride] = useState('');
   const [roles, setRoles] = useState<any[]>([]);
 
@@ -211,7 +212,7 @@ export default function ApprovalDetails() {
 
               <div className="space-y-3 pt-2">
                 <button 
-                  onClick={() => handleDecision('approved')}
+                  onClick={() => setShowApproveModal(true)}
                   disabled={submitting || !roleOverride}
                   className="w-full py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 disabled:opacity-50"
                 >
@@ -267,6 +268,42 @@ export default function ApprovalDetails() {
                 className="flex-1 py-2.5 bg-red-500 hover:bg-red-400 disabled:bg-red-500/50 disabled:text-red-200/50 text-white font-semibold rounded-lg transition"
               >
                 Confirm & Reject
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Approve Confirmation Modal */}
+      {showApproveModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-6 shadow-2xl">
+            <h3 className="text-lg font-bold text-emerald-400 flex items-center gap-2 mb-4">
+              <CheckCircle2 className="w-5 h-5" />
+              Confirm Approval
+            </h3>
+            <p className="text-sm text-slate-300 mb-6 leading-relaxed">
+              Are you sure you want to approve this applicant? They will be granted system access with the role of:{' '}
+              <span className="font-bold text-emerald-400 border border-emerald-500/30 bg-emerald-500/10 px-2 py-1 rounded-md">
+                {roles.find(r => r._id === roleOverride)?.name || 'Unknown Role'}
+              </span>
+            </p>
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setShowApproveModal(false)}
+                className="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium rounded-lg transition"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={() => {
+                  setShowApproveModal(false);
+                  handleDecision('approved');
+                }}
+                disabled={submitting || !roleOverride}
+                className="flex-1 py-2.5 bg-emerald-500 hover:bg-emerald-400 disabled:bg-emerald-500/50 disabled:text-emerald-950/50 text-slate-950 font-bold rounded-lg transition"
+              >
+                Confirm & Approve
               </button>
             </div>
           </div>

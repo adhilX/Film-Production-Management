@@ -26,8 +26,6 @@ export const PermissionGuard: React.FC<PermissionGuardProps> = ({
 
   const hasPermission = (perm: string): boolean => {
     if (!user) return false;
-    // Admins bypass all permission checks
-    if (user.systemRole === 'Admin') return true;
     return user.permissions ? user.permissions.includes(perm) : false;
   };
 

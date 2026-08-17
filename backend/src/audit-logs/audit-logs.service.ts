@@ -48,6 +48,7 @@ export class AuditLogsService {
     metadata: { oldStatus?: string; newStatus?: string; [key: string]: any },
     module?: string,
     ipAddress?: string,
+    session?: ClientSession,
   ): Promise<AuditLog> {
     return this.log(
       actorId,
@@ -56,7 +57,7 @@ export class AuditLogsService {
       'User',
       metadata.oldStatus || '',
       metadata.newStatus || '',
-      undefined,
+      session,
       module,
       metadata,
       ipAddress,
