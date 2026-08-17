@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { authService } from '@/services/authService';
 import { useAuthStore } from '@/store/useAuthStore';
 import { 
@@ -841,7 +842,7 @@ export default function OnboardingPage() {
                 </div>
               </div>
               <div className="pt-3 border-t border-slate-100">
-                <button className="text-[11px] font-bold text-[#4f46e5] hover:text-indigo-700 transition">View Full Details &rarr;</button>
+                <Link href="/onboarding/details" className="text-[11px] font-bold text-[#4f46e5] hover:text-indigo-700 transition">View Full Details &rarr;</Link>
               </div>
             </div>
 

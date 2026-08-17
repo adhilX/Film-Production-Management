@@ -23,7 +23,7 @@ export default function OnboardingGuard({ children }: { children: React.ReactNod
       const status = statusData?.onboardingStatus || user.onboardingStatus || 'in-progress';
 
       const isPublicRoute = pathname === '/login' || pathname === '/signup';
-      const isOnboardingFormRoute = pathname === '/onboarding';
+      const isOnboardingRoute = pathname.startsWith('/onboarding');
 
       if (isPublicRoute) {
         setChecking(false);
@@ -31,12 +31,12 @@ export default function OnboardingGuard({ children }: { children: React.ReactNod
       }
 
       if (status === 'approved') {
-        if (isOnboardingFormRoute) {
+        if (isOnboardingRoute) {
           router.replace('/');
         }
       } else {
         // 'in-progress', 'changes-requested', or 'pending-review'
-        if (!isOnboardingFormRoute) {
+        if (!isOnboardingRoute) {
           router.replace('/onboarding');
         }
       }

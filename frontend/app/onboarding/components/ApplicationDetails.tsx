@@ -3,19 +3,13 @@
 import React from 'react';
 import { CheckCircle2 } from 'lucide-react';
 
-interface Step6Props {
+interface ApplicationDetailsProps {
   formData: any;
 }
 
-export default function Step6Review({ formData }: Step6Props) {
+export default function ApplicationDetails({ formData }: ApplicationDetailsProps) {
   return (
-    <div className="space-y-4 animate-in fade-in duration-200">
-      <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-        <CheckCircle2 className="w-5 h-5 text-emerald-600" /> Step 6: Review & Final Submission
-      </h2>
-      <p className="text-xs text-slate-500">
-        Please review all your details carefully. Submitting will transition your application to the <strong className="text-slate-800">Pending Review</strong> state for administrator audit.
-      </p>
+    <div className="space-y-4">
 
       <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 space-y-4 text-xs">
         {/* Section 1: Professional */}
