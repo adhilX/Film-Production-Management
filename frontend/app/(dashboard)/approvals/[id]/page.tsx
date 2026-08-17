@@ -46,7 +46,7 @@ export default function ApprovalDetails() {
         roleId: roleOverride || undefined,
         adminFeedback: status === 'changes-requested' ? feedback : undefined,
       });
-      router.push('/admin/approvals');
+      router.push('/approvals');
     } catch (err) {
       console.error('Failed to submit decision', err);
       setSubmitting(false);
@@ -68,7 +68,7 @@ export default function ApprovalDetails() {
   return (
     <div className="animate-in fade-in duration-300 pb-20">
       <div className="mb-6">
-        <Link href="/admin/approvals" className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-amber-500 transition mb-4">
+        <Link href="/approvals" className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-amber-500 transition mb-4">
           <ArrowLeft className="w-4 h-4" />
           Back to Queue
         </Link>

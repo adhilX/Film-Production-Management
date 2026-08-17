@@ -139,8 +139,8 @@ export const FundRequestList: React.FC<FundRequestListProps> = ({ funds, loading
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     {fund.status === 'Pending' && (
-                      <PermissionGuard permission="funds.approve">
-                        <div className="flex space-x-2">
+                      <div className="flex space-x-2">
+                        <PermissionGuard permission="funds.approve">
                           <button
                             disabled={processingId === fund._id}
                             onClick={() => handleApprove(fund._id)}
@@ -148,6 +148,8 @@ export const FundRequestList: React.FC<FundRequestListProps> = ({ funds, loading
                           >
                             Approve
                           </button>
+                        </PermissionGuard>
+                        <PermissionGuard permission="funds.reject">
                           <button
                             disabled={processingId === fund._id}
                             onClick={() => handleReject(fund._id)}
@@ -155,8 +157,8 @@ export const FundRequestList: React.FC<FundRequestListProps> = ({ funds, loading
                           >
                             Reject
                           </button>
-                        </div>
-                      </PermissionGuard>
+                        </PermissionGuard>
+                      </div>
                     )}
                   </td>
                 </tr>

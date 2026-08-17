@@ -43,9 +43,9 @@ export default function FundsPage() {
       <div className="flex flex-col gap-4 justify-between items-start">
         <h1 className="text-2xl font-bold">Fund Management</h1>
 
-        {/* Only visible to those who can view productions */}
+        {/* Only visible to those who can request funds */}
         <div className="w-full">
-          <PermissionGuard permission="productions.view">
+          <PermissionGuard permission="funds.request">
             <CreateFundForm onSuccess={fetchFunds} />
           </PermissionGuard>
         </div>

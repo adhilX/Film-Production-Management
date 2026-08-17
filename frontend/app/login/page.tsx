@@ -71,11 +71,7 @@ export default function LoginPage() {
       setSuccess(`Welcome back, ${loggedInUser?.name || 'User'}! Redirecting to workspace...`);
 
       setTimeout(() => {
-        if (loggedInUser?.systemRole === 'Admin') {
-          window.location.href = '/admin';
-        } else {
-          window.location.href = '/';
-        }
+        window.location.href = '/';
       }, 500);
     } catch (err: unknown) {
       if (err && typeof err === 'object' && 'response' in err) {

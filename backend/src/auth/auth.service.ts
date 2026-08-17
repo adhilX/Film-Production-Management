@@ -43,12 +43,16 @@ export class AuthService implements IAuthService, OnModuleInit {
       { name: 'locations.view', description: 'View Locations', group: 'Production Perms' },
       { name: 'locations.book', description: 'Book Locations', group: 'Production Perms' },
       { name: 'locations.approve', description: 'Approve Locations', group: 'Production Perms' },
+      { name: 'locations.update', description: 'Update Locations', group: 'Production Perms' },
       { name: 'inventory.view', description: 'View Inventory', group: 'Production Perms' },
       { name: 'inventory.manage', description: 'Manage Inventory', group: 'Production Perms' },
+      { name: 'costumes.view', description: 'View Costumes', group: 'Production Perms' },
       // Financial Perms
       { name: 'funds.view', description: 'View Fund Requests', group: 'Financial Perms' },
       { name: 'funds.create', description: 'Submit Fund Requests', group: 'Financial Perms' },
+      { name: 'funds.request', description: 'Request Funds', group: 'Financial Perms' },
       { name: 'funds.approve', description: 'Approve Fund Requests', group: 'Financial Perms' },
+      { name: 'funds.reject', description: 'Reject Fund Requests', group: 'Financial Perms' },
     ];
 
     for (const perm of defaultPermissions) {
@@ -60,23 +64,41 @@ export class AuthService implements IAuthService, OnModuleInit {
 
     // 1. Seed Roles
     const adminPermissions = [
+      'users.view',
       'users.approve',
-      'locations.approve',
-      'locations.book',
-      'funds.approve',
+      'users.update',
+      'roles.view',
+      'roles.manage',
       'audit_logs.view',
-      'production.delete',
+      'productions.view',
       'productions.create',
+      'productions.update',
+      'production.delete',
+      'locations.view',
+      'locations.book',
+      'locations.update',
+      'locations.approve',
+      'funds.view',
+      'funds.request',
+      'funds.approve',
+      'funds.reject',
+      'costumes.view'
     ];
 
     const managerPermissions = [
-      'locations.approve',
-      'locations.book',
-      'funds.approve',
-      'productions.create',
+      'productions.view',
+      'productions.update',
+      'locations.view',
+      'locations.update',
+      'funds.view',
+      'funds.request'
     ];
 
-    const userPermissions = ['locations.book'];
+    const userPermissions = [
+      'productions.view',
+      'locations.view',
+      'costumes.view'
+    ];
 
     const getPermissionIds = async (names: string[]): Promise<any[]> => {
       const perms = await this._permissionModel.find({ name: { $in: names } }).exec();

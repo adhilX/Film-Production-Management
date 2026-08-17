@@ -110,7 +110,7 @@ export default function ApprovalsQueue() {
                   </td>
                   <td className="px-6 py-4 text-right">
                     <Link 
-                      href={`/admin/approvals/${app._id}`}
+                      href={`/approvals/${app._id}`}
                       className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold rounded-lg transition"
                     >
                       Review
