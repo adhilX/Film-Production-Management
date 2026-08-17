@@ -106,6 +106,7 @@ export class UsersService {
         const oldStatus = user.onboardingStatus;
         user.onboardingStatus = 'pending-review';
         user.status = 'Pending';
+        user.adminFeedback = ''; // Clear out the admin feedback upon resubmission
         if (oldStatus !== 'pending-review') {
           await this.auditLogsService.create(userId, userId, 'USER_ONBOARDING_STATUS_CHANGE', {
             oldStatus,

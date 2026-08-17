@@ -57,8 +57,8 @@ export default function SignaturePad({ value, onChange, error }: SignaturePadPro
       if (padRef.current.isEmpty()) {
         onChange('');
       } else {
-        // Save as base64 png
-        onChange(padRef.current.getTrimmedCanvas().toDataURL('image/png'));
+        // Save as base64 png - don't trim to preserve original aspect ratio when loaded back!
+        onChange(padRef.current.toDataURL('image/png'));
       }
     }
   };

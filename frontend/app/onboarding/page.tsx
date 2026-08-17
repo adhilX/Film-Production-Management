@@ -50,6 +50,7 @@ export default function OnboardingPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [success, setSuccess] = useState<string | null>(null);
   const [adminFeedback, setAdminFeedback] = useState<string | null>(null);
+  const [onboardingStatus, setOnboardingStatus] = useState<string>('in-progress');
 
   // Form State
   const [formData, setFormData] = useState({
@@ -77,6 +78,14 @@ export default function OnboardingPage() {
       try {
         const me = await authService.getMe();
         if (me) {
+          const status = me.onboardingStatus || 'in-progress';
+          setOnboardingStatus(status);
+          
+          if (status === 'approved') {
+            router.replace('/');
+            return;
+          }
+
           setAdminFeedback(me.adminFeedback || null);
           if (me.currentStep && me.currentStep >= 1 && me.currentStep <= 6) {
             setStep(me.currentStep);
@@ -266,6 +275,8 @@ export default function OnboardingPage() {
       });
 
       setSuccess('Application submitted successfully!');
+      setAdminFeedback(null);
+      setOnboardingStatus('pending-review');
       setStep(6);
     } catch (e: any) {
       setErrors({ api: e.response?.data?.message || 'An error occurred during onboarding submission.' });
@@ -321,17 +332,6 @@ export default function OnboardingPage() {
         {/* Scrollable Container */}
         <div className="p-8 space-y-6 max-w-4xl w-full mx-auto">
           
-          {/* Changes Requested Banner */}
-          {adminFeedback && (
-            <div className="p-4 bg-red-50 border border-red-200 text-red-800 rounded-2xl text-xs flex flex-col gap-1.5 animate-pulse">
-              <div className="flex items-center gap-2">
-                <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />
-                <span className="font-bold uppercase tracking-wider">Changes Requested by Administrator</span>
-              </div>
-              <p className="pl-7 font-medium">{adminFeedback}</p>
-            </div>
-          )}
-
           {/* Global Error Banner */}
           {errors.api && (
             <div className="p-4 bg-red-50 border border-red-200 text-red-800 rounded-2xl text-xs flex items-start gap-3">
@@ -352,7 +352,7 @@ export default function OnboardingPage() {
           <div className="bg-white border border-slate-200/80 rounded-3xl shadow-sm overflow-hidden flex flex-col">
             
             {/* Header Banner Section */}
-            <FormHeader step={step} />
+            {step < 6 && <FormHeader step={step} />}
 
             {/* Step Body */}
             <div className="p-6 sm:p-8 flex-1">
@@ -399,7 +399,13 @@ export default function OnboardingPage() {
                   adminFeedback={adminFeedback}
                 />
               )}
-              {step === 6 && <Step6Done />}
+              {step === 6 && (
+                <Step6Done 
+                  status={onboardingStatus} 
+                  adminFeedback={adminFeedback} 
+                  onEdit={() => setStep(1)} 
+                />
+              )}
             </div>
 
             {/* Stepper Footer Controls */}
