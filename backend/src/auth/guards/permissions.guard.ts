@@ -49,7 +49,8 @@ export class PermissionsGuard implements CanActivate {
     const timestamp = new Date().toISOString();
 
     // Onboarding Gate: If user is not Admin and onboarding is not approved, block permission-protected features
-    if (user.systemRole !== 'Admin' && user.onboardingStatus !== 'approved') {
+    const isAdmin = user.permissions && user.permissions.includes('roles.manage');
+    if (!isAdmin && user.onboardingStatus !== 'approved') {
       await this.auditLogsService.log(
         user._id.toString(),
         'PERMISSION_DENIED_ONBOARDING_GATE',
@@ -63,10 +64,7 @@ export class PermissionsGuard implements CanActivate {
       );
     }
 
-    // Admin has all permissions automatically
-    if (user.systemRole === 'Admin') {
-      return true;
-    }
+
 
     // Extract user permission strings
     const userPermissions: string[] = user.permissions || [];

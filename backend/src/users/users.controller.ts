@@ -72,7 +72,7 @@ export class UsersController {
     return {
       status: user.status,
       isActive: user.isActive,
-      systemRole: user.systemRole,
+      systemRoleId: user.systemRoleId,
       onboardingStatus: user.onboardingStatus,
       permissions: user.permissions || [],
     };

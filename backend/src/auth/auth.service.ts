@@ -264,9 +264,8 @@ export class AuthService implements IAuthService, OnModuleInit {
         passwordHash,
         name: 'Super Admin',
         contractorType: 'Production Company',
-        systemRole: 'Admin',
         status: 'Approved',
-        roleId: adminRole._id,
+        systemRoleId: adminRole._id,
         isActive: true,
         onboardingStatus: 'approved',
         currentStep: 6,
@@ -293,9 +292,8 @@ export class AuthService implements IAuthService, OnModuleInit {
       passwordHash,
       name,
       contractorType,
-      systemRole: 'User',
       status: 'Pending',
-      roleId: userRole?._id,
+      systemRoleId: null,
       isActive: false,
     });
 
@@ -322,7 +320,7 @@ export class AuthService implements IAuthService, OnModuleInit {
     const tokens = await this._jwtService.generateTokens({
       userId: user._id.toString(),
       email: user.email,
-      role: user.systemRole,
+      systemRoleId: user.systemRoleId?.toString(),
     });
 
     return {
@@ -341,7 +339,7 @@ export class AuthService implements IAuthService, OnModuleInit {
     return this._jwtService.generateTokens({
       userId: user._id.toString(),
       email: user.email,
-      role: user.systemRole,
+      systemRoleId: user.systemRoleId?.toString(),
     });
   }
 

@@ -41,7 +41,7 @@ export class UsersService {
     pages: number;
     limit: number;
   }> {
-    const query: any = { systemRole: { $ne: 'Admin' } };
+    const query: any = {};
 
     if (search) {
       const escapedSearch = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -58,7 +58,7 @@ export class UsersService {
     const users = await this.userModel
       .find(query)
       .populate({
-        path: 'roleId',
+        path: 'systemRoleId',
         populate: { path: 'permissions' },
       })
       .select('-passwordHash')
@@ -79,7 +79,7 @@ export class UsersService {
     const user = await this.userModel
       .findById(id)
       .populate({
-        path: 'roleId',
+        path: 'systemRoleId',
         populate: { path: 'permissions' },
       })
       .select('-passwordHash')
@@ -95,7 +95,7 @@ export class UsersService {
       .findById(userId)
       .populate('profile')
       .populate({
-        path: 'roleId',
+        path: 'systemRoleId',
         populate: { path: 'permissions' },
       })
       .select('-passwordHash')
@@ -288,34 +288,14 @@ export class UsersService {
       user.onboardingStatus = 'approved';
       user.adminFeedback = '';
 
-      // Role Mapping
-      let systemRole = 'User';
-      let roleName = 'User';
-
-      switch (user.contractorType) {
-        case 'Production Company':
-          systemRole = 'Manager';
-          roleName = 'Production Manager';
-          break;
-        case 'Admin':
-          systemRole = 'Admin';
-          roleName = 'Admin';
-          break;
-        default:
-          systemRole = 'User';
-          roleName = 'User';
-          break;
+      if (!updateDto.systemRoleId) {
+        throw new BadRequestException('systemRoleId is required for Approval');
       }
-
-      user.systemRole = systemRole;
-      const dbRole = await this.roleModel.findOne({ name: roleName }).exec();
-      if (dbRole) {
-        user.roleId = dbRole._id;
-      }
+      user.systemRoleId = new Types.ObjectId(updateDto.systemRoleId);
     } else if (nextStatus === 'Changes Requested') {
       user.isActive = false;
       user.onboardingStatus = 'changes-requested';
-      user.roleId = null;
+      user.systemRoleId = null;
       user.adminFeedback =
         updateDto.adminFeedback ||
         'Please review and update your onboarding details.';

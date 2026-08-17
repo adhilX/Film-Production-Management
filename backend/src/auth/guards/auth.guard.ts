@@ -47,7 +47,7 @@ export class AuthGuard implements CanActivate {
     const user = await this._userModel
       .findById(payload.userId)
       .populate({
-        path: 'roleId',
+        path: 'systemRoleId',
         populate: { path: 'permissions' },
       })
       .populate({
@@ -83,31 +83,7 @@ export class AuthGuard implements CanActivate {
 
     request.user = user;
 
-    const requiredPermissions = this._reflector.getAllAndOverride<string[]>(
-      PERMISSIONS_KEY,
-      [context.getHandler(), context.getClass()],
-    );
-
-    if (requiredPermissions && requiredPermissions.length > 0) {
-      if (user.systemRole !== 'Admin') {
-        const userRole = await this._roleModel
-          .findById(user.roleId)
-          .populate('permissions')
-          .exec();
-        const userPermissions = ((userRole?.permissions as any[]) || []).map(
-          (p) => p.name,
-        );
-        const hasAllPermissions = requiredPermissions.every((perm) =>
-          userPermissions.includes(perm),
-        );
-        if (!hasAllPermissions) {
-          console.log(
-            `[AuthGuard] Missing permissions for ${user._id}. Required: ${requiredPermissions}, Has: ${userPermissions}`,
-          );
-          throw new ForbiddenException(GENERAL_MESSAGES.FORBIDDEN);
-        }
-      }
-    }
+    // Permissions check is handled by PermissionsGuard.
 
     const checkProduction = this._reflector.getAllAndOverride<boolean>(
       CHECK_PRODUCTION_KEY,
@@ -115,7 +91,9 @@ export class AuthGuard implements CanActivate {
     );
 
     if (checkProduction) {
-      if (user.systemRole !== 'Admin') {
+      // Admins (identified by having 'roles.manage' permission) bypass production assignment check
+      const isAdmin = user.permissions && user.permissions.includes('roles.manage');
+      if (!isAdmin) {
         let productionId =
           request.params.productionId ||
           request.body.productionId ||

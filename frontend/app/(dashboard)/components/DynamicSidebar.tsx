@@ -40,7 +40,6 @@ export default function DynamicSidebar() {
   const hasPermission = (permission: string | null): boolean => {
     if (permission === null) return true;
     if (!user) return false;
-    if (user.systemRole === 'Admin') return true;
     return user.permissions ? user.permissions.includes(permission) : false;
   };
 
@@ -122,7 +121,7 @@ export default function DynamicSidebar() {
         <div className="flex flex-col bg-slate-950/40 border border-slate-800/80 rounded-xl p-3.5 space-y-1">
           <span className="font-semibold text-xs text-slate-100">{user.name}</span>
           <span className="text-[9px] text-slate-500 uppercase tracking-wider font-semibold">
-            {user.contractorType} • {user.systemRole}
+            {user.contractorType} • {user.systemRoleId?.name || 'User'}
           </span>
         </div>
         <LogoutButton 

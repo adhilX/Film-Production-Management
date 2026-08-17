@@ -37,13 +37,6 @@ export class User {
 
   @Prop({
     required: true,
-    enum: ['Admin', 'Manager', 'User'],
-    default: 'User',
-  })
-  systemRole: string;
-
-  @Prop({
-    required: true,
     enum: [
       'Draft',
       'Pending',
@@ -57,7 +50,7 @@ export class User {
   status: string;
 
   @Prop({ type: Types.ObjectId, ref: 'Role', default: null })
-  roleId: Types.ObjectId | null;
+  systemRoleId: Types.ObjectId | null;
 
   @Prop({ required: true, default: false })
   isActive: boolean;
@@ -78,6 +71,7 @@ export class User {
   // Virtual fields
   profile?: any;
   role?: any;
+  permissions?: string[];
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
@@ -91,13 +85,13 @@ UserSchema.virtual('profile', {
 
 UserSchema.virtual('role', {
   ref: 'Role',
-  localField: 'roleId',
+  localField: 'systemRoleId',
   foreignField: '_id',
   justOne: true,
 });
 
 UserSchema.virtual('permissions').get(function (this: UserDocument) {
-  const role = this.role || this.roleId;
+  const role = this.role || this.systemRoleId;
   if (role && role.permissions) {
     return ((role.permissions as any[]) || [])
       .map((p: any) => p.name || p.toString())

@@ -32,7 +32,6 @@ export default function OverviewModule() {
 
   const hasPermission = (permission: string): boolean => {
     if (!user) return false;
-    if (user.systemRole === 'Admin') return true;
     return user.permissions ? user.permissions.includes(permission) : false;
   };
 

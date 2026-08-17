@@ -25,14 +25,13 @@ export class UpdateOnboardingDto {
   status: string;
 
   @ApiProperty({
-    example: 'User',
-    enum: ['Admin', 'Manager', 'User'],
+    example: '507f1f77bcf86cd799439011',
     required: false,
-    description: 'Assigned system role on approval',
+    description: 'Assigned system role ID on approval',
   })
   @IsOptional()
-  @IsEnum(['Admin', 'Manager', 'User'])
-  systemRole?: string;
+  @IsString()
+  systemRoleId?: string;
 
   @ApiProperty({
     example: 'Please upload a clearer ID copy.',

@@ -3,7 +3,10 @@ export interface UserProfile {
   email: string;
   name: string;
   contractorType: string;
-  systemRole: string;
+  systemRoleId?: {
+    _id: string;
+    name: string;
+  };
   status: string;
   permissions: string[];
   onboardingStatus?: string;

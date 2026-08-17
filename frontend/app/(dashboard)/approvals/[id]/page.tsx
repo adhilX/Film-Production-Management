@@ -43,7 +43,7 @@ export default function ApprovalDetails() {
     try {
       await adminService.evaluateApplication(id as string, {
         status,
-        roleId: roleOverride || undefined,
+        systemRoleId: roleOverride || undefined,
         adminFeedback: status === 'changes-requested' ? feedback : undefined,
       });
       router.push('/approvals');
@@ -194,24 +194,25 @@ export default function ApprovalDetails() {
             
             <div className="space-y-6">
               <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">System Role Override (Optional)</label>
+                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Assign System Role (Required)</label>
                 <select 
                   value={roleOverride}
                   onChange={(e) => setRoleOverride(e.target.value)}
                   className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:border-amber-500 outline-none"
+                  required
                 >
-                  <option value="">Auto-assign based on Contractor Type</option>
+                  <option value="">Select a Role...</option>
                   {roles.map(r => (
                     <option key={r._id} value={r._id}>{r.name}</option>
                   ))}
                 </select>
-                <p className="text-[10px] text-slate-500 mt-1">Leave blank to let the system map automatically.</p>
+                <p className="text-[10px] text-slate-500 mt-1">You must explicitly assign a role to approve.</p>
               </div>
 
               <div className="space-y-3 pt-2">
                 <button 
                   onClick={() => handleDecision('approved')}
-                  disabled={submitting}
+                  disabled={submitting || !roleOverride}
                   className="w-full py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 disabled:opacity-50"
                 >
                   <CheckCircle2 className="w-5 h-5" />

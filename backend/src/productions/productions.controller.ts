@@ -36,7 +36,7 @@ export class ProductionsController {
     return this.productionsService.create(
       createDto,
       req.user._id,
-      req.user.systemRole,
+      req.user.permissions?.includes('roles.manage') || false,
     );
   }
 
@@ -46,7 +46,7 @@ export class ProductionsController {
   })
   @ApiResponse({ status: 200, description: 'Array of accessible productions.' })
   findAll(@Req() req: any) {
-    return this.productionsService.findAll(req.user._id, req.user.systemRole);
+    return this.productionsService.findAll(req.user._id, req.user.permissions?.includes('roles.manage') || false);
   }
 
   @Get(':id')

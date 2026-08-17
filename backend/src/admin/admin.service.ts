@@ -54,14 +54,14 @@ export class AdminService {
   async evaluateApplication(
     id: string,
     adminId: string,
-    payload: { status: string; roleId?: string; adminFeedback?: string },
+    payload: { status: string; systemRoleId?: string; adminFeedback?: string },
   ): Promise<User> {
     const user = await this.userModel.findById(id).exec();
     if (!user) {
       throw new NotFoundException('User not found');
     }
 
-    const { status, roleId, adminFeedback } = payload;
+    const { status, systemRoleId, adminFeedback } = payload;
     const oldStatus = user.onboardingStatus;
 
     if (status === 'approved') {
@@ -70,40 +70,15 @@ export class AdminService {
       user.status = 'Approved';
       user.adminFeedback = '';
 
-      // Map Contractor Type to System Role
-      let systemRole = 'User';
-      let roleName = 'User';
-
-      switch (user.contractorType) {
-        case 'Production Company':
-          systemRole = 'Manager';
-          roleName = 'Production Manager';
-          break;
-        case 'Admin':
-          systemRole = 'Admin';
-          roleName = 'Admin';
-          break;
-        default:
-          systemRole = 'User';
-          roleName = 'User';
-          break;
+      if (!systemRoleId) {
+        throw new BadRequestException('systemRoleId is required for Approval');
       }
-
-      user.systemRole = systemRole;
-
-      if (roleId) {
-        user.roleId = new Types.ObjectId(roleId);
-      } else {
-        const dbRole = await this.roleModel.findOne({ name: roleName }).exec();
-        if (dbRole) {
-          user.roleId = dbRole._id;
-        }
-      }
+      user.systemRoleId = new Types.ObjectId(systemRoleId);
     } else if (status === 'changes-requested') {
       user.isActive = false;
       user.onboardingStatus = 'changes-requested';
       user.status = 'Changes Requested';
-      user.roleId = null;
+      user.systemRoleId = null;
       user.adminFeedback =
         adminFeedback || 'Please review and update your onboarding details.';
     } else {
@@ -140,8 +115,8 @@ export class AdminService {
       isActive: payload.isActive !== undefined ? payload.isActive : true,
     });
 
-    if (payload.roleId) {
-      user.roleId = new Types.ObjectId(payload.roleId);
+    if (payload.systemRoleId) {
+      user.systemRoleId = new Types.ObjectId(payload.systemRoleId);
     }
 
     await user.save();
@@ -171,16 +146,16 @@ export class AdminService {
     if (payload.email) user.email = payload.email;
     if (payload.name) user.name = payload.name;
     if (payload.contractorType) user.contractorType = payload.contractorType;
-    if (payload.systemRole) user.systemRole = payload.systemRole;
+
     if (payload.status) user.status = payload.status;
     if (payload.onboardingStatus)
       user.onboardingStatus = payload.onboardingStatus;
     if (payload.isActive !== undefined) user.isActive = payload.isActive;
 
-    if (payload.roleId) {
-      user.roleId = new Types.ObjectId(payload.roleId);
-    } else if (payload.roleId === null) {
-      user.roleId = null;
+    if (payload.systemRoleId) {
+      user.systemRoleId = new Types.ObjectId(payload.systemRoleId);
+    } else if (payload.systemRoleId === null) {
+      user.systemRoleId = null;
     }
 
     await user.save();

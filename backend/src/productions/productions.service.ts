@@ -27,7 +27,7 @@ export class ProductionsService {
   async create(
     createDto: CreateProductionDto,
     creatorId: string,
-    systemRole: string,
+    isAdmin: boolean,
   ): Promise<Production> {
     const prod = new this.productionModel(createDto);
     await prod.save();
@@ -36,16 +36,15 @@ export class ProductionsService {
     const castCrew = new this.castCrewModel({
       userId: new Types.ObjectId(creatorId),
       productionId: prod._id,
-      roleInProduction:
-        systemRole === 'Admin' ? 'Super Admin' : 'Production Manager',
+      roleInProduction: isAdmin ? 'Super Admin' : 'Production Manager',
     });
     await castCrew.save();
 
     return prod;
   }
 
-  async findAll(userId: string, systemRole: string): Promise<Production[]> {
-    if (systemRole === 'Admin') {
+  async findAll(userId: string, isAdmin: boolean): Promise<Production[]> {
+    if (isAdmin) {
       return this.productionModel.find().exec();
     }
 

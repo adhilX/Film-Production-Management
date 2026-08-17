@@ -9,7 +9,6 @@ import {
   Req,
 } from '@nestjs/common';
 import { AdminService } from './admin.service';
-import { AdminGuard } from '../auth/guards/admin.guard';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { Permissions } from '../auth/decorators/permissions.decorator';
 import {
@@ -21,7 +20,7 @@ import {
 
 @ApiTags('Admin')
 @ApiBearerAuth()
-@UseGuards(AuthGuard, AdminGuard)
+@UseGuards(AuthGuard)
 @Controller('admin')
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}
@@ -53,7 +52,7 @@ export class AdminController {
     @Param('id') id: string,
     @Req() req: any,
     @Body()
-    payload: { status: string; roleId?: string; adminFeedback?: string },
+    payload: { status: string; systemRoleId?: string; adminFeedback?: string },
   ) {
     return this.adminService.evaluateApplication(
       id,

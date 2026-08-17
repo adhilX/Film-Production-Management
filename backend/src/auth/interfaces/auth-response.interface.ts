@@ -5,7 +5,7 @@ export interface AuthUserProfile {
   email: string;
   name: string;
   contractorType: string;
-  systemRole: string;
+  systemRoleId?: any;
   status: string;
   permissions: string[];
 }
