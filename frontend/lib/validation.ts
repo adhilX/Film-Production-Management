@@ -47,3 +47,21 @@ export const step5Schema = z.object({
   agreeTerms: z.boolean().refine((val) => val === true, { message: 'You must agree to the Terms of Service' }),
   signatureData: z.string().min(1, 'Digital signature is required'),
 });
+
+export const onboardingSchema = z.object({
+  name: z.string().min(2, 'Name must be at least 2 characters'),
+  photoUrl: z.string().min(1, 'Profile photo is required'),
+  phoneNumber: z.string().min(5, 'Phone number must be at least 5 digits'),
+  department: z.string().min(1, 'Please select your department'),
+  position: z.string().min(1, 'Position is required'),
+  experience: z.string().min(10, 'Experience summary must be at least 10 characters'),
+  bankName: z.string().min(1, 'Bank name is required'),
+  accountNumber: z.string().min(5, 'Account number must be at least 5 digits'),
+  routingNumber: z.string().min(5, 'Routing number must be at least 5 digits'),
+  taxFormUrl: z.string().min(1, 'Tax document upload is required'),
+  governmentIdType: z.string().min(1, 'Government ID Type selection is required'),
+  identityDocs: z.array(z.string()).min(2, 'Both front and back ID document uploads are required'),
+  agreeNda: z.boolean().refine((val) => val === true, { message: 'You must agree to the NDA' }),
+  agreeTerms: z.boolean().refine((val) => val === true, { message: 'You must agree to the Terms of Service font-bold' }),
+  signatureData: z.string().min(1, 'Digital signature is required'),
+});

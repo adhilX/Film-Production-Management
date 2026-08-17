@@ -25,7 +25,7 @@ import Step3Financial from './components/Step3Financial';
 import Step4Identity from './components/Step4Identity';
 import Step5Contracts from './components/Step5Contracts';
 import Step6Review from './components/Step6Review';
-import { step2Schema, step3Schema, step4Schema, step5Schema } from '@/lib/validation';
+import { step2Schema, step3Schema, step4Schema, step5Schema, onboardingSchema } from '@/lib/validation';
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -220,57 +220,29 @@ export default function OnboardingPage() {
     setErrors({});
     setSuccess(null);
     try {
-      // Validate all steps before submitting
-      const step2Val = step2Schema.safeParse({
-        name: formData.name,
-        photoUrl: formData.photoUrl,
-        phoneNumber: formData.phoneNumber,
-        department: formData.department,
-        position: formData.position,
-        experience: formData.experience,
-      });
-
-      const step3Val = step3Schema.safeParse({
-        bankName: formData.bankName,
-        accountNumber: formData.accountNumber,
-        routingNumber: formData.routingNumber,
-        taxFormUrl: formData.taxFormUrl,
-      });
-
-      const step4Val = step4Schema.safeParse({
-        governmentIdType: formData.governmentIdType,
-        identityDocs: formData.identityDocs,
-      });
-
-      const step5Val = step5Schema.safeParse({
-        agreeNda: formData.agreeNda,
-        agreeTerms: formData.agreeTerms,
-        signatureData: formData.signatureData,
-      });
-
-      if (!step2Val.success || !step3Val.success || !step4Val.success || !step5Val.success) {
+      // Validate all steps before submitting using onboardingSchema from validation.ts
+      const result = onboardingSchema.safeParse(formData);
+      if (!result.success) {
         const allErrors: Record<string, string> = {};
-        const addErrors = (result: any) => {
-          if (!result.success) {
-            result.error.issues.forEach((issue: any) => {
-              if (issue.path[0]) {
-                allErrors[String(issue.path[0])] = issue.message;
-              }
-            });
+        result.error.issues.forEach((issue: any) => {
+          if (issue.path[0]) {
+            allErrors[String(issue.path[0])] = issue.message;
           }
-        };
-        addErrors(step2Val);
-        addErrors(step3Val);
-        addErrors(step4Val);
-        addErrors(step5Val);
+        });
 
         setErrors({ ...allErrors, api: 'Please correct all validation errors across onboarding steps before submitting.' });
 
         // Focus on the first step that contains an error
-        if (!step2Val.success) setStep(2);
-        else if (!step3Val.success) setStep(3);
-        else if (!step4Val.success) setStep(4);
-        else if (!step5Val.success) setStep(5);
+        const firstErrorKey = result.error.issues[0]?.path[0] as string;
+        if (['name', 'photoUrl', 'phoneNumber', 'department', 'position', 'experience'].includes(firstErrorKey)) {
+          setStep(2);
+        } else if (['bankName', 'accountNumber', 'routingNumber', 'taxFormUrl'].includes(firstErrorKey)) {
+          setStep(3);
+        } else if (['governmentIdType', 'identityDocs'].includes(firstErrorKey)) {
+          setStep(4);
+        } else if (['agreeNda', 'agreeTerms', 'signatureData'].includes(firstErrorKey)) {
+          setStep(5);
+        }
 
         setLoading(false);
         return;
