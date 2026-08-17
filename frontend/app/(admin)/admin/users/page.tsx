@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { adminService } from '@/services/adminService';
 import { User, CheckCircle2, XCircle, Search, Edit, UserPlus } from 'lucide-react';
 import UserEditModal from '@/app/components/admin/UserEditModal';
+import Pagination from '@/app/components/Pagination';
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<any[]>([]);
@@ -11,15 +12,36 @@ export default function AdminUsersPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState('all');
 
+  // Pagination State
+  const [page, setPage] = useState(1);
+  const [limit] = useState(10);
+  const [total, setTotal] = useState(0);
+  const [pages, setPages] = useState(1);
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any | null>(null);
 
+  // Debounce search input
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+      setPage(1);
+    }, 400);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchTerm]);
+
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const data = await adminService.getUsers();
-      setUsers(data);
+      const data = await adminService.getUsers(page, limit, debouncedSearch);
+      setUsers(data.users || []);
+      setTotal(data.total || 0);
+      setPages(data.pages || 1);
     } catch (error) {
       console.error('Failed to fetch users:', error);
     } finally {
@@ -29,7 +51,7 @@ export default function AdminUsersPage() {
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [page, debouncedSearch]);
 
   const handleEdit = (user: any) => {
     setSelectedUser(user);
@@ -42,10 +64,8 @@ export default function AdminUsersPage() {
   };
 
   const filteredUsers = users.filter(user => {
-    const matchesSearch = user.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          user.email?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesRole = filterRole === 'all' || user.systemRole === filterRole;
-    return matchesSearch && matchesRole;
+    return matchesRole;
   });
 
   return (
@@ -89,7 +109,6 @@ export default function AdminUsersPage() {
           <option value="all">All Roles</option>
           <option value="User">Standard User</option>
           <option value="Manager">Manager</option>
-          <option value="Admin">Admin</option>
         </select>
       </div>
 
@@ -184,6 +203,15 @@ export default function AdminUsersPage() {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination component */}
+        <Pagination
+          page={page}
+          pages={pages}
+          total={total}
+          limit={limit}
+          onPageChange={setPage}
+        />
       </div>
 
       <UserEditModal 

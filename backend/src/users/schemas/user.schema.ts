@@ -58,8 +58,9 @@ export class User {
   @Prop({ required: false })
   adminFeedback?: string;
 
-  // Virtual field
+  // Virtual fields
   profile?: any;
+  role?: any;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
@@ -71,9 +72,19 @@ UserSchema.virtual('profile', {
   justOne: true,
 });
 
+UserSchema.virtual('role', {
+  ref: 'Role',
+  localField: 'roleId',
+  foreignField: '_id',
+  justOne: true,
+});
+
 UserSchema.virtual('permissions').get(function (this: UserDocument) {
-  if (this.roleId && (this.roleId as any).permissions) {
-    return (this.roleId as any).permissions.map((p: any) => p.name || p.toString());
+  const role = this.role || this.roleId;
+  if (role && (role as any).permissions) {
+    return ((role as any).permissions as any[] || [])
+      .map((p: any) => p.name || p.toString())
+      .filter(Boolean);
   }
   return [];
 });

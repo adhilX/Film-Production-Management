@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Body, Param, UseGuards, Req, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, Param, UseGuards, Req, UseInterceptors, UploadedFile, BadRequestException, Query } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
@@ -21,9 +21,15 @@ export class UsersController {
   @Get()
   @Permissions('users.approve')
   @ApiOperation({ summary: 'List all registered contractors and system users' })
-  @ApiResponse({ status: 200, description: 'Array of user documents.' })
-  findAll() {
-    return this.usersService.findAll();
+  @ApiResponse({ status: 200, description: 'Paginated user documents.' })
+  findAll(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('search') search?: string,
+  ) {
+    const pageNum = parseInt(page || '1', 10);
+    const limitNum = parseInt(limit || '10', 10);
+    return this.usersService.findAll(pageNum, limitNum, search || '');
   }
 
   @Get('me')
@@ -43,6 +49,7 @@ export class UsersController {
       isActive: user.isActive,
       systemRole: user.systemRole,
       onboardingStatus: user.onboardingStatus,
+      permissions: user.permissions || [],
     };
   }
 

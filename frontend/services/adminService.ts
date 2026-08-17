@@ -43,8 +43,10 @@ export const adminService = {
   },
 
   // User Management
-  async getUsers(): Promise<any[]> {
-    const res = await axiosClient.get<any[]>('/users');
+  async getUsers(page = 1, limit = 10, search = ''): Promise<{ users: any[]; total: number; page: number; pages: number; limit: number }> {
+    const res = await axiosClient.get<{ users: any[]; total: number; page: number; pages: number; limit: number }>('/users', {
+      params: { page, limit, search }
+    });
     return res.data;
   },
   async createUser(payload: any): Promise<any> {

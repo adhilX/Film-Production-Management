@@ -153,11 +153,13 @@ export const useAuthStore = create<AuthState>()(
           const statusData = await authService.getStatus();
           const currentUser = get().user;
           if (currentUser) {
+            const hasPermissionsChanged = JSON.stringify(currentUser.permissions || []) !== JSON.stringify(statusData.permissions || []);
             if (
               currentUser.status !== statusData.status ||
               currentUser.isActive !== statusData.isActive ||
               currentUser.systemRole !== statusData.systemRole ||
-              currentUser.onboardingStatus !== statusData.onboardingStatus
+              currentUser.onboardingStatus !== statusData.onboardingStatus ||
+              hasPermissionsChanged
             ) {
               const updatedUser = {
                 ...currentUser,
@@ -165,6 +167,7 @@ export const useAuthStore = create<AuthState>()(
                 isActive: statusData.isActive,
                 systemRole: statusData.systemRole,
                 onboardingStatus: statusData.onboardingStatus,
+                permissions: statusData.permissions || [],
               };
               set({ user: updatedUser });
             }

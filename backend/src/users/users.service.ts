@@ -18,11 +18,39 @@ export class UsersService {
     private auditLogsService: AuditLogsService,
   ) {}
 
-  async findAll(): Promise<User[]> {
-    return this.userModel.find().populate({
-      path: 'roleId',
-      populate: { path: 'permissions' }
-    }).select('-passwordHash').exec();
+  async findAll(page = 1, limit = 10, search = ''): Promise<{ users: User[]; total: number; page: number; pages: number; limit: number }> {
+    const query: any = { systemRole: { $ne: 'Admin' } };
+    
+    if (search) {
+      const escapedSearch = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      query.$or = [
+        { name: { $regex: escapedSearch, $options: 'i' } },
+        { email: { $regex: escapedSearch, $options: 'i' } },
+      ];
+    }
+
+    const total = await this.userModel.countDocuments(query).exec();
+    const pages = Math.ceil(total / limit);
+    const skip = (page - 1) * limit;
+
+    const users = await this.userModel
+      .find(query)
+      .populate({
+        path: 'roleId',
+        populate: { path: 'permissions' }
+      })
+      .select('-passwordHash')
+      .skip(skip)
+      .limit(limit)
+      .exec();
+
+    return {
+      users,
+      total,
+      page,
+      pages,
+      limit,
+    };
   }
 
   async findOne(id: string): Promise<User> {

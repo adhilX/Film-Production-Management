@@ -30,7 +30,7 @@ export default function AdminDashboard() {
         setMetrics({
           pending: pendingApps.length,
           stalePending: staleApps.length,
-          totalUsers: usersList.length,
+          totalUsers: usersList.total || 0,
         });
       } catch (error) {
         console.error('Failed to load admin metrics', error);
