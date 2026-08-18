@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, ShieldAlert } from 'lucide-react';
 import { adminService } from '@/services/adminService';
+import { useAuthStore } from '@/store/useAuthStore';
 
 interface PermissionMatrixProps {
   roles: any[];
@@ -21,20 +22,57 @@ export default function PermissionMatrix({
   const [selectedGroupFilter, setSelectedGroupFilter] = useState('All');
   const [updatingCell, setUpdatingCell] = useState<string | null>(null);
 
+  // Local optimistic state for roles
+  const [optimisticRoles, setOptimisticRoles] = useState<any[]>(roles);
+
+  const user = useAuthStore((state) => state.user);
+  const isSuperAdmin = user?.systemRoleId?.name?.toLowerCase() === 'super admin';
+  const canManage = user?.permissions?.includes('roles.manage');
+
+  const CORE_ROLES = ['Super Admin', 'Production Admin', 'Production Manager', 'Cast', 'Crew'];
+
+  useEffect(() => {
+    setOptimisticRoles(roles);
+  }, [roles]);
+
   const handleToggleMatrixPermission = async (role: any, permId: string) => {
+    if (!canManage) return;
+    if (role.name === 'Super Admin') return;
+    if (CORE_ROLES.includes(role.name) && !isSuperAdmin) return;
+
     const cellKey = `${role._id}-${permId}`;
     setUpdatingCell(cellKey);
 
-    try {
-      const currentPermIds = (role.permissions || []).map((p: any) => p._id || p.id || p);
-      const updatedPermIds = currentPermIds.includes(permId)
-        ? currentPermIds.filter((id: string) => id !== permId)
-        : [...currentPermIds, permId];
+    const currentPermIds = (role.permissions || []).map((p: any) => p._id || p.id || p);
+    const updatedPermIds = currentPermIds.includes(permId)
+      ? currentPermIds.filter((id: string) => id !== permId)
+      : [...currentPermIds, permId];
 
+    // Keep original roles state for reverting
+    const originalRoles = [...optimisticRoles];
+
+    // Optimistically update the UI state
+    setOptimisticRoles(
+      optimisticRoles.map((r) => {
+        if (r._id === role._id) {
+          const toggledPermissions = currentPermIds.includes(permId)
+            ? r.permissions.filter((p: any) => (p._id || p.id || p) !== permId)
+            : [...r.permissions, { _id: permId }];
+          return { ...r, permissions: toggledPermissions };
+        }
+        return r;
+      })
+    );
+
+    try {
       await adminService.updateRole(role._id, { permissions: updatedPermIds });
       await onRefreshRoles();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to toggle matrix permission:', err);
+      // Revert to original roles state
+      setOptimisticRoles(originalRoles);
+      const errMsg = err.response?.data?.message || err.message || 'Unknown error occurred';
+      alert(`Failed to update permissions: ${errMsg}`);
     } finally {
       setUpdatingCell(null);
     }
@@ -109,7 +147,7 @@ export default function PermissionMatrix({
                 <th className="p-4 font-bold w-[40%]">
                   Permission Description & String
                 </th>
-                {roles.map(role => (
+                {optimisticRoles.map(role => (
                   <th 
                     key={role._id} 
                     className="p-4 font-bold text-center"
@@ -136,12 +174,16 @@ export default function PermissionMatrix({
                     </div>
                   </td>
 
-                  {roles.map(role => {
+                  {optimisticRoles.map(role => {
                     const hasPermission = (role.permissions || []).some(
                       (p: any) => (p._id || p.id || p) === perm._id
                     );
                     const cellKey = `${role._id}-${perm._id}`;
                     const isCellUpdating = updatingCell === cellKey;
+                    const isCheckboxDisabled = 
+                      !canManage || 
+                      role.name === 'Super Admin' || 
+                      (CORE_ROLES.includes(role.name) && !isSuperAdmin);
 
                     return (
                       <td key={role._id} className="p-4 text-center">
@@ -152,8 +194,11 @@ export default function PermissionMatrix({
                             <input
                               type="checkbox"
                               checked={hasPermission}
+                              disabled={isCheckboxDisabled}
                               onChange={() => handleToggleMatrixPermission(role, perm._id)}
-                              className="w-4.5 h-4.5 rounded border-slate-350 bg-white text-indigo-600 focus:ring-indigo-600/20 focus:ring-offset-0 transition cursor-pointer"
+                              className={`w-4.5 h-4.5 rounded border-slate-350 bg-white text-indigo-600 focus:ring-indigo-600/20 focus:ring-offset-0 transition ${
+                                isCheckboxDisabled ? 'cursor-not-allowed opacity-40' : 'cursor-pointer'
+                              }`}
                             />
                           )}
                         </div>

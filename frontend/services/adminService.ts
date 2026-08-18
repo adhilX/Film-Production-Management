@@ -102,8 +102,19 @@ export const adminService = {
 
 
   // Audit Logs
-  async getAuditLogs(): Promise<any[]> {
-    const res = await axiosClient.get<any[]>('/audit-logs');
+  async getAuditLogs(params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    module?: string;
+    action?: string;
+    productionId?: string;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
+  }): Promise<{ logs: any[]; total: number; page: number; pages: number; limit: number; metrics?: any }> {
+    const res = await axiosClient.get<{ logs: any[]; total: number; page: number; pages: number; limit: number; metrics?: any }>('/audit-logs', {
+      params,
+    });
     return res.data;
   },
 };

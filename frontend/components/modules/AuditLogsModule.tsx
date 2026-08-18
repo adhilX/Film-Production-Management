@@ -13,8 +13,8 @@ export default function AuditLogsModule() {
 
   const fetchAuditLogs = async () => {
     try {
-      const data = await adminService.getAuditLogs();
-      setAuditLogs(data);
+      const data = await adminService.getAuditLogs({ limit: 10 });
+      setAuditLogs(data.logs || []);
     } catch (e) {
       console.error('Error fetching audit logs:', e);
     }

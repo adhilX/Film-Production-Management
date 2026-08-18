@@ -1,6 +1,9 @@
+'use client';
+
 import { useState, useEffect } from 'react';
 import { X, Save, AlertTriangle, ShieldAlert } from 'lucide-react';
 import { adminService } from '@/services/adminService';
+import { useAuthStore } from '@/store/useAuthStore';
 
 interface RoleEditModalProps {
   isOpen: boolean;
@@ -16,8 +19,18 @@ export default function RoleEditModal({ isOpen, onClose, role, onSave }: RoleEdi
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const user = useAuthStore((state) => state.user);
+  const isSuperAdmin = user?.systemRoleId?.name?.toLowerCase() === 'super admin';
+  const canManage = user?.permissions?.includes('roles.manage');
+
+  const CORE_ROLES = ['Super Admin', 'Production Admin', 'Production Manager', 'Cast', 'Crew'];
+  const isCoreRole = role && CORE_ROLES.includes(role.name);
+  const isImmutableSuperAdmin = role?.name === 'Super Admin';
+  const isEditingDisabled = isImmutableSuperAdmin || (isCoreRole && !isSuperAdmin);
+
   useEffect(() => {
     if (isOpen) {
+      setError(null);
       if (role) {
         setName(role.name || '');
         const initialPerms = (role.permissions || []).map((p: any) => typeof p === 'object' ? (p._id || p.id) : p);
@@ -44,6 +57,7 @@ export default function RoleEditModal({ isOpen, onClose, role, onSave }: RoleEdi
             grouped[groupName].push({
               id: perm._id || perm.id,
               label: perm.description || perm.name,
+              name: perm.name,
             });
           });
 
@@ -64,6 +78,7 @@ export default function RoleEditModal({ isOpen, onClose, role, onSave }: RoleEdi
   }, [isOpen]);
 
   const togglePermission = (permId: string) => {
+    if (isEditingDisabled || !canManage) return;
     setSelectedPermissions(prev => 
       prev.includes(permId) 
         ? prev.filter(p => p !== permId) 
@@ -73,6 +88,31 @@ export default function RoleEditModal({ isOpen, onClose, role, onSave }: RoleEdi
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isEditingDisabled || !canManage) return;
+
+    // High-impact permission change check (if any administrative permission is modified)
+    const adminPermissions = ['roles.manage', 'users.approve', 'audit_logs.view', 'logs.view', 'funds.approve', 'productions.update'];
+    const originalPerms = role ? (role.permissions || []).map((p: any) => typeof p === 'object' ? (p._id || p.id) : p) : [];
+    
+    const addedPerms = selectedPermissions.filter(p => !originalPerms.includes(p));
+    const removedPerms = originalPerms.filter((p: string) => !selectedPermissions.includes(p));
+    
+    // Check if any added/removed permission is in the adminPermissions list
+    const isHighImpact = permissionGroups.some(group => {
+      return group.permissions.some((perm: any) => {
+        const isAdm = adminPermissions.includes(perm.name);
+        const changed = addedPerms.includes(perm.id) || removedPerms.includes(perm.id);
+        return isAdm && changed;
+      });
+    });
+
+    if (isHighImpact) {
+      const confirmSave = window.confirm(
+        'Warning: You are making high-impact administrative permission changes to this role. This will affect access rights for all users assigned to this role. Do you want to proceed?'
+      );
+      if (!confirmSave) return;
+    }
+
     setLoading(true);
     setError(null);
 
@@ -85,15 +125,13 @@ export default function RoleEditModal({ isOpen, onClose, role, onSave }: RoleEdi
       onSave();
       onClose();
     } catch (err: any) {
-      setError(err.response?.data?.error || err.response?.data?.message || 'Failed to save role.');
+      setError(err.response?.data?.message || err.message || 'Failed to save role.');
     } finally {
       setLoading(false);
     }
   };
 
   if (!isOpen) return null;
-
-  const isAdminRole = role?.name === 'Admin' || role?.name === 'Super Admin' || role?.name === 'Production Admin';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -103,7 +141,7 @@ export default function RoleEditModal({ isOpen, onClose, role, onSave }: RoleEdi
         <div className="p-6 border-b border-slate-100 flex justify-between items-center">
           <div className="flex items-center gap-3">
             <h2 className="text-base font-bold text-slate-800">{role ? 'Edit System Role' : 'Create System Role'}</h2>
-            {isAdminRole && (
+            {isCoreRole && (
               <span className="px-2 py-0.5 bg-red-50 text-red-650 border border-red-200 rounded text-[9px] font-bold uppercase tracking-wider flex items-center gap-1">
                 <ShieldAlert className="w-3 h-3" /> Core System Role
               </span>
@@ -153,7 +191,7 @@ export default function RoleEditModal({ isOpen, onClose, role, onSave }: RoleEdi
                               type="checkbox" 
                               checked={selectedPermissions.includes(perm.id)}
                               onChange={() => togglePermission(perm.id)}
-                              disabled={isAdminRole} // Don't let them lock out the core Admin role
+                              disabled={isEditingDisabled || !canManage}
                               className="peer sr-only" 
                             />
                             <div className="w-5 h-5 border border-slate-350 rounded bg-white peer-checked:bg-indigo-600 peer-checked:border-indigo-600 transition-all peer-focus:ring-2 peer-focus:ring-indigo-600/30 flex items-center justify-center peer-disabled:opacity-50">
@@ -163,7 +201,7 @@ export default function RoleEditModal({ isOpen, onClose, role, onSave }: RoleEdi
                             </div>
                           </div>
                           <div>
-                            <div className={`text-xs font-bold transition ${isAdminRole ? 'text-slate-400' : 'text-slate-700 group-hover/label:text-indigo-600'}`}>
+                            <div className={`text-xs font-bold transition ${isEditingDisabled || !canManage ? 'text-slate-400' : 'text-slate-700 group-hover/label:text-indigo-600'}`}>
                               {perm.label}
                             </div>
                             <div className="text-[9px] text-slate-450 font-mono mt-0.5">{perm.id}</div>
@@ -176,9 +214,9 @@ export default function RoleEditModal({ isOpen, onClose, role, onSave }: RoleEdi
               </div>
             </div>
             
-            {isAdminRole && (
+            {isEditingDisabled && (
               <p className="text-xs text-red-750 mt-2 bg-red-50 p-3 rounded-xl border border-red-250 font-medium">
-                You cannot modify the permissions of the core <strong>Admin</strong> role to prevent accidental lockouts.
+                This system role cannot be modified.
               </p>
             )}
 
@@ -196,7 +234,7 @@ export default function RoleEditModal({ isOpen, onClose, role, onSave }: RoleEdi
           <button 
             type="submit"
             form="role-form"
-            disabled={loading || isAdminRole}
+            disabled={loading || isEditingDisabled || !canManage}
             className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white transition text-xs font-bold flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
           >
             {loading ? 'Saving...' : (

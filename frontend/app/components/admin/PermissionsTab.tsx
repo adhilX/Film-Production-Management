@@ -6,6 +6,7 @@ import {
   ChevronDown, ChevronUp, SlidersHorizontal, Plus, ShieldAlert 
 } from 'lucide-react';
 import { adminService } from '@/services/adminService';
+import { useAuthStore } from '@/store/useAuthStore';
 
 interface PermissionsTabProps {
   permissions: any[];
@@ -31,9 +32,25 @@ export default function PermissionsTab({
   const [formSuccess, setFormSuccess] = useState<string | null>(null);
   const [isSubmittingPerm, setIsSubmittingPerm] = useState(false);
 
+  const user = useAuthStore((state) => state.user);
+  const canManage = user?.permissions?.includes('roles.manage');
+
   const handleAddPermission = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newPermName.trim()) return;
+    if (!canManage) return;
+
+    const trimmedName = newPermName.trim().toLowerCase();
+    if (!trimmedName) {
+      setFormError('Permission name cannot be empty.');
+      return;
+    }
+
+    // Basic frontend format check (e.g. check for letters/dots/underscores/dashes)
+    const validFormat = /^[a-z0-9_.-]+$/.test(trimmedName);
+    if (!validFormat) {
+      setFormError('Permission name must only contain lowercase letters, numbers, dots, dashes, or underscores.');
+      return;
+    }
 
     setIsSubmittingPerm(true);
     setFormError(null);
@@ -41,19 +58,19 @@ export default function PermissionsTab({
 
     try {
       await adminService.createPermission({
-        name: newPermName.trim().toLowerCase(),
+        name: trimmedName,
         description: newPermDesc.trim() || undefined,
         group: newPermGroup,
       });
 
       setNewPermName('');
       setNewPermDesc('');
-      setFormSuccess(`Permission "${newPermName.trim().toLowerCase()}" created successfully!`);
+      setFormSuccess(`Permission "${trimmedName}" created successfully!`);
       
       setTimeout(() => setFormSuccess(null), 4000);
       await onRefreshPermissions();
     } catch (err: any) {
-      setFormError(err.response?.data?.error || err.response?.data?.message || 'Failed to create permission.');
+      setFormError(err.response?.data?.message || err.message || 'Failed to create permission.');
     } finally {
       setIsSubmittingPerm(false);
     }
@@ -107,24 +124,26 @@ export default function PermissionsTab({
           )}
         </div>
 
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setIsFormOpen(!isFormOpen)}
-            className={`flex items-center gap-1.5 px-4 py-2 border rounded-xl text-xs font-bold transition cursor-pointer ${
-              isFormOpen 
-                ? 'bg-indigo-50 border-indigo-200 text-indigo-700' 
-                : 'border-slate-200 text-slate-705 bg-white hover:bg-slate-50'
-            }`}
-          >
-            <SlidersHorizontal className="w-3.5 h-3.5" />
-            {isFormOpen ? 'Hide Register Form' : 'Register Permission'}
-            {isFormOpen ? <ChevronUp className="w-3.5 h-3.5 ml-1" /> : <ChevronDown className="w-3.5 h-3.5 ml-1" />}
-          </button>
-        </div>
+        {canManage && (
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setIsFormOpen(!isFormOpen)}
+              className={`flex items-center gap-1.5 px-4 py-2 border rounded-xl text-xs font-bold transition cursor-pointer ${
+                isFormOpen 
+                  ? 'bg-indigo-50 border-indigo-200 text-indigo-700' 
+                  : 'border-slate-200 text-slate-705 bg-white hover:bg-slate-50'
+              }`}
+            >
+              <SlidersHorizontal className="w-3.5 h-3.5" />
+              {isFormOpen ? 'Hide Register Form' : 'Register Permission'}
+              {isFormOpen ? <ChevronUp className="w-3.5 h-3.5 ml-1" /> : <ChevronDown className="w-3.5 h-3.5 ml-1" />}
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Expandable Register Permission Form */}
-      {isFormOpen && (
+      {canManage && isFormOpen && (
         <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-xs animate-in slide-in-from-top-4 duration-200 space-y-4">
           <div>
             <h2 className="text-base font-bold text-slate-800 flex items-center gap-2">
@@ -152,7 +171,7 @@ export default function PermissionsTab({
 
           <form onSubmit={handleAddPermission} className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
             <div className="space-y-2">
-              <label className="block text-[10px] font-bold text-slate-450 uppercase tracking-wider">
+              <label className="block text-[10px] font-bold text-slate-455 uppercase tracking-wider">
                 Permission String (Name)
               </label>
               <input
@@ -166,7 +185,7 @@ export default function PermissionsTab({
             </div>
 
             <div className="space-y-2">
-              <label className="block text-[10px] font-bold text-slate-450 uppercase tracking-wider">
+              <label className="block text-[10px] font-bold text-slate-455 uppercase tracking-wider">
                 Description / Label
               </label>
               <input
@@ -180,7 +199,7 @@ export default function PermissionsTab({
 
             <div className="flex flex-col sm:flex-row gap-4 items-end">
               <div className="space-y-2 flex-1 w-full">
-                <label className="block text-[10px] font-bold text-slate-450 uppercase tracking-wider">
+                <label className="block text-[10px] font-bold text-slate-455 uppercase tracking-wider">
                   Category Group
                 </label>
                 <select
@@ -287,7 +306,7 @@ export default function PermissionsTab({
 
                       {/* Assigned Roles badges */}
                       <div className="flex flex-col items-start sm:items-end gap-1.5 min-w-[200px]">
-                        <span className="text-[9px] font-bold text-slate-450 uppercase tracking-wider">
+                        <span className="text-[9px] font-bold text-slate-455 uppercase tracking-wider">
                           Assigned Roles
                         </span>
                         <div className="flex flex-wrap gap-1.5 justify-start sm:justify-end">

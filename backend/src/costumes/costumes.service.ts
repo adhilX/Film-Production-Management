@@ -80,6 +80,8 @@ export class CostumesService {
         '',
         JSON.stringify({ name: saved.name, quantity: saved.quantity }),
         session || undefined,
+        'COSTUMES',
+        { productionId },
       );
 
       if (session) {
@@ -237,6 +239,8 @@ export class CostumesService {
           condition: saved.condition,
         }),
         session || undefined,
+        'COSTUMES',
+        { productionId },
       );
 
       if (session) {
@@ -298,6 +302,8 @@ export class CostumesService {
         previousState,
         '',
         session || undefined,
+        'COSTUMES',
+        { productionId },
       );
 
       if (session) {
@@ -443,6 +449,8 @@ export class CostumesService {
           assignedTo: targetUserId || characterId,
         }),
         session || undefined,
+        'COSTUMES',
+        { productionId },
       );
 
       if (session) {
@@ -568,6 +576,8 @@ export class CostumesService {
           conditionAtReturn: returnDto.conditionAtReturn,
         }),
         session || undefined,
+        'COSTUMES',
+        { productionId },
       );
 
       if (session) {

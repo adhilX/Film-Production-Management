@@ -88,6 +88,8 @@ export class LocationsService {
         '',
         JSON.stringify({ name: saved.name, address: saved.address }),
         session || undefined,
+        'LOCATIONS',
+        { productionId },
       );
 
       if (session) {
@@ -180,6 +182,8 @@ export class LocationsService {
         previousState,
         JSON.stringify({ name: saved.name, address: saved.address }),
         session || undefined,
+        'LOCATIONS',
+        { productionId },
       );
 
       if (session) {
@@ -243,6 +247,8 @@ export class LocationsService {
         previousState,
         '',
         session || undefined,
+        'LOCATIONS',
+        { productionId },
       );
 
       if (session) {
@@ -309,6 +315,8 @@ export class LocationsService {
         '',
         JSON.stringify({ locationId: saved.locationId, startDate: saved.startDate, endDate: saved.endDate }),
         session || undefined,
+        'LOCATIONS',
+        { productionId, locationId: saved.locationId },
       );
 
       if (session) {
@@ -433,6 +441,8 @@ export class LocationsService {
         previousStatus,
         updateDto.status,
         session || undefined,
+        'LOCATIONS',
+        { productionId, bookingId: saved._id },
       );
 
       if (session) {

@@ -167,7 +167,7 @@ export default function DashboardPage() {
           adminService.getApplications(),
           adminService.getUsers(1, 10).catch(() => ({ users: [], total: 0 })),
           productionsService.getProductions(),
-          adminService.getAuditLogs().catch(() => [])
+          adminService.getAuditLogs({ limit: 10 }).catch(() => ({ logs: [], total: 0, page: 1, pages: 1, limit: 10 }))
         ]);
 
         const totalProjects = allProductions.length;
@@ -192,7 +192,7 @@ export default function DashboardPage() {
 
         setProjectsList(allProductions);
         setApprovalsList(pendingAppsList);
-        setActivitiesList(auditLogs);
+        setActivitiesList(auditLogs.logs || []);
       } catch (error) {
         console.error('Failed to load admin metrics', error);
       } finally {

@@ -14,7 +14,7 @@ export default function AdminAuditLogsPage() {
     try {
       setLoading(true);
       const data = await adminService.getAuditLogs();
-      const sortedLogs = data.sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      const sortedLogs = (data.logs || []).sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
       setLogs(sortedLogs);
     } catch (error) {
       console.error('Failed to fetch audit logs:', error);

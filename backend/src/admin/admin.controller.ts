@@ -21,6 +21,9 @@ import {
   ApiResponse,
   ApiBearerAuth,
 } from '@nestjs/swagger';
+import { CreateRoleDto } from './dto/create-role.dto';
+import { UpdateRoleDto } from './dto/update-role.dto';
+import { CreatePermissionDto } from './dto/create-permission.dto';
 
 @ApiTags('Admin')
 @ApiBearerAuth()
@@ -135,9 +138,16 @@ export class AdminController {
   @ApiOperation({ summary: 'Create a new system role' })
   createRole(
     @Req() req: any,
-    @Body() payload: { name: string; permissions: string[] },
+    @Body() payload: CreateRoleDto,
   ) {
-    return this.adminService.createRole(req.user._id.toString(), payload);
+    const requesterPermissions = req.user.permissions || [];
+    const requesterRoleName = req.user.systemRoleId?.name || '';
+    return this.adminService.createRole(
+      req.user._id.toString(),
+      payload,
+      requesterPermissions,
+      requesterRoleName,
+    );
   }
 
   @Patch('roles/:id')
@@ -146,10 +156,20 @@ export class AdminController {
   updateRole(
     @Param('id') id: string,
     @Req() req: any,
-    @Body() payload: { permissions: string[] },
+    @Body() payload: UpdateRoleDto,
   ) {
     this.validateObjectId(id, 'roleId');
-    return this.adminService.updateRole(req.user._id.toString(), id, payload);
+    const requesterPermissions = req.user.permissions || [];
+    const requesterRoleName = req.user.systemRoleId?.name || '';
+    const requesterRoleId = req.user.systemRoleId?._id?.toString() || '';
+    return this.adminService.updateRole(
+      req.user._id.toString(),
+      id,
+      payload,
+      requesterPermissions,
+      requesterRoleName,
+      requesterRoleId,
+    );
   }
 
   // --- Global Permissions Management ---
@@ -166,7 +186,7 @@ export class AdminController {
   @ApiOperation({ summary: 'Create a new global permission string' })
   createPermission(
     @Req() req: any,
-    @Body() payload: { name: string; description?: string; group?: string },
+    @Body() payload: CreatePermissionDto,
   ) {
     return this.adminService.createPermission(req.user._id.toString(), payload);
   }
