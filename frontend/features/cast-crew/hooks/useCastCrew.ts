@@ -6,6 +6,7 @@ import { castCrewService } from '../services/cast-crew.service';
 import { usePermissions } from '@/hooks/usePermissions';
 import { PERMISSIONS } from '@/constants/permissions';
 import type { Character, CastCrew } from '@/app/types';
+import { formatError } from '@/utils/format-error';
 
 export function useCastCrew() {
   const user = useAuthStore(state => state.user);
@@ -65,7 +66,9 @@ export function useCastCrew() {
       setCastCrewList(ccList);
     } catch (e: any) {
       console.error('Error fetching cast & crew details:', e);
-      setErrorMsg(e?.response?.data?.message || 'Failed to load project details.');
+      const errMsg = formatError(e, 'Failed to load project details.');
+      setErrorMsg(errMsg);
+      toast.error(errMsg);
     } finally {
       setLoading(false);
     }
@@ -83,6 +86,7 @@ export function useCastCrew() {
       }
     } catch (e) {
       console.error(`Error fetching eligible ${type} list:`, e);
+      toast.error(formatError(e, `Failed to fetch eligible ${type} list.`));
     }
   };
 
@@ -121,7 +125,9 @@ export function useCastCrew() {
       setCharacterModalOpen(false);
       fetchData();
     } catch (err: any) {
-      setErrorMsg(err?.response?.data?.message || 'Failed to save character.');
+      const errMsg = formatError(err, 'Failed to save character.');
+      setErrorMsg(errMsg);
+      toast.error(errMsg);
     }
   };
 
@@ -133,7 +139,9 @@ export function useCastCrew() {
       triggerSuccess('Character deleted successfully.');
       fetchData();
     } catch (err: any) {
-      setErrorMsg(err?.response?.data?.message || 'Failed to delete character.');
+      const errMsg = formatError(err, 'Failed to delete character.');
+      setErrorMsg(errMsg);
+      toast.error(errMsg);
     }
   };
 
@@ -161,7 +169,9 @@ export function useCastCrew() {
       setAssignCastModalOpen(false);
       fetchData();
     } catch (err: any) {
-      setErrorMsg(err?.response?.data?.message || 'Failed to assign cast member.');
+      const errMsg = formatError(err, 'Failed to assign cast member.');
+      setErrorMsg(errMsg);
+      toast.error(errMsg);
     }
   };
 
@@ -188,7 +198,9 @@ export function useCastCrew() {
       setAssignCrewModalOpen(false);
       fetchData();
     } catch (err: any) {
-      setErrorMsg(err?.response?.data?.message || 'Failed to assign crew member.');
+      const errMsg = formatError(err, 'Failed to assign crew member.');
+      setErrorMsg(errMsg);
+      toast.error(errMsg);
     }
   };
 
@@ -214,7 +226,9 @@ export function useCastCrew() {
       setEditAssignmentModalOpen(false);
       fetchData();
     } catch (err: any) {
-      setErrorMsg(err?.response?.data?.message || 'Failed to update assignment.');
+      const errMsg = formatError(err, 'Failed to update assignment.');
+      setErrorMsg(errMsg);
+      toast.error(errMsg);
     }
   };
 
@@ -226,7 +240,9 @@ export function useCastCrew() {
       triggerSuccess('Assignment removed successfully.');
       fetchData();
     } catch (err: any) {
-      setErrorMsg(err?.response?.data?.message || 'Failed to remove assignment.');
+      const errMsg = formatError(err, 'Failed to remove assignment.');
+      setErrorMsg(errMsg);
+      toast.error(errMsg);
     }
   };
 

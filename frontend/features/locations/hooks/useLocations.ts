@@ -77,7 +77,9 @@ export function useLocations() {
         setSelectedLocation(locsData[0]);
       }
     } catch (err: any) {
-      setError(formatError(err, 'Failed to load locations data.'));
+      const errMsg = formatError(err, 'Failed to load locations data.');
+      setError(errMsg);
+      toast.error(errMsg);
     } finally {
       setLoading(false);
     }
@@ -127,7 +129,9 @@ export function useLocations() {
       }
       fetchData();
     } catch (err: any) {
-      setError(formatError(err, 'Failed to delete location.'));
+      const errMsg = formatError(err, 'Failed to delete location.');
+      setError(errMsg);
+      toast.error(errMsg);
     }
   };
 
@@ -158,7 +162,9 @@ export function useLocations() {
       fetchData();
       setActiveTab('bookings');
     } catch (err: any) {
-      setError(formatError(err, 'Failed to submit booking request.'));
+      const errMsg = formatError(err, 'Failed to submit booking request.');
+      setError(errMsg);
+      toast.error(errMsg);
     }
   };
 
@@ -175,7 +181,9 @@ export function useLocations() {
       toast.success(`Booking ${status.toLowerCase()}.`);
       fetchData();
     } catch (err: any) {
-      setError(formatError(err, 'Failed to update booking status.'));
+      const errMsg = formatError(err, 'Failed to update booking status.');
+      setError(errMsg);
+      toast.error(errMsg);
     }
   };
 
@@ -270,7 +278,9 @@ export function useLocations() {
       setIsImportOpen(false);
       fetchData();
     } catch (err: any) {
-      setError(formatError(err, 'Failed to import locations.'));
+      const errMsg = formatError(err, 'Failed to import locations.');
+      setError(errMsg);
+      toast.error(errMsg);
     }
   };
 

@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import toast from 'react-hot-toast';
 import { adminService } from '@/services/adminService';
 import { useHeaderStore } from '@/store/useHeaderStore';
+import { formatError } from '@/utils/format-error';
 import { 
   CheckCircle2, 
   XCircle, 
@@ -51,17 +53,6 @@ function ApprovalDetailsContent() {
   const [submitting, setSubmitting] = useState(false);
   const setHeader = useHeaderStore(state => state.setHeader);
 
-  const formatError = (err: any, defaultMsg: string): string => {
-    if (err.response?.status === 403) {
-      return "You don't have permission to perform this action.";
-    }
-    const message = err.response?.data?.message;
-    if (Array.isArray(message)) {
-      return message.join(', ');
-    }
-    return message || err.message || defaultMsg;
-  };
-
   useEffect(() => {
     if (user?.name) {
       setHeader('Approval Review', `Evaluating onboarding submission for ${user.name}`);
@@ -90,7 +81,9 @@ function ApprovalDetailsContent() {
       setRoles(rolesData || []);
     } catch (err: any) {
       console.error('Failed to load application details', err);
-      setErrorMsg(formatError(err, 'Failed to load application details. Please try again.'));
+      const errMsg = formatError(err, 'Failed to load application details. Please try again.');
+      setErrorMsg(errMsg);
+      toast.error(errMsg);
     } finally {
       setLoading(false);
     }
@@ -109,10 +102,13 @@ function ApprovalDetailsContent() {
         systemRoleId: roleOverride || undefined,
         adminFeedback: status === 'changes-requested' ? feedback : undefined,
       });
+      toast.success(status === 'approved' ? 'Application approved successfully.' : 'Changes requested successfully.');
       router.push('/approvals');
     } catch (err: any) {
       console.error('Failed to submit decision', err);
-      setSubmitError(formatError(err, 'Failed to submit decision. Please check validation rules.'));
+      const errMsg = formatError(err, 'Failed to submit decision. Please check validation rules.');
+      setSubmitError(errMsg);
+      toast.error(errMsg);
       setSubmitting(false);
     }
   };

@@ -120,7 +120,9 @@ export const LocationEditModal: React.FC<LocationEditModalProps> = ({
       onSave();
       onClose();
     } catch (err: any) {
-      setError(formatError(err, 'Failed to update location.'));
+      const errMsg = formatError(err, 'Failed to update location.');
+      setError(errMsg);
+      toast.error(errMsg);
     }
   };
 

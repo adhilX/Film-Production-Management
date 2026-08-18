@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import { useAuthStore } from '@/store/useAuthStore';
 import { userService } from '../services/user.service';
 import { roleService } from '@/features/roles/services/role.service';
 import { usePermissions } from '@/hooks/usePermissions';
 import { PERMISSIONS } from '@/constants/permissions';
+import { formatError } from '@/utils/format-error';
 
 export function useUsers() {
   const currentUser = useAuthStore((state) => state.user);
@@ -44,17 +46,6 @@ export function useUsers() {
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [detailsUserId, setDetailsUserId] = useState<string | null>(null);
 
-  const formatError = (err: any, defaultMsg: string): string => {
-    if (err.response?.status === 403) {
-      return "You don't have permission to perform this action.";
-    }
-    const message = err.response?.data?.message;
-    if (Array.isArray(message)) {
-      return message.join(', ');
-    }
-    return message || err.message || defaultMsg;
-  };
-
   // Debounce search input
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -87,7 +78,9 @@ export function useUsers() {
       setPages(data.pages || 1);
     } catch (err: any) {
       console.error('Failed to fetch users:', err);
-      setError(formatError(err, 'Failed to load user directory.'));
+      const errMsg = formatError(err, 'Failed to load user directory.');
+      setError(errMsg);
+      toast.error(errMsg);
     } finally {
       setLoading(false);
     }
@@ -99,7 +92,9 @@ export function useUsers() {
       setRoles(data || []);
     } catch (err: any) {
       console.error('Failed to fetch roles:', err);
-      setError(formatError(err, 'Failed to load system roles.'));
+      const errMsg = formatError(err, 'Failed to load system roles.');
+      setError(errMsg);
+      toast.error(errMsg);
     }
   };
 

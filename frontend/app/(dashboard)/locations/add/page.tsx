@@ -4,6 +4,7 @@ import React, { useState, useEffect, FormEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
+import toast from 'react-hot-toast';
 import {
   ArrowLeft,
   ChevronRight,
@@ -29,6 +30,7 @@ import { UnauthorizedFallback } from '@/components/common/UnauthorizedFallback';
 import { PERMISSIONS } from '@/constants/permissions';
 import locationsService from '@/services/locationsService';
 import { authService } from '@/services/authService';
+import { formatError } from '@/utils/format-error';
 
 // Dynamically import LeafletMap to avoid SSR/window undefined issues
 const LeafletMap = dynamic(() => import('@/components/LeafletMap'), { ssr: false });
@@ -188,17 +190,6 @@ export default function AddLocationPage() {
     }
   };
 
-  const formatError = (err: any, defaultMsg: string): string => {
-    if (err.response?.status === 403) {
-      return "You don't have permission to perform this action.";
-    }
-    const message = err.response?.data?.message;
-    if (Array.isArray(message)) {
-      return message.join(', ');
-    }
-    return message || err.message || defaultMsg;
-  };
-
   // Image upload handler
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -215,7 +206,9 @@ export default function AddLocationPage() {
       const res = await authService.uploadOnboardingFile(file, 'location');
       setLocImage(res.fileUrl);
     } catch (err: any) {
-      setError(formatError(err, 'Failed to upload location image.'));
+      const errMsg = formatError(err, 'Failed to upload location image.');
+      setError(errMsg);
+      toast.error(errMsg);
     } finally {
       setIsUploading(false);
     }
@@ -274,12 +267,15 @@ export default function AddLocationPage() {
         longitude: locLng,
       });
 
+      toast.success('Physical location created successfully.');
       setSuccess('Physical location created successfully.');
       setTimeout(() => {
         router.push('/locations');
       }, 1000);
     } catch (err: any) {
-      setError(formatError(err, 'Failed to create physical location.'));
+      const errMsg = formatError(err, 'Failed to create physical location.');
+      setError(errMsg);
+      toast.error(errMsg);
     } finally {
       setIsSubmitting(false);
     }

@@ -2,10 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { X, Save, AlertTriangle, ShieldAlert } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { adminService } from '@/services/adminService';
 import { useAuthStore } from '@/store/useAuthStore';
 import { usePermissions } from '@/hooks/usePermissions';
 import { PERMISSIONS } from '@/constants/permissions';
+import { formatError } from '@/utils/format-error';
 
 interface RoleEditModalProps {
   isOpen: boolean;
@@ -70,9 +72,11 @@ export default function RoleEditModal({ isOpen, onClose, role, onSave }: RoleEdi
           }));
 
           setPermissionGroups(groupsArray);
-        } catch (err) {
+        } catch (err: any) {
           console.error('Failed to load permissions:', err);
-          setError('Failed to load permissions list from the backend.');
+          const errMsg = formatError(err, 'Failed to load permissions list from the backend.');
+          setError(errMsg);
+          toast.error(errMsg);
         }
       };
 
@@ -122,22 +126,17 @@ export default function RoleEditModal({ isOpen, onClose, role, onSave }: RoleEdi
     try {
       if (role) {
         await adminService.updateRole(role._id, { permissions: selectedPermissions });
+        toast.success('System role permissions matrix saved successfully.');
       } else {
         await adminService.createRole({ name, permissions: selectedPermissions });
+        toast.success('System role created successfully.');
       }
       onSave();
       onClose();
     } catch (err: any) {
-      if (err.response?.status === 403) {
-        setError("You don't have permission to perform this action.");
-      } else {
-        const message = err.response?.data?.message;
-        if (Array.isArray(message)) {
-          setError(message.join(', '));
-        } else {
-          setError(message || err.message || 'Failed to save role.');
-        }
-      }
+      const errMsg = formatError(err, 'Failed to save role.');
+      setError(errMsg);
+      toast.error(errMsg);
     } finally {
       setLoading(false);
     }

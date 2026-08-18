@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import { adminService } from '@/services/adminService';
+import { formatError } from '@/utils/format-error';
 
 export function useApprovals() {
   const [applications, setApplications] = useState<any[]>([]);
@@ -31,17 +33,6 @@ export function useApprovals() {
     rejected: 0,
     changesRequested: 0,
   });
-
-  const formatError = (err: any, defaultMsg: string): string => {
-    if (err.response?.status === 403) {
-      return "You don't have permission to perform this action.";
-    }
-    const message = err.response?.data?.message;
-    if (Array.isArray(message)) {
-      return message.join(', ');
-    }
-    return message || err.message || defaultMsg;
-  };
 
   // Debounce search input
   useEffect(() => {
@@ -89,7 +80,9 @@ export function useApprovals() {
       }
     } catch (err: any) {
       console.error('Failed to load applications', err);
-      setErrorMsg(formatError(err, 'Failed to load onboarding applications. Please try again.'));
+      const errMsg = formatError(err, 'Failed to load onboarding applications. Please try again.');
+      setErrorMsg(errMsg);
+      toast.error(errMsg);
     } finally {
       setLoading(false);
     }

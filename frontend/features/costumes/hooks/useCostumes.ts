@@ -172,7 +172,9 @@ export function useCostumes() {
       setCategories(uniqueCats);
     } catch (err: any) {
       console.error(err);
-      setErrorMsg(formatError(err, 'Failed to retrieve costumes and assets data.'));
+      const errMsg = formatError(err, 'Failed to retrieve costumes and assets data.');
+      setErrorMsg(errMsg);
+      toast.error(errMsg);
     } finally {
       setLoading(false);
     }
@@ -207,7 +209,9 @@ export function useCostumes() {
       setCostumeForm((prev) => ({ ...prev, imageUrl: res.fileUrl }));
       triggerSuccess('Image uploaded successfully.');
     } catch (err: any) {
-      setErrorMsg(formatError(err, 'Failed to upload image file.'));
+      const errMsg = formatError(err, 'Failed to upload image file.');
+      setErrorMsg(errMsg);
+      toast.error(errMsg);
     } finally {
       setIsUploading(false);
     }
@@ -266,7 +270,9 @@ export function useCostumes() {
       setCostumeModalOpen(false);
       fetchData();
     } catch (err: any) {
-      setErrorMsg(formatError(err, 'Failed to save costume asset.'));
+      const errMsg = formatError(err, 'Failed to save costume asset.');
+      setErrorMsg(errMsg);
+      toast.error(errMsg);
     } finally {
       setIsSubmitting(false);
     }
@@ -282,7 +288,9 @@ export function useCostumes() {
       triggerSuccess('Costume asset deleted successfully.');
       fetchData();
     } catch (err: any) {
-      setErrorMsg(formatError(err, 'Failed to delete costume.'));
+      const errMsg = formatError(err, 'Failed to delete costume.');
+      setErrorMsg(errMsg);
+      toast.error(errMsg);
     }
   };
 
@@ -337,7 +345,9 @@ export function useCostumes() {
       setAssignModalOpen(false);
       fetchData();
     } catch (err: any) {
-      setErrorMsg(formatError(err, 'Failed to assign costume.'));
+      const errMsg = formatError(err, 'Failed to assign costume.');
+      setErrorMsg(errMsg);
+      toast.error(errMsg);
     } finally {
       setIsSubmitting(false);
     }
@@ -375,7 +385,9 @@ export function useCostumes() {
       setReturnModalOpen(false);
       fetchData();
     } catch (err: any) {
-      setErrorMsg(formatError(err, 'Failed to check in costume items.'));
+      const errMsg = formatError(err, 'Failed to check in costume items.');
+      setErrorMsg(errMsg);
+      toast.error(errMsg);
     } finally {
       setIsSubmitting(false);
     }

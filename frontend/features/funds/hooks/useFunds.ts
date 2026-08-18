@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import toast from 'react-hot-toast';
 import { useProductionStore } from '@/store/useProductionStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { fundsService } from '../services/funds.service';
@@ -6,6 +7,7 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { PERMISSIONS } from '@/constants/permissions';
 import type { Budget, FundRequest } from '@/app/types';
 import type { UserProfile } from '@/types/auth';
+import { formatError } from '@/utils/format-error';
 
 export function useFunds() {
   const selectedProduction = useProductionStore((state) => state.selectedProduction);
@@ -58,7 +60,9 @@ export function useFunds() {
       setRequests(requestsData);
     } catch (err: any) {
       console.error('Failed to load financial data:', err);
-      setError(err.response?.data?.message || 'Failed to fetch project budget and requests.');
+      const errMsg = formatError(err, 'Failed to fetch project budget and requests.');
+      setError(errMsg);
+      toast.error(errMsg);
     } finally {
       setLoading(false);
     }
@@ -90,9 +94,10 @@ export function useFunds() {
     if (!confirm('Are you sure you want to cancel this pending fund request?')) return;
     try {
       await fundsService.cancelFundRequest(selectedProduction._id, requestId);
+      toast.success('Fund request cancelled successfully.');
       fetchBudgetAndRequests();
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to cancel the request.');
+      toast.error(formatError(err, 'Failed to cancel the request.'));
     }
   };
 

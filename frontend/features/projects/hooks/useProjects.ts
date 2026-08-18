@@ -90,8 +90,9 @@ export function useProjects() {
         const managers = await projectService.getEligibleManagers();
         setSystemUsers(managers || []);
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error('Error fetching static data:', e);
+      toast.error(formatError(e, 'Failed to fetch static project data.'));
     }
   };
 
@@ -116,8 +117,9 @@ export function useProjects() {
       setProductionsList(list);
       setTotalItems(total);
       setTotalPages(pagesCount);
-    } catch (e) {
+    } catch (e: any) {
       console.error('Error fetching paginated projects:', e);
+      toast.error(formatError(e, 'Failed to fetch paginated projects.'));
     } finally {
       setLoading(false);
     }
@@ -189,7 +191,9 @@ export function useProjects() {
       toast.success('Cover image uploaded successfully.');
     } catch (err: any) {
       console.error(err);
-      setFormError(formatError(err, 'Failed to upload project image.'));
+      const errMsg = formatError(err, 'Failed to upload project image.');
+      setFormError(errMsg);
+      toast.error(errMsg);
       setImageFile(null);
       setImagePreview(null);
     } finally {
@@ -316,7 +320,9 @@ export function useProjects() {
       }
       toast.success('Project created successfully.');
     } catch (err: any) {
-      setFormError(formatError(err, 'Failed to create project.'));
+      const errMsg = formatError(err, 'Failed to create project.');
+      setFormError(errMsg);
+      toast.error(errMsg);
     }
   };
 
@@ -334,7 +340,9 @@ export function useProjects() {
       }
       toast.success('Project updated successfully.');
     } catch (err: any) {
-      setFormError(formatError(err, 'Failed to update project.'));
+      const errMsg = formatError(err, 'Failed to update project.');
+      setFormError(errMsg);
+      toast.error(errMsg);
     }
   };
 

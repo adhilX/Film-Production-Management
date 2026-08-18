@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import toast from 'react-hot-toast';
 import { useProductionStore } from '@/store/useProductionStore';
 import fundsService from '@/services/fundsService';
+import { formatError } from '@/utils/format-error';
 
 const requestSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters').max(100, 'Title must not exceed 100 characters'),
@@ -60,9 +62,12 @@ export default function CreateRequestModal({
         category: values.category,
         requestedAmount: requestedAmountPaise,
       });
+      toast.success('Fund request submitted successfully.');
       onSuccess();
     } catch (err: any) {
-      setApiError(err.response?.data?.message || 'Failed to submit fund request');
+      const errMsg = formatError(err, 'Failed to submit fund request');
+      setApiError(errMsg);
+      toast.error(errMsg);
     }
   };
 

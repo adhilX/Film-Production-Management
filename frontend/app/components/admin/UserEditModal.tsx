@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { X, Save, AlertTriangle } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { adminService } from '@/services/adminService';
 import { authService } from '@/services/authService';
 import { useAuthStore } from '@/store/useAuthStore';
+import { formatError } from '@/utils/format-error';
 
 interface UserEditModalProps {
   isOpen: boolean;
@@ -86,8 +88,9 @@ export default function UserEditModal({ isOpen, onClose, user, onSave }: UserEdi
     try {
       const data = await adminService.getRoles();
       setRoles(data);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to fetch roles:', err);
+      toast.error(formatError(err, 'Failed to load system roles.'));
     }
   };
 
@@ -127,22 +130,17 @@ export default function UserEditModal({ isOpen, onClose, user, onSave }: UserEdi
           const freshProfile = await authService.getProfile(currentUserId);
           useAuthStore.setState({ user: freshProfile });
         }
+        toast.success('User updated successfully.');
       } else {
         await adminService.createUser(formData as any);
+        toast.success('User created successfully.');
       }
       onSave();
       onClose();
     } catch (err: any) {
-      if (err.response?.status === 403) {
-        setError("You don't have permission to perform this action.");
-      } else {
-        const message = err.response?.data?.message;
-        if (Array.isArray(message)) {
-          setError(message.join(', '));
-        } else {
-          setError(message || err.message || 'Failed to save user.');
-        }
-      }
+      const errMsg = formatError(err, 'Failed to save user.');
+      setError(errMsg);
+      toast.error(errMsg);
     } finally {
       setLoading(false);
     }

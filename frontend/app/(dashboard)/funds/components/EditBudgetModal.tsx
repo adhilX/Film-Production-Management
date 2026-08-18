@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import toast from 'react-hot-toast';
 import { useProductionStore } from '@/store/useProductionStore';
 import fundsService from '@/services/fundsService';
 import { Budget } from '@/app/types';
+import { formatError } from '@/utils/format-error';
 
 interface EditBudgetModalProps {
   budget: Budget;
@@ -54,9 +56,12 @@ export default function EditBudgetModal({
         totalBudget: totalBudgetPaise,
         currency: values.currency,
       });
+      toast.success('Project budget updated successfully.');
       onSuccess();
     } catch (err: any) {
-      setApiError(err.response?.data?.message || 'Failed to update project budget');
+      const errMsg = formatError(err, 'Failed to update project budget');
+      setApiError(errMsg);
+      toast.error(errMsg);
     }
   };
 

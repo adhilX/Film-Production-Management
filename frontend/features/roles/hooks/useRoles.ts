@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import { useAuthStore } from '@/store/useAuthStore';
 import { roleService } from '../services/role.service';
 import { userService } from '@/features/users/services/user.service';
 import { usePermissions } from '@/hooks/usePermissions';
 import { PERMISSIONS } from '@/constants/permissions';
+import { formatError } from '@/utils/format-error';
 
 export function useRoles() {
   const [roles, setRoles] = useState<any[]>([]);
@@ -43,16 +45,7 @@ export function useRoles() {
 
   const CORE_ROLES = ['Super Admin', 'Production Admin', 'Production Manager', 'Cast', 'Crew'];
 
-  const formatError = (err: any, defaultMsg: string): string => {
-    if (err.response?.status === 403) {
-      return "You don't have permission to perform this action.";
-    }
-    const message = err.response?.data?.message;
-    if (Array.isArray(message)) {
-      return message.join(', ');
-    }
-    return message || err.message || defaultMsg;
-  };
+
 
   const fetchRoles = async () => {
     try {
@@ -62,7 +55,9 @@ export function useRoles() {
       setRoles(data);
     } catch (err: any) {
       console.error('Failed to fetch roles:', err);
-      setError(formatError(err, 'Failed to load system roles.'));
+      const errMsg = formatError(err, 'Failed to load system roles.');
+      setError(errMsg);
+      toast.error(errMsg);
     } finally {
       setLoading(false);
     }
@@ -76,7 +71,9 @@ export function useRoles() {
       setPermissions(data);
     } catch (err: any) {
       console.error('Failed to fetch permissions:', err);
-      setError(formatError(err, 'Failed to load permissions list.'));
+      const errMsg = formatError(err, 'Failed to load permissions list.');
+      setError(errMsg);
+      toast.error(errMsg);
     } finally {
       setPermLoading(false);
     }
@@ -170,12 +167,16 @@ export function useRoles() {
     try {
       await roleService.updateRole(role._id, { permissions: updatedPermIds });
       await fetchRoles();
-      setSuccess(`Permissions updated successfully for "${role.name}".`);
+      const successMsg = `Permissions updated successfully for "${role.name}".`;
+      setSuccess(successMsg);
+      toast.success(successMsg);
       setTimeout(() => setSuccess(null), 3000);
     } catch (err: any) {
       console.error('Failed to toggle matrix permission:', err);
       setRoles(originalRoles);
-      setError(formatError(err, 'Failed to update role permissions.'));
+      const errMsg = formatError(err, 'Failed to update role permissions.');
+      setError(errMsg);
+      toast.error(errMsg);
     } finally {
       setUpdatingCell(null);
     }

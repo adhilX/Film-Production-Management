@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import toast from 'react-hot-toast';
 import { useProductionStore } from '@/store/useProductionStore';
 import fundsService from '@/services/fundsService';
 import { FundRequest } from '@/app/types';
+import { formatError } from '@/utils/format-error';
 
 interface ApproveRequestModalProps {
   request: FundRequest;
@@ -58,17 +60,21 @@ export default function ApproveRequestModal({
       await fundsService.approveFundRequest(selectedProduction._id, request._id, {
         approvedAmount: approvedAmountPaise,
       });
+      toast.success('Fund request approved successfully.');
       onSuccess();
     } catch (err: any) {
       const msg = err.response?.data?.message;
+      let customMsg = '';
       if (
         msg === 'Approvers cannot approve their own fund requests.' ||
         (Array.isArray(msg) && msg.includes('Approvers cannot approve their own fund requests.'))
       ) {
-        setApiError('You cannot approve your own fund request.');
+        customMsg = 'You cannot approve your own fund request.';
       } else {
-        setApiError(msg || 'Failed to approve fund request');
+        customMsg = formatError(err, 'Failed to approve fund request');
       }
+      setApiError(customMsg);
+      toast.error(customMsg);
     }
   };
 
