@@ -37,8 +37,9 @@ export class AuditLogsService {
       timestamp: new Date(),
     };
 
-    if (productionId && Types.ObjectId.isValid(productionId.toString())) {
-      logEntryData.productionId = new Types.ObjectId(productionId.toString());
+    const resolvedProductionId = productionId || metadata?.productionId;
+    if (resolvedProductionId && Types.ObjectId.isValid(resolvedProductionId.toString())) {
+      logEntryData.productionId = new Types.ObjectId(resolvedProductionId.toString());
     }
 
     const logEntry = new this.auditLogModel(logEntryData);

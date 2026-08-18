@@ -47,7 +47,16 @@ axiosClient.interceptors.response.use(
     const originalRequest = error.config;
 
     // Check if error is 401 Unauthorized and request hasn't been retried yet
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (error.response?.status === 401) {
+      if (originalRequest._retry) {
+        // If we already retried and still get 401, clear auth and redirect
+        useAuthStore.getState().clearAuth();
+        if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+          window.location.href = '/login';
+        }
+        return Promise.reject(error);
+      }
+
       // Avoid refreshing if it's any auth-related endpoint (login, signup, logout, refresh)
       if (
         originalRequest.url?.includes('/auth/login') ||
@@ -58,6 +67,9 @@ axiosClient.interceptors.response.use(
         // If a logout or token refresh request fails, clear local auth credentials immediately
         if (originalRequest.url?.includes('/auth/refresh') || originalRequest.url?.includes('/auth/logout')) {
           useAuthStore.getState().clearAuth();
+          if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+            window.location.href = '/login';
+          }
         }
         return Promise.reject(error);
       }
@@ -85,11 +97,17 @@ axiosClient.interceptors.response.use(
         } else {
           processQueue(error, null);
           useAuthStore.getState().clearAuth();
+          if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+            window.location.href = '/login';
+          }
           return Promise.reject(error);
         }
       } catch (refreshErr) {
         processQueue(refreshErr, null);
         useAuthStore.getState().clearAuth();
+        if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+          window.location.href = '/login';
+        }
         return Promise.reject(refreshErr);
       } finally {
         isRefreshing = false;
