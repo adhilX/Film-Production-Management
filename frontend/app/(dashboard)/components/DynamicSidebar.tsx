@@ -50,7 +50,7 @@ export default function DynamicSidebar({ isMobile }: DynamicSidebarProps) {
 
   // Filter based on permissions
   const visibleItems = USER_MENU_ITEMS.filter(item => {
-    if (user?.status !== 'Approved') return false; 
+    if (user?.status !== 'Approved') return false;
     if (!hasPermission(item.permission)) return false;
     return true;
   });
@@ -69,7 +69,7 @@ export default function DynamicSidebar({ isMobile }: DynamicSidebarProps) {
               </div>
               <span className="text-xs font-black tracking-wider text-slate-900 uppercase">Tendagon</span>
             </div>
-            <button 
+            <button
               onClick={() => setSidebarOpen(false)}
               className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-50 rounded-lg transition"
             >
@@ -110,7 +110,7 @@ export default function DynamicSidebar({ isMobile }: DynamicSidebarProps) {
           {(() => {
             const projectItems = visibleItems.filter(item => item.group === 'project');
             const adminItems = visibleItems.filter(item => item.group === 'admin');
-            
+
             return (
               <>
                 {projectItems.length > 0 && (
@@ -125,13 +125,12 @@ export default function DynamicSidebar({ isMobile }: DynamicSidebarProps) {
                             key={item.href}
                             href={item.href}
                             onClick={() => isMobile && setSidebarOpen(false)}
-                            className={`w-full text-left py-2 px-3 rounded-xl text-xs font-semibold flex items-center gap-2.5 transition cursor-pointer ${
-                              isActive 
-                                ? 'bg-purple-50 border border-purple-100/50 text-purple-700 shadow-xs' 
+                            className={`w-full text-left py-2 px-3 rounded-xl text-xs font-semibold flex items-center gap-2.5 transition cursor-pointer ${isActive
+                                ? 'bg-purple-50 border border-purple-100/50 text-purple-700 shadow-xs'
                                 : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
-                            }`}
+                              }`}
                           >
-                            <Icon size={14} className={isActive ? 'text-purple-600' : 'text-slate-400'} /> 
+                            <Icon size={14} className={isActive ? 'text-purple-600' : 'text-slate-400'} />
                             {item.label}
                           </Link>
                         );
@@ -156,13 +155,12 @@ export default function DynamicSidebar({ isMobile }: DynamicSidebarProps) {
                             key={item.href}
                             href={item.href}
                             onClick={() => isMobile && setSidebarOpen(false)}
-                            className={`w-full text-left py-2 px-3 rounded-xl text-xs font-semibold flex items-center gap-2.5 transition cursor-pointer ${
-                              isActive 
-                                ? 'bg-purple-50 border border-purple-100/50 text-purple-700 shadow-xs' 
+                            className={`w-full text-left py-2 px-3 rounded-xl text-xs font-semibold flex items-center gap-2.5 transition cursor-pointer ${isActive
+                                ? 'bg-purple-50 border border-purple-100/50 text-purple-700 shadow-xs'
                                 : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
-                            }`}
+                              }`}
                           >
-                            <Icon size={14} className={isActive ? 'text-purple-600' : 'text-slate-400'} /> 
+                            <Icon size={14} className={isActive ? 'text-purple-600' : 'text-slate-400'} />
                             {item.label}
                           </Link>
                         );
@@ -177,7 +175,7 @@ export default function DynamicSidebar({ isMobile }: DynamicSidebarProps) {
       </div>
 
       {/* Quick Actions (no Logout Button here) */}
-      <div className="mt-8 pt-4 border-t border-slate-100">
+      <div className="mt-4 pt-4 border-t border-slate-100">
         <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-2 block px-2">Quick Actions</span>
         <Link
           href="/productions"

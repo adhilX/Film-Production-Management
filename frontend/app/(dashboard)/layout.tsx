@@ -40,7 +40,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {isSidebarOpen && (
           <>
             {/* Backdrop */}
-            <div 
+            <div
               className="fixed inset-0 bg-slate-950/40 backdrop-blur-xs z-40 md:hidden animate-in fade-in duration-200"
               onClick={() => setSidebarOpen(false)}
             />

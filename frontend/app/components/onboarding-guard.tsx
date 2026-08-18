@@ -53,8 +53,11 @@ export default function OnboardingGuard({ children }: { children: React.ReactNod
     const isPublicRoute = pathname === '/login' || pathname === '/signup';
     if (!isPublicRoute) {
       return (
-        <div className="flex min-h-screen bg-slate-950 items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-amber-500"></div>
+        <div className="flex min-h-screen bg-[#f8fafc] items-center justify-center font-sans">
+          <div className="flex flex-col items-center gap-3">
+            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-purple-600"></div>
+            <span className="text-xs font-bold text-slate-400 animate-pulse uppercase tracking-wider">Verifying Session...</span>
+          </div>
         </div>
       );
     }

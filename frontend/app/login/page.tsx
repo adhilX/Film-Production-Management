@@ -62,6 +62,9 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('remember_me', rememberMe ? 'true' : 'false');
+      }
       const res = await login({ email, password });
       
       // Sync the token with the AuthProvider context

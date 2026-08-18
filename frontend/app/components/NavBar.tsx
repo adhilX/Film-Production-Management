@@ -30,7 +30,7 @@ export default function NavBar({ title: propTitle, subtitle: propSubtitle }: Nav
 
     // 3. Fallback based on route pathnames
     if (pathname === '/') {
-      return { title: 'Admin Dashboard', subtitle: 'System overview and high-level metrics.' };
+      return { title: 'Dashboard', subtitle: 'System overview and high-level metrics.' };
     }
     if (pathname.startsWith('/approvals')) {
       if (pathname.includes('/[id]') || pathname !== '/approvals') {
@@ -65,8 +65,8 @@ export default function NavBar({ title: propTitle, subtitle: propSubtitle }: Nav
     if (pathname.startsWith('/onboarding')) {
       return { title: 'Onboarding Process', subtitle: 'Complete all steps to join Tendagon' };
     }
-    
-    return { title: 'Tendagon', subtitle: 'Film Project Management' };
+
+    return { title: '', subtitle: '' };
   };
 
   const { title, subtitle } = getHeaderDetails();
@@ -83,7 +83,7 @@ export default function NavBar({ title: propTitle, subtitle: propSubtitle }: Nav
       <div className="flex items-center h-full">
         {/* Mobile Hamburger Toggle (only show in dashboard/sidebar view) */}
         {!isOnboarding && (
-          <button 
+          <button
             onClick={toggleSidebar}
             className="md:hidden p-2 mr-2 -ml-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition cursor-pointer"
           >
@@ -92,11 +92,10 @@ export default function NavBar({ title: propTitle, subtitle: propSubtitle }: Nav
         )}
 
         {/* Logo / Branding */}
-        <div className={`h-full flex items-center gap-3 shrink-0 ${
-          isOnboarding 
-            ? 'pl-0 lg:pl-6 pr-4 sm:pr-6 border-r border-slate-200/80 w-auto lg:w-[320px]' 
+        <div className={`h-full flex items-center gap-3 shrink-0 ${isOnboarding
+            ? 'pl-0 lg:pl-6 pr-4 sm:pr-6 border-r border-slate-200/80 w-auto lg:w-[320px]'
             : 'pl-0 md:pl-6 pr-4 sm:pr-6 w-auto md:w-64'
-        }`}>
+          }`}>
           <div className="w-11 h-11 rounded-xl bg-amber-500 flex items-center justify-center text-slate-950 shadow-lg shadow-amber-500/20 shrink-0">
             <Clapperboard className="w-6 h-6 stroke-[2.5]" />
           </div>
@@ -147,17 +146,17 @@ export default function NavBar({ title: propTitle, subtitle: propSubtitle }: Nav
           {showUserDropdown && (
             <div className="absolute right-0 mt-2 w-48 bg-white border border-slate-200/90 rounded-2xl shadow-xl py-1.5 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
               {/* Profile Link */}
-              <Link 
-                href="/onboarding/details" 
+              <Link
+                href="/onboarding/details"
                 onClick={() => setShowUserDropdown(false)}
                 className="w-full px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2 font-semibold transition"
               >
                 <User className="w-3.5 h-3.5 text-slate-400" /> Profile
               </Link>
-              
+
               {/* Account Settings Link */}
-              <Link 
-                href="/onboarding/details" 
+              <Link
+                href="/onboarding/details"
                 onClick={() => setShowUserDropdown(false)}
                 className="w-full px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2 font-semibold transition border-b border-slate-100 pb-2 mb-1"
               >
@@ -166,7 +165,7 @@ export default function NavBar({ title: propTitle, subtitle: propSubtitle }: Nav
 
               {/* Sign Out Button */}
               <div className="px-1.5 pt-0.5">
-                <LogoutButton 
+                <LogoutButton
                   className="w-full text-left px-3 py-1.5 text-xs text-red-650 hover:bg-red-50 flex items-center gap-2 font-bold rounded-xl transition"
                   showIcon={true}
                   iconClassName="w-3.5 h-3.5"

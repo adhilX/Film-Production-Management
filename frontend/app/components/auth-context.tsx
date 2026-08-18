@@ -25,9 +25,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [storeAccessToken, token]);
 
   useEffect(() => {
-    let storedToken = localStorage.getItem('token');
-    if (!storedToken) {
-      const authStorage = localStorage.getItem('auth-storage');
+    let storedToken = typeof window !== 'undefined' ? (localStorage.getItem('token') || sessionStorage.getItem('token')) : null;
+    if (!storedToken && typeof window !== 'undefined') {
+      const authStorage = localStorage.getItem('auth-storage') || sessionStorage.getItem('auth-storage');
       if (authStorage) {
         try {
           const parsed = JSON.parse(authStorage);
@@ -47,13 +47,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = (newToken: string) => {
     setToken(newToken);
-    localStorage.setItem('token', newToken);
+    if (typeof window !== 'undefined') {
+      const remember = localStorage.getItem('remember_me') === 'true';
+      if (remember) {
+        localStorage.setItem('token', newToken);
+        sessionStorage.removeItem('token');
+      } else {
+        sessionStorage.setItem('token', newToken);
+        localStorage.removeItem('token');
+      }
+    }
   };
 
   const logout = () => {
     setToken(null);
-    localStorage.removeItem('token');
-    localStorage.removeItem('auth-storage');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('token');
+      localStorage.removeItem('auth-storage');
+      localStorage.removeItem('remember_me');
+      sessionStorage.removeItem('token');
+      sessionStorage.removeItem('auth-storage');
+    }
     document.cookie = 'refresh_token=; path=/; max-age=0; SameSite=Lax';
   };
 

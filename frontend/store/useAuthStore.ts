@@ -19,13 +19,38 @@ interface AuthState {
 
 const setAuthCookie = () => {
   if (typeof document !== 'undefined') {
-    document.cookie = 'refresh_token=true; path=/; max-age=604800; SameSite=Lax';
+    const remember = typeof window !== 'undefined' ? localStorage.getItem('remember_me') === 'true' : false;
+    if (remember) {
+      document.cookie = 'refresh_token=true; path=/; max-age=604800; SameSite=Lax';
+    } else {
+      document.cookie = 'refresh_token=true; path=/; SameSite=Lax';
+    }
   }
 };
 
 const removeAuthCookie = () => {
   if (typeof document !== 'undefined') {
     document.cookie = 'refresh_token=; path=/; max-age=0; SameSite=Lax';
+  }
+};
+
+const setTokenInStorage = (token: string) => {
+  if (typeof window !== 'undefined') {
+    const remember = localStorage.getItem('remember_me') === 'true';
+    if (remember) {
+      localStorage.setItem('token', token);
+      sessionStorage.removeItem('token');
+    } else {
+      sessionStorage.setItem('token', token);
+      localStorage.removeItem('token');
+    }
+  }
+};
+
+const removeTokenFromStorage = () => {
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('token');
+    sessionStorage.removeItem('token');
   }
 };
 
@@ -60,9 +85,7 @@ export const useAuthStore = create<AuthState>()(
           const { access_token } = response;
           
           setAuthCookie();
-          if (typeof window !== 'undefined') {
-            localStorage.setItem('token', access_token);
-          }
+          setTokenInStorage(access_token);
 
           const decoded = decodeJwt(access_token);
           const userId = decoded?.userId;
@@ -89,9 +112,7 @@ export const useAuthStore = create<AuthState>()(
 
       setAuth: (user: UserProfile, accessToken: string) => {
         setAuthCookie();
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('token', accessToken);
-        }
+        setTokenInStorage(accessToken);
         set({
           user,
           accessToken,
@@ -101,16 +122,15 @@ export const useAuthStore = create<AuthState>()(
       },
 
       setAccessToken: (accessToken: string) => {
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('token', accessToken);
-        }
+        setTokenInStorage(accessToken);
         set({ accessToken });
       },
 
       clearAuth: () => {
         removeAuthCookie();
+        removeTokenFromStorage();
         if (typeof window !== 'undefined') {
-          localStorage.removeItem('token');
+          localStorage.removeItem('remember_me');
         }
         set({
           user: null,
@@ -137,9 +157,7 @@ export const useAuthStore = create<AuthState>()(
           const data = await authService.refreshToken();
           const { access_token } = data;
           setAuthCookie();
-          if (typeof window !== 'undefined') {
-            localStorage.setItem('token', access_token);
-          }
+          setTokenInStorage(access_token);
           set({ accessToken: access_token, isAuthenticated: true });
           return access_token;
         } catch (error) {
@@ -182,7 +200,18 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'auth-storage',
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(() => {
+        if (typeof window !== 'undefined') {
+          const remember = localStorage.getItem('remember_me') === 'true';
+          return remember ? localStorage : sessionStorage;
+        }
+        return {
+          getItem: () => null,
+          setItem: () => {},
+          removeItem: () => {},
+          clear: () => {},
+        } as any;
+      }),
       partialize: (state) => ({
         accessToken: state.accessToken,
         isAuthenticated: state.isAuthenticated,
