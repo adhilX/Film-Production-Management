@@ -55,10 +55,38 @@ export const adminService = {
   },
 
   // User Management
-  async getUsers(page = 1, limit = 10, search = ''): Promise<{ users: any[]; total: number; page: number; pages: number; limit: number }> {
+  async getUsers(
+    pageOrParams?: number | {
+      page?: number;
+      limit?: number;
+      search?: string;
+      contractorType?: string;
+      systemRoleId?: string;
+      status?: string;
+      onboardingStatus?: string;
+      isActive?: boolean;
+      department?: string;
+      sortBy?: string;
+      sortOrder?: 'asc' | 'desc';
+    },
+    limit?: number,
+    search?: string
+  ): Promise<{ users: any[]; total: number; page: number; pages: number; limit: number }> {
+    let params: any = {};
+    if (typeof pageOrParams === 'object' && pageOrParams !== null) {
+      params = pageOrParams;
+    } else {
+      if (pageOrParams !== undefined) params.page = pageOrParams;
+      if (limit !== undefined) params.limit = limit;
+      if (search !== undefined) params.search = search;
+    }
     const res = await axiosClient.get<{ users: any[]; total: number; page: number; pages: number; limit: number }>('/users', {
-      params: { page, limit, search }
+      params
     });
+    return res.data;
+  },
+  async getUser(id: string): Promise<any> {
+    const res = await axiosClient.get<any>(`/users/${id}`);
     return res.data;
   },
   async createUser(payload: any): Promise<any> {
@@ -69,6 +97,8 @@ export const adminService = {
     const res = await axiosClient.patch<any>(`/admin/users/${id}`, payload);
     return res.data;
   },
+
+
 
 
   // Audit Logs

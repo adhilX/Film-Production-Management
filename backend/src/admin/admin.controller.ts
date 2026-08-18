@@ -109,8 +109,17 @@ export class AdminController {
   @ApiOperation({ summary: 'Update a user manually' })
   updateUser(@Param('id') id: string, @Req() req: any, @Body() payload: any) {
     this.validateObjectId(id, 'userId');
-    return this.adminService.updateUser(req.user._id.toString(), id, payload);
+    const requesterPermissions = req.user.permissions || [];
+    const requesterRoleName = req.user.systemRoleId?.name || '';
+    return this.adminService.updateUser(
+      req.user._id.toString(),
+      id,
+      payload,
+      requesterPermissions,
+      requesterRoleName,
+    );
   }
+
 
   // --- System Settings (Roles & Permissions) ---
 

@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { InjectModel, InjectConnection } from '@nestjs/mongoose';
 import { Model, Types, Connection } from 'mongoose';
@@ -294,21 +295,103 @@ export class AdminService {
     return user;
   }
 
-  async updateUser(adminId: string, id: string, payload: any): Promise<User> {
+  async updateUser(
+    adminId: string,
+    id: string,
+    payload: any,
+    requesterPermissions: string[] = [],
+    requesterRoleName = '',
+  ): Promise<User> {
     const user = await this.userModel.findById(id).exec();
     if (!user) {
       throw new NotFoundException('User not found');
     }
 
     const oldStatus = user.onboardingStatus;
+    const oldActive = user.isActive;
+    const oldRoleId = user.systemRoleId?.toString();
 
+    // 1. Self-update protections
+    if (payload.systemRoleId !== undefined && payload.systemRoleId !== oldRoleId && id === adminId) {
+      throw new BadRequestException('You cannot modify your own system role');
+    }
+    if (payload.isActive !== undefined && payload.isActive !== oldActive && id === adminId) {
+      throw new BadRequestException('You cannot modify your own active status');
+    }
+
+    // Get Super Admin role details
+    const superAdminRoleObj = await this.roleModel.findOne({ name: 'Super Admin' }).exec();
+
+    // Fetch target user's current role name
+    let targetUserRoleName = '';
+    if (user.systemRoleId) {
+      const targetUserRole = await this.roleModel.findById(user.systemRoleId).exec();
+      if (targetUserRole) {
+        targetUserRoleName = targetUserRole.name;
+      }
+    }
+
+    // 2. Role assignment validations & privilege escalation checks
+    if (payload.systemRoleId !== undefined && payload.systemRoleId !== oldRoleId) {
+      // Require roles.manage permission to change roles
+      if (!requesterPermissions.includes('roles.manage')) {
+        throw new ForbiddenException('You do not have permission to manage user roles');
+      }
+
+      if (payload.systemRoleId) {
+        const targetRoleObj = await this.roleModel.findById(payload.systemRoleId).exec();
+        if (!targetRoleObj) {
+          throw new BadRequestException('Target role does not exist');
+        }
+
+        // Only Super Admins can assign the Super Admin role
+        if (targetRoleObj.name === 'Super Admin' && requesterRoleName !== 'Super Admin') {
+          throw new ForbiddenException('Only Super Admins can assign the Super Admin role');
+        }
+      }
+
+      // Non-Super Admins cannot modify Super Admin role
+      if (targetUserRoleName === 'Super Admin' && requesterRoleName !== 'Super Admin') {
+        throw new ForbiddenException('Only Super Admins can modify Super Admin accounts');
+      }
+
+      // Safeguard: Prevent leaving the system with 0 active Super Admins
+      if (targetUserRoleName === 'Super Admin' && payload.systemRoleId !== superAdminRoleObj?._id.toString()) {
+        const superAdminCount = await this.userModel.countDocuments({
+          systemRoleId: superAdminRoleObj?._id,
+          isActive: true,
+        }).exec();
+        if (superAdminCount <= 1) {
+          throw new BadRequestException('Cannot change the role of the last active Super Admin');
+        }
+      }
+    }
+
+    // 3. Status change validations
+    if (payload.isActive !== undefined && payload.isActive !== oldActive) {
+      // Non-Super Admins cannot deactivate a Super Admin
+      if (targetUserRoleName === 'Super Admin' && requesterRoleName !== 'Super Admin') {
+        throw new ForbiddenException('Only Super Admins can modify Super Admin accounts');
+      }
+
+      // Safeguard: Prevent leaving the system with 0 active Super Admins
+      if (targetUserRoleName === 'Super Admin' && payload.isActive === false) {
+        const superAdminCount = await this.userModel.countDocuments({
+          systemRoleId: superAdminRoleObj?._id,
+          isActive: true,
+        }).exec();
+        if (superAdminCount <= 1) {
+          throw new BadRequestException('Cannot deactivate the last active Super Admin');
+        }
+      }
+    }
+
+    // Apply updates
     if (payload.email) user.email = payload.email;
     if (payload.name) user.name = payload.name;
     if (payload.contractorType) user.contractorType = payload.contractorType;
-
     if (payload.status) user.status = payload.status;
-    if (payload.onboardingStatus)
-      user.onboardingStatus = payload.onboardingStatus;
+    if (payload.onboardingStatus) user.onboardingStatus = payload.onboardingStatus;
     if (payload.isActive !== undefined) user.isActive = payload.isActive;
 
     if (payload.systemRoleId) {
@@ -319,12 +402,40 @@ export class AdminService {
 
     await user.save();
 
-    await this.auditLogsService.create(
-      adminId,
-      user._id.toString(),
-      'USER_UPDATED',
-      { oldStatus, newStatus: user.onboardingStatus },
-    );
+    // 4. Audit Logging
+    if (payload.systemRoleId !== undefined && payload.systemRoleId !== oldRoleId) {
+      await this.auditLogsService.create(
+        adminId,
+        user._id.toString(),
+        'USER_ROLE_CHANGED',
+        { oldRole: oldRoleId, newRole: payload.systemRoleId },
+      );
+    }
+
+    if (payload.isActive !== undefined && payload.isActive !== oldActive) {
+      await this.auditLogsService.create(
+        adminId,
+        user._id.toString(),
+        payload.isActive ? 'USER_ACTIVATED' : 'USER_DEACTIVATED',
+        { oldActive, newActive: payload.isActive },
+      );
+    }
+
+    // Log general update if other fields changed
+    if (
+      payload.email !== undefined ||
+      payload.name !== undefined ||
+      payload.contractorType !== undefined ||
+      payload.status !== undefined ||
+      payload.onboardingStatus !== undefined
+    ) {
+      await this.auditLogsService.create(
+        adminId,
+        user._id.toString(),
+        'USER_UPDATED',
+        { oldStatus, newStatus: user.onboardingStatus },
+      );
+    }
 
     return user;
   }

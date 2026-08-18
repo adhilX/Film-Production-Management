@@ -16,6 +16,8 @@ import {
   DocumentRecordDocument,
 } from './schemas/document-record.schema';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
+import { CastCrew, CastCrewDocument } from '../productions/schemas/cast-crew.schema';
+import { AuditLog, AuditLogDocument } from '../audit-logs/schemas/audit-log.schema';
 
 @Injectable()
 export class UsersService {
@@ -27,13 +29,23 @@ export class UsersService {
     @InjectModel(DocumentRecord.name)
     private documentRecordModel: Model<DocumentRecordDocument>,
     private auditLogsService: AuditLogsService,
+    @InjectModel(CastCrew.name) private castCrewModel: Model<CastCrewDocument>,
+    @InjectModel(AuditLog.name) private auditLogModel: Model<AuditLogDocument>,
   ) {}
 
-  async findAll(
-    page = 1,
-    limit = 10,
-    search = '',
-  ): Promise<{
+  async findAll(options: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    contractorType?: string;
+    systemRoleId?: string;
+    status?: string;
+    onboardingStatus?: string;
+    isActive?: boolean;
+    department?: string;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
+  }): Promise<{
     users: User[];
     total: number;
     page: number;
@@ -42,17 +54,64 @@ export class UsersService {
   }> {
     const query: any = {};
 
-    if (search) {
-      const escapedSearch = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    if (options.search) {
+      const escapedSearch = options.search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       query.$or = [
         { name: { $regex: escapedSearch, $options: 'i' } },
         { email: { $regex: escapedSearch, $options: 'i' } },
       ];
     }
 
+    if (options.contractorType) {
+      query.contractorType = options.contractorType;
+    }
+
+    if (options.systemRoleId) {
+      query.systemRoleId = new Types.ObjectId(options.systemRoleId);
+    }
+
+    if (options.status) {
+      query.status = options.status;
+    }
+
+    if (options.onboardingStatus) {
+      query.onboardingStatus = options.onboardingStatus;
+    }
+
+    if (options.isActive !== undefined) {
+      query.isActive = options.isActive;
+    }
+
+    if (options.department) {
+      const matchingProfiles = await this.userProfileModel
+        .find({ department: { $regex: options.department, $options: 'i' } })
+        .select('userId')
+        .exec();
+      const userIds = matchingProfiles.map((p) => p.userId);
+      if (query._id) {
+        query._id = { $and: [query._id, { $in: userIds }] };
+      } else {
+        query._id = { $in: userIds };
+      }
+    }
+
+    const sort: any = {};
+    if (options.sortBy) {
+      const order = options.sortOrder === 'desc' ? -1 : 1;
+      if (['name', 'email', 'contractorType', 'status', 'createdAt', 'updatedAt'].includes(options.sortBy)) {
+        sort[options.sortBy] = order;
+      } else {
+        sort.updatedAt = -1;
+      }
+    } else {
+      sort.updatedAt = -1;
+    }
+
+    const pageNum = options.page || 1;
+    const limitNum = options.limit || 10;
     const total = await this.userModel.countDocuments(query).exec();
-    const pages = Math.ceil(total / limit);
-    const skip = (page - 1) * limit;
+    const pages = Math.ceil(total / limitNum);
+    const skip = (pageNum - 1) * limitNum;
 
     const users = await this.userModel
       .find(query)
@@ -62,18 +121,20 @@ export class UsersService {
         populate: { path: 'permissions' },
       })
       .select('-passwordHash')
+      .sort(sort)
       .skip(skip)
-      .limit(limit)
+      .limit(limitNum)
       .exec();
 
     return {
       users,
       total,
-      page,
+      page: pageNum,
       pages,
-      limit,
+      limit: limitNum,
     };
   }
+
 
   async findOne(id: string): Promise<User> {
     const user = await this.userModel
@@ -227,5 +288,45 @@ export class UsersService {
     return this.getMe(userId);
   }
 
+  async findUserAssignments(targetUserId: string, requester: any): Promise<any[]> {
+    const targetUserAssignments = await this.castCrewModel
+      .find({ userId: new Types.ObjectId(targetUserId) })
+      .populate('productionId')
+      .exec();
 
+    const isAdmin =
+      requester.permissions &&
+      (requester.permissions.includes('roles.manage') ||
+        requester.permissions.includes('users.approve'));
+
+    if (isAdmin) {
+      return targetUserAssignments;
+    }
+
+    // Find all productions the requester is assigned to
+    const requesterAssignments = await this.castCrewModel
+      .find({ userId: requester._id })
+      .exec();
+    const requesterProductionIds = requesterAssignments.map((a) =>
+      a.productionId.toString(),
+    );
+
+    return targetUserAssignments.filter((a) => {
+      const prodId = a.productionId?._id ? a.productionId._id.toString() : a.productionId?.toString();
+      return requesterProductionIds.includes(prodId);
+    });
+  }
+
+
+  async findAuditLogs(targetUserId: string): Promise<any[]> {
+    return this.auditLogModel
+      .find({
+        resourceId: new Types.ObjectId(targetUserId),
+        resourceType: 'User',
+      })
+      .populate('userId', 'name email')
+      .sort({ createdAt: -1 })
+      .exec();
+  }
 }
+

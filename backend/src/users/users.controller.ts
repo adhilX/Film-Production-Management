@@ -13,6 +13,7 @@ import {
   Query,
   ForbiddenException,
 } from '@nestjs/common';
+import { Types } from 'mongoose';
 import {
   ApiTags,
   ApiBearerAuth,
@@ -27,6 +28,7 @@ import { AuthGuard } from '../auth/guards/auth.guard';
 import { PermissionsGuard } from '../auth/guards/permissions.guard';
 import { Permissions } from '../auth/decorators/permissions.decorator';
 import { CloudinaryService } from '../common/cloudinary/cloudinary.service';
+
 
 @ApiTags('Users & Onboarding')
 @ApiBearerAuth('JWT-auth')
@@ -46,10 +48,31 @@ export class UsersController {
     @Query('page') page?: string,
     @Query('limit') limit?: string,
     @Query('search') search?: string,
+    @Query('contractorType') contractorType?: string,
+    @Query('systemRoleId') systemRoleId?: string,
+    @Query('status') status?: string,
+    @Query('onboardingStatus') onboardingStatus?: string,
+    @Query('isActive') isActive?: string,
+    @Query('department') department?: string,
+    @Query('sortBy') sortBy?: string,
+    @Query('sortOrder') sortOrder?: 'asc' | 'desc',
   ) {
     const pageNum = parseInt(page || '1', 10);
     const limitNum = parseInt(limit || '10', 10);
-    const result = await this.usersService.findAll(pageNum, limitNum, search || '');
+    const isActiveBool = isActive !== undefined ? isActive === 'true' : undefined;
+    const result = await this.usersService.findAll({
+      page: pageNum,
+      limit: limitNum,
+      search: search || '',
+      contractorType,
+      systemRoleId,
+      status,
+      onboardingStatus,
+      isActive: isActiveBool,
+      department,
+      sortBy,
+      sortOrder,
+    });
     if (result.users) {
       result.users = result.users.map((u: any) => {
         const uObj = u.toJSON ? u.toJSON() : JSON.parse(JSON.stringify(u));
@@ -65,6 +88,7 @@ export class UsersController {
     }
     return result;
   }
+
 
   @Get('me')
   @ApiOperation({ summary: 'Get current user detail profile' })
@@ -137,18 +161,25 @@ export class UsersController {
     };
   }
 
+  private validateObjectId(id: string, name: string) {
+    if (!Types.ObjectId.isValid(id)) {
+      throw new BadRequestException(`Invalid ${name} format`);
+    }
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Fetch user profile details by ID' })
   @ApiResponse({ status: 200, description: 'User document details.' })
   async findOne(@Param('id') id: string, @Req() req: any) {
+    this.validateObjectId(id, 'userId');
     const isSelf = req.user._id.toString() === id;
     const hasViewPerm = req.user.permissions && req.user.permissions.includes('users.view');
     if (!isSelf && !hasViewPerm) {
       throw new ForbiddenException('Access denied: Cannot view another user\'s profile');
     }
     const user = await this.usersService.findOne(id);
+    const uObj = (user as any).toJSON ? (user as any).toJSON() : JSON.parse(JSON.stringify(user));
     if (!isSelf) {
-      const uObj = (user as any).toJSON ? (user as any).toJSON() : JSON.parse(JSON.stringify(user));
       if (uObj.profile) {
         delete uObj.profile.bankDetails;
         delete uObj.profile.taxFormUrl;
@@ -156,8 +187,11 @@ export class UsersController {
         delete uObj.profile.identityDocs;
         delete uObj.profile.signatureData;
       }
-      return uObj;
     }
-    return user;
+    if (isSelf || hasViewPerm) {
+      uObj.assignments = await this.usersService.findUserAssignments(id, req.user);
+      uObj.auditLogs = await this.usersService.findAuditLogs(id);
+    }
+    return uObj;
   }
 }
