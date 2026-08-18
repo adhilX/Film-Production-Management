@@ -16,7 +16,6 @@ import {
   Shield, 
   Users, 
   User, 
-  Phone, 
   Briefcase, 
   Info, 
   UserPlus, 
@@ -39,7 +38,6 @@ export default function SignupPage() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    phone: '',
     password: '',
     confirmPassword: '',
     role: 'Freelancer',
@@ -225,24 +223,6 @@ export default function SignupPage() {
                 </div>
               </div>
 
-              {/* Row 2: Phone Number (Optional) */}
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                  Phone Number <span className="text-slate-400 font-normal lowercase">(optional)</span>
-                </label>
-                <div className="flex items-center gap-2">
-                  <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center shrink-0 border border-purple-100">
-                    <Phone className="w-4 h-4 text-purple-600" />
-                  </div>
-                  <input
-                    type="tel"
-                    value={formData.phone}
-                    onChange={(e) => handleInputChange('phone', e.target.value)}
-                    placeholder="Enter your phone number"
-                    className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-600/20 transition duration-200"
-                  />
-                </div>
-              </div>
 
               {/* Row 3: Password & Confirm Password */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
