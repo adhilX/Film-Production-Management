@@ -23,7 +23,7 @@ export const AuditFilterBar: React.FC<AuditFilterBarProps> = ({
           placeholder="Search by IP, ID, or detail..."
           value={search}
           onChange={e => setSearch(e.target.value)}
-          className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-900"
+          className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900"
         />
       </div>
       
@@ -32,7 +32,7 @@ export const AuditFilterBar: React.FC<AuditFilterBarProps> = ({
         <select
           value={moduleFilter}
           onChange={e => setModuleFilter(e.target.value)}
-          className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-705 cursor-pointer"
+          className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-705 cursor-pointer"
         >
           <option value="All">All Modules</option>
           <option value="FUNDS">FUNDS</option>
@@ -47,7 +47,7 @@ export const AuditFilterBar: React.FC<AuditFilterBarProps> = ({
         <select
           value={actionFilter}
           onChange={e => setActionFilter(e.target.value)}
-          className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-705 cursor-pointer"
+          className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-705 cursor-pointer"
         >
           <option value="All">All Actions</option>
           <option value="FUND_APPROVED">FUND_APPROVED</option>

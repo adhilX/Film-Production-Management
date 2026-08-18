@@ -109,7 +109,7 @@ export default function RightSidebar({ step, progressPercentage, progressColor, 
 
               {/* Expect 4 */}
               <div className="flex gap-3 items-start">
-                <div className="p-2 bg-indigo-50 text-indigo-650 rounded-xl shrink-0">
+                <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl shrink-0">
                   <Bell className="w-4 h-4" />
                 </div>
                 <div>

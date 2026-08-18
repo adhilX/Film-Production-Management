@@ -46,7 +46,7 @@ export default function SystemRolesTab({
                         isAdmin
                           ? 'bg-red-50 text-red-650'
                           : isManager
-                          ? 'bg-indigo-50 text-indigo-650'
+                          ? 'bg-indigo-50 text-indigo-600'
                           : 'bg-slate-100 text-slate-500'
                       }`}
                     >
@@ -62,7 +62,7 @@ export default function SystemRolesTab({
 
                   <button
                     onClick={() => onEditRole(role)}
-                    className="p-1.5 text-slate-400 hover:text-indigo-650 hover:bg-indigo-50 rounded-xl transition cursor-pointer"
+                    className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition cursor-pointer"
                     title="Edit Role Matrix"
                   >
                     <Edit2 className="w-4 h-4" />

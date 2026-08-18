@@ -1,32 +1,20 @@
-import {
-  IsNotEmpty,
-  IsString,
-  IsNumber,
-  IsOptional,
-} from 'class-validator';
+import { IsString, IsNumber, IsOptional } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
-export class CreateLocationDto {
-  @ApiProperty({
-    example: '60d5ecb8b5c9c211b8b2e1f4',
-    description: 'Production ID',
-  })
+export class UpdateLocationDto {
+  @ApiProperty({ example: 'Stage B Studio Lot', required: false, description: 'Location name' })
   @IsString()
-  @IsNotEmpty()
-  productionId: string;
-
-  @ApiProperty({ example: 'Stage B Studio Lot', description: 'Location name' })
-  @IsString()
-  @IsNotEmpty()
-  name: string;
+  @IsOptional()
+  name?: string;
 
   @ApiProperty({
     example: '100 Universal City Plaza, Universal City, CA',
+    required: false,
     description: 'Address / location details',
   })
   @IsString()
-  @IsNotEmpty()
-  address: string;
+  @IsOptional()
+  address?: string;
 
   @ApiProperty({
     example: 'Main soundstage for interior spaceship scenes',

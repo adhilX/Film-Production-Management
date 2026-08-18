@@ -528,7 +528,7 @@ export default function ProductionsPage() {
             {hasPermission('productions.create') && (
               <button
                 onClick={openCreateModal}
-                className="flex items-center justify-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-755 text-white font-bold rounded-xl shadow-xs transition cursor-pointer text-xs shrink-0 w-full lg:w-auto"
+                className="flex items-center justify-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-xs transition cursor-pointer text-xs shrink-0 w-full lg:w-auto"
               >
                 <Plus className="w-4 h-4 stroke-[2.5]" />
                 Create Project
@@ -721,7 +721,7 @@ export default function ProductionsPage() {
           <div className="relative bg-white border border-slate-200 w-full max-w-2xl rounded-2xl overflow-hidden shadow-xl animate-in zoom-in-95 duration-200 flex flex-col">
             <div className="p-6 border-b border-slate-100 flex justify-between items-center">
               <h2 className="text-base font-bold text-slate-800 flex items-center gap-2">
-                <Film className="w-5 h-5 text-indigo-650" /> Create Project
+                <Film className="w-5 h-5 text-indigo-600" /> Create Project
               </h2>
               <button onClick={() => setIsCreateOpen(false)} className="text-slate-400 hover:text-slate-655 cursor-pointer font-bold text-xs">Close</button>
             </div>
@@ -758,7 +758,7 @@ export default function ProductionsPage() {
 
                   {isUploadingImage ? (
                     <div className="flex flex-col items-center gap-2 py-4">
-                      <Loader2 className="w-8 h-8 animate-spin text-indigo-655" />
+                      <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
                       <span className="text-xs font-semibold text-slate-500">Uploading cover image to Cloudinary...</span>
                     </div>
                   ) : imagePreview ? (
@@ -786,7 +786,7 @@ export default function ProductionsPage() {
                         <button
                           type="button"
                           onClick={() => fileInputRef.current?.click()}
-                          className="text-indigo-650 hover:text-indigo-800 transition font-black underline cursor-pointer"
+                          className="text-indigo-600 hover:text-indigo-800 transition font-black underline cursor-pointer"
                         >
                           browse files
                         </button>
@@ -807,7 +807,7 @@ export default function ProductionsPage() {
                     required
                     value={formData.title}
                     onChange={handleInputChange}
-                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-900"
+                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900"
                   />
                 </div>
                 <div className="space-y-1">
@@ -818,7 +818,7 @@ export default function ProductionsPage() {
                     required
                     value={formData.budget}
                     onChange={handleInputChange}
-                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-900"
+                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900"
                   />
                 </div>
                 <div className="space-y-1">
@@ -829,7 +829,7 @@ export default function ProductionsPage() {
                     required
                     value={formData.genre}
                     onChange={handleInputChange}
-                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-900"
+                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900"
                   />
                 </div>
                 <div className="space-y-1">
@@ -840,7 +840,7 @@ export default function ProductionsPage() {
                     required
                     value={formData.format}
                     onChange={handleInputChange}
-                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-900"
+                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900"
                   />
                 </div>
                 <div className="space-y-1">
@@ -851,7 +851,7 @@ export default function ProductionsPage() {
                     required
                     value={formData.language}
                     onChange={handleInputChange}
-                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-900"
+                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900"
                   />
                 </div>
                 <div className="space-y-1">
@@ -861,7 +861,7 @@ export default function ProductionsPage() {
                     required
                     value={formData.productionManager}
                     onChange={handleInputChange}
-                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-700 appearance-none cursor-pointer"
+                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-700 appearance-none cursor-pointer"
                   >
                     <option value="">Select Manager...</option>
                     {systemUsers.map((u) => (
@@ -877,7 +877,7 @@ export default function ProductionsPage() {
                     required
                     value={formData.startDate}
                     onChange={handleInputChange}
-                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-700 cursor-pointer"
+                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-700 cursor-pointer"
                   />
                 </div>
                 <div className="space-y-1">
@@ -888,7 +888,7 @@ export default function ProductionsPage() {
                     required
                     value={formData.endDate}
                     onChange={handleInputChange}
-                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-700 cursor-pointer"
+                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-700 cursor-pointer"
                   />
                 </div>
               </div>
@@ -900,7 +900,7 @@ export default function ProductionsPage() {
                   name="logline"
                   value={formData.logline}
                   onChange={handleInputChange}
-                  className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-900"
+                  className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900"
                 />
               </div>
 
@@ -911,7 +911,7 @@ export default function ProductionsPage() {
                   value={formData.synopsis}
                   onChange={handleInputChange}
                   rows={3}
-                  className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-900 resize-none"
+                  className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900 resize-none"
                 />
               </div>
             </form>
@@ -928,7 +928,7 @@ export default function ProductionsPage() {
                 type="submit"
                 onClick={handleCreateSubmit}
                 disabled={isUploadingImage}
-                className="px-5 py-2 bg-indigo-600 hover:bg-indigo-755 text-white rounded-xl text-xs font-bold cursor-pointer disabled:opacity-55 disabled:cursor-not-allowed"
+                className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold cursor-pointer disabled:opacity-55 disabled:cursor-not-allowed"
               >
                 Create
               </button>
@@ -944,7 +944,7 @@ export default function ProductionsPage() {
           <div className="relative bg-white border border-slate-200 w-full max-w-2xl rounded-2xl overflow-hidden shadow-xl animate-in zoom-in-95 duration-200 flex flex-col">
             <div className="p-6 border-b border-slate-100 flex justify-between items-center">
               <h2 className="text-base font-bold text-slate-800 flex items-center gap-2">
-                <Film className="w-5 h-5 text-indigo-650" /> Edit Project: {editingProd.title}
+                <Film className="w-5 h-5 text-indigo-600" /> Edit Project: {editingProd.title}
               </h2>
               <button onClick={() => setIsEditOpen(false)} className="text-slate-400 hover:text-slate-655 cursor-pointer font-bold text-xs">Close</button>
             </div>
@@ -981,7 +981,7 @@ export default function ProductionsPage() {
 
                   {isUploadingImage ? (
                     <div className="flex flex-col items-center gap-2 py-4">
-                      <Loader2 className="w-8 h-8 animate-spin text-indigo-655" />
+                      <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
                       <span className="text-xs font-semibold text-slate-500">Uploading cover image to Cloudinary...</span>
                     </div>
                   ) : imagePreview ? (
@@ -1009,7 +1009,7 @@ export default function ProductionsPage() {
                         <button
                           type="button"
                           onClick={() => fileInputRef.current?.click()}
-                          className="text-indigo-650 hover:text-indigo-800 transition font-black underline cursor-pointer"
+                          className="text-indigo-600 hover:text-indigo-800 transition font-black underline cursor-pointer"
                         >
                           browse files
                         </button>
@@ -1030,7 +1030,7 @@ export default function ProductionsPage() {
                     required
                     value={formData.title}
                     onChange={handleInputChange}
-                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-900"
+                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900"
                   />
                 </div>
                 <div className="space-y-1">
@@ -1040,7 +1040,7 @@ export default function ProductionsPage() {
                     required
                     value={formData.status}
                     onChange={handleInputChange}
-                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-705 font-bold cursor-pointer"
+                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-705 font-bold cursor-pointer"
                   >
                     <option value={editingProd.status}>{editingProd.status} (Current)</option>
                     {getValidTransitions(editingProd.status).map((s) => (
@@ -1056,7 +1056,7 @@ export default function ProductionsPage() {
                     required
                     value={formData.budget}
                     onChange={handleInputChange}
-                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-900"
+                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900"
                   />
                 </div>
                 <div className="space-y-1">
@@ -1067,7 +1067,7 @@ export default function ProductionsPage() {
                     required
                     value={formData.genre}
                     onChange={handleInputChange}
-                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-900"
+                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900"
                   />
                 </div>
                 <div className="space-y-1">
@@ -1078,7 +1078,7 @@ export default function ProductionsPage() {
                     required
                     value={formData.format}
                     onChange={handleInputChange}
-                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-900"
+                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900"
                   />
                 </div>
                 <div className="space-y-1">
@@ -1089,7 +1089,7 @@ export default function ProductionsPage() {
                     required
                     value={formData.language}
                     onChange={handleInputChange}
-                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-900"
+                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900"
                   />
                 </div>
                 <div className="space-y-1">
@@ -1099,7 +1099,7 @@ export default function ProductionsPage() {
                     required
                     value={formData.productionManager}
                     onChange={handleInputChange}
-                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-705 cursor-pointer"
+                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-705 cursor-pointer"
                   >
                     {systemUsers.map((u) => (
                       <option key={u._id} value={u._id}>{u.name}</option>
@@ -1114,7 +1114,7 @@ export default function ProductionsPage() {
                     required
                     value={formData.startDate}
                     onChange={handleInputChange}
-                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-700 cursor-pointer"
+                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-700 cursor-pointer"
                   />
                 </div>
                 <div className="space-y-1">
@@ -1125,7 +1125,7 @@ export default function ProductionsPage() {
                     required
                     value={formData.endDate}
                     onChange={handleInputChange}
-                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-700 cursor-pointer"
+                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-700 cursor-pointer"
                   />
                 </div>
               </div>
@@ -1137,7 +1137,7 @@ export default function ProductionsPage() {
                   name="logline"
                   value={formData.logline}
                   onChange={handleInputChange}
-                  className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-900"
+                  className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900"
                 />
               </div>
 
@@ -1148,7 +1148,7 @@ export default function ProductionsPage() {
                   value={formData.synopsis}
                   onChange={handleInputChange}
                   rows={3}
-                  className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-900 resize-none"
+                  className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900 resize-none"
                 />
               </div>
             </form>
@@ -1165,7 +1165,7 @@ export default function ProductionsPage() {
                 type="submit"
                 onClick={handleEditSubmit}
                 disabled={isUploadingImage}
-                className="px-5 py-2 bg-indigo-600 hover:bg-indigo-755 text-white rounded-xl text-xs font-bold cursor-pointer disabled:opacity-55 disabled:cursor-not-allowed"
+                className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold cursor-pointer disabled:opacity-55 disabled:cursor-not-allowed"
               >
                 Save Changes
               </button>

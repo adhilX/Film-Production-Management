@@ -95,7 +95,7 @@ export default function PermissionsTab({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search by permission name or description..."
-            className="w-full bg-white border border-slate-250 rounded-xl pl-10 pr-4 py-2 text-slate-900 text-xs focus:outline-none focus:border-indigo-650 transition"
+            className="w-full bg-white border border-slate-250 rounded-xl pl-10 pr-4 py-2 text-slate-900 text-xs focus:outline-none focus:border-indigo-600 transition"
           />
           {searchQuery && (
             <button 
@@ -161,7 +161,7 @@ export default function PermissionsTab({
                 onChange={(e) => setNewPermName(e.target.value)}
                 required
                 placeholder="e.g. costumes.burn"
-                className="w-full bg-white border border-slate-250 rounded-xl px-4 py-2.5 text-slate-900 focus:outline-none focus:border-indigo-650 transition font-mono text-xs"
+                className="w-full bg-white border border-slate-250 rounded-xl px-4 py-2.5 text-slate-900 focus:outline-none focus:border-indigo-600 transition font-mono text-xs"
               />
             </div>
 
@@ -174,7 +174,7 @@ export default function PermissionsTab({
                 value={newPermDesc}
                 onChange={(e) => setNewPermDesc(e.target.value)}
                 placeholder="e.g. Burn costumes in store"
-                className="w-full bg-white border border-slate-250 rounded-xl px-4 py-2.5 text-slate-900 focus:outline-none focus:border-indigo-650 transition text-xs"
+                className="w-full bg-white border border-slate-250 rounded-xl px-4 py-2.5 text-slate-900 focus:outline-none focus:border-indigo-600 transition text-xs"
               />
             </div>
 
@@ -186,7 +186,7 @@ export default function PermissionsTab({
                 <select
                   value={newPermGroup}
                   onChange={(e) => setNewPermGroup(e.target.value)}
-                  className="w-full bg-white border border-slate-250 rounded-xl px-4 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-indigo-650 transition appearance-none cursor-pointer"
+                  className="w-full bg-white border border-slate-250 rounded-xl px-4 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-indigo-600 transition appearance-none cursor-pointer"
                 >
                   <option value="User & Auth Perms">User & Auth Perms</option>
                   <option value="Production Perms">Production Perms</option>
@@ -198,7 +198,7 @@ export default function PermissionsTab({
               <button
                 type="submit"
                 disabled={isSubmittingPerm}
-                className="flex items-center justify-center gap-1.5 px-5 py-2.5 bg-indigo-650 hover:bg-indigo-750 text-white font-bold rounded-xl shadow-xs transition disabled:opacity-50 h-[42px] min-w-[130px] cursor-pointer text-xs"
+                className="flex items-center justify-center gap-1.5 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-xs transition disabled:opacity-50 h-[42px] min-w-[130px] cursor-pointer text-xs"
               >
                 <Plus className="w-4 h-4" />
                 {isSubmittingPerm ? 'Creating...' : 'Create'}
@@ -240,7 +240,7 @@ export default function PermissionsTab({
               setSearchQuery('');
               setSelectedGroupFilter('All');
             }}
-            className="text-indigo-650 hover:underline cursor-pointer"
+            className="text-indigo-600 hover:underline cursor-pointer"
           >
             Reset Search Filters
           </button>
@@ -251,7 +251,7 @@ export default function PermissionsTab({
       <div className="space-y-6">
         {permLoading && permissions.length === 0 ? (
           <div className="flex justify-center items-center h-64 bg-white border border-slate-200/80 rounded-2xl animate-pulse shadow-xs">
-            <div className="w-8 h-8 border-2 border-indigo-650 border-t-transparent rounded-full animate-spin"></div>
+            <div className="w-8 h-8 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
           </div>
         ) : filteredPermissions.length === 0 ? (
           <div className="flex flex-col justify-center items-center h-64 bg-white border border-slate-200/80 rounded-2xl text-center p-6 shadow-xs">
@@ -265,7 +265,7 @@ export default function PermissionsTab({
           Object.keys(groupedFilteredPermissions).map((groupName) => (
             <div key={groupName} className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-xs">
               <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center gap-2">
-                <Folder className="w-4 h-4 text-indigo-650" />
+                <Folder className="w-4 h-4 text-indigo-600" />
                 <h3 className="font-bold text-slate-700 text-xs uppercase tracking-wider">{groupName}</h3>
               </div>
 
@@ -302,7 +302,7 @@ export default function PermissionsTab({
                                     isAdmin
                                       ? 'bg-red-50 border-red-100 text-red-750'
                                       : isManager
-                                      ? 'bg-indigo-50 border-indigo-100 text-indigo-755'
+                                      ? 'bg-indigo-50 border-indigo-100 text-indigo-700'
                                       : 'bg-slate-100 border-slate-200 text-slate-650'
                                   }`}
                                 >

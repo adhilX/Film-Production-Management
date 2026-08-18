@@ -23,6 +23,7 @@ import {
   AUTH_MESSAGES,
   USER_MESSAGES,
 } from '../common/constants/messages.constant';
+import { defaultPermissions, rolesConfig } from './constants/seed-data.constant';
 
 @Injectable()
 export class AuthService implements IAuthService, OnModuleInit {
@@ -40,122 +41,6 @@ export class AuthService implements IAuthService, OnModuleInit {
 
   private async seedRolesAndAdmin() {
     // 0. Seed Permissions
-    const defaultPermissions = [
-      // User & Auth Perms
-      {
-        name: 'users.view',
-        description: 'View Users',
-        group: 'User & Auth Perms',
-      },
-      {
-        name: 'users.create',
-        description: 'Create Users',
-        group: 'User & Auth Perms',
-      },
-      {
-        name: 'users.update',
-        description: 'Update Users',
-        group: 'User & Auth Perms',
-      },
-      {
-        name: 'users.approve',
-        description: 'Approve Onboarding',
-        group: 'User & Auth Perms',
-      },
-      {
-        name: 'roles.view',
-        description: 'View Roles',
-        group: 'User & Auth Perms',
-      },
-      {
-        name: 'roles.manage',
-        description: 'Manage Roles & RBAC',
-        group: 'User & Auth Perms',
-      },
-      {
-        name: 'audit_logs.view',
-        description: 'View Audit Logs',
-        group: 'User & Auth Perms',
-      },
-      // Production Perms
-      {
-        name: 'productions.view',
-        description: 'View Productions',
-        group: 'Production Perms',
-      },
-      {
-        name: 'productions.create',
-        description: 'Create Productions',
-        group: 'Production Perms',
-      },
-      {
-        name: 'productions.update',
-        description: 'Edit Productions',
-        group: 'Production Perms',
-      },
-      {
-        name: 'locations.view',
-        description: 'View Locations',
-        group: 'Production Perms',
-      },
-      {
-        name: 'locations.book',
-        description: 'Book Locations',
-        group: 'Production Perms',
-      },
-      {
-        name: 'locations.approve',
-        description: 'Approve Locations',
-        group: 'Production Perms',
-      },
-      {
-        name: 'locations.update',
-        description: 'Update Locations',
-        group: 'Production Perms',
-      },
-      {
-        name: 'inventory.view',
-        description: 'View Inventory',
-        group: 'Production Perms',
-      },
-      {
-        name: 'inventory.manage',
-        description: 'Manage Inventory',
-        group: 'Production Perms',
-      },
-      {
-        name: 'costumes.view',
-        description: 'View Costumes',
-        group: 'Production Perms',
-      },
-      // Financial Perms
-      {
-        name: 'funds.view',
-        description: 'View Fund Requests',
-        group: 'Financial Perms',
-      },
-      {
-        name: 'funds.create',
-        description: 'Submit Fund Requests',
-        group: 'Financial Perms',
-      },
-      {
-        name: 'funds.request',
-        description: 'Request Funds',
-        group: 'Financial Perms',
-      },
-      {
-        name: 'funds.approve',
-        description: 'Approve Fund Requests',
-        group: 'Financial Perms',
-      },
-      {
-        name: 'funds.reject',
-        description: 'Reject Fund Requests',
-        group: 'Financial Perms',
-      },
-    ];
-
     for (const perm of defaultPermissions) {
       const existing = await this._permissionModel
         .findOne({ name: perm.name })
@@ -165,44 +50,12 @@ export class AuthService implements IAuthService, OnModuleInit {
       }
     }
 
+    // Clean up obsolete permissions
+    await this._permissionModel.deleteMany({
+      name: { $nin: defaultPermissions.map(p => p.name) }
+    }).exec();
+
     // 1. Seed Roles
-    const adminPermissions = [
-      'users.view',
-      'users.approve',
-      'users.update',
-      'roles.view',
-      'roles.manage',
-      'audit_logs.view',
-      'productions.view',
-      'productions.create',
-      'productions.update',
-      'production.delete',
-      'locations.view',
-      'locations.book',
-      'locations.update',
-      'locations.approve',
-      'funds.view',
-      'funds.request',
-      'funds.approve',
-      'funds.reject',
-      'costumes.view',
-    ];
-
-    const managerPermissions = [
-      'productions.view',
-      'productions.update',
-      'locations.view',
-      'locations.update',
-      'funds.view',
-      'funds.request',
-    ];
-
-    const userPermissions = [
-      'productions.view',
-      'locations.view',
-      'costumes.view',
-    ];
-
     const getPermissionIds = async (names: string[]): Promise<any[]> => {
       const perms = await this._permissionModel
         .find({ name: { $in: names } })
@@ -210,47 +63,30 @@ export class AuthService implements IAuthService, OnModuleInit {
       return perms.map((p) => p._id);
     };
 
-    const adminPermissionIds = await getPermissionIds(adminPermissions);
-    const managerPermissionIds = await getPermissionIds(managerPermissions);
-    const userPermissionIds = await getPermissionIds(userPermissions);
+    let superAdminRole: any = null;
 
-    let adminRole = await this._roleModel.findOne({ name: 'Admin' }).exec();
-    if (!adminRole) {
-      adminRole = new this._roleModel({
-        name: 'Admin',
-        permissions: adminPermissionIds,
-      });
-      await adminRole.save();
-    } else {
-      adminRole.permissions = adminPermissionIds as any;
-      await adminRole.save();
+    for (const r of rolesConfig) {
+      const permissionIds = await getPermissionIds(r.permissions);
+      let existingRole = await this._roleModel.findOne({ name: r.name }).exec();
+      if (!existingRole) {
+        existingRole = new this._roleModel({
+          name: r.name,
+          permissions: permissionIds,
+        });
+      } else {
+        existingRole.permissions = permissionIds as any;
+      }
+      await existingRole.save();
+
+      if (r.name === 'Super Admin') {
+        superAdminRole = existingRole;
+      }
     }
 
-    let managerRole = await this._roleModel
-      .findOne({ name: 'Production Manager' })
-      .exec();
-    if (!managerRole) {
-      managerRole = new this._roleModel({
-        name: 'Production Manager',
-        permissions: managerPermissionIds,
-      });
-      await managerRole.save();
-    } else {
-      managerRole.permissions = managerPermissionIds as any;
-      await managerRole.save();
-    }
-
-    let userRole = await this._roleModel.findOne({ name: 'User' }).exec();
-    if (!userRole) {
-      userRole = new this._roleModel({
-        name: 'User',
-        permissions: userPermissionIds,
-      });
-      await userRole.save();
-    } else {
-      userRole.permissions = userPermissionIds as any;
-      await userRole.save();
-    }
+    // Clean up obsolete roles
+    await this._roleModel.deleteMany({
+      name: { $nin: rolesConfig.map(r => r.name) }
+    }).exec();
 
     // 2. Seed Default Admin
     const adminEmail = 'admin@production.com';
@@ -265,7 +101,7 @@ export class AuthService implements IAuthService, OnModuleInit {
         name: 'Super Admin',
         contractorType: 'Production Company',
         status: 'Approved',
-        systemRoleId: adminRole._id,
+        systemRoleId: superAdminRole._id,
         isActive: true,
         onboardingStatus: 'approved',
         currentStep: 6,
@@ -274,6 +110,9 @@ export class AuthService implements IAuthService, OnModuleInit {
       console.log(
         'Seeded default admin user: admin@production.com / AdminPassword123!',
       );
+    } else {
+      existingAdmin.systemRoleId = superAdminRole._id;
+      await existingAdmin.save();
     }
   }
 
@@ -285,7 +124,6 @@ export class AuthService implements IAuthService, OnModuleInit {
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
-    const userRole = await this._roleModel.findOne({ name: 'User' }).exec();
 
     const user = new this._userModel({
       email,

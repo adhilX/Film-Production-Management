@@ -41,7 +41,7 @@ export default function FundsPage() {
   return (
     <div className="max-w-[1400px] mx-auto px-6 md:px-8 lg:px-10 py-8 space-y-6 animate-in fade-in duration-300">
       {/* Only visible to those who can request funds */}
-      <PermissionGuard permission="funds.request">
+      <PermissionGuard permission="funds.create">
         <CreateFundForm onSuccess={fetchFunds} />
       </PermissionGuard>
 

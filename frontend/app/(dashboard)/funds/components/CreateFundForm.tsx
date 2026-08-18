@@ -56,7 +56,7 @@ export const CreateFundForm: React.FC<CreateFundFormProps> = ({ onSuccess }) => 
             {...register("amount", { valueAsNumber: true })} 
             type="number" 
             placeholder="e.g. 5000" 
-            className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-900"
+            className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900"
           />
           {errors.amount && <p className="text-red-650 text-[10px] font-bold mt-1.5 uppercase tracking-wider">{errors.amount.message}</p>}
         </div>
@@ -67,7 +67,7 @@ export const CreateFundForm: React.FC<CreateFundFormProps> = ({ onSuccess }) => 
             {...register("justification")} 
             type="text"
             placeholder="Operational justification for these funds..." 
-            className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-900"
+            className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900"
           />
           {errors.justification && <p className="text-red-650 text-[10px] font-bold mt-1.5 uppercase tracking-wider">{errors.justification.message}</p>}
         </div>
@@ -76,7 +76,7 @@ export const CreateFundForm: React.FC<CreateFundFormProps> = ({ onSuccess }) => 
           <button 
             disabled={isSubmitting} 
             type="submit"
-            className="w-full py-2 bg-indigo-650 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition cursor-pointer shadow-xs disabled:opacity-50 whitespace-nowrap"
+            className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition cursor-pointer shadow-xs disabled:opacity-50 whitespace-nowrap"
           >
             {isSubmitting ? 'Submitting...' : 'Request Funds'}
           </button>

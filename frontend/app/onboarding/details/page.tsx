@@ -78,7 +78,7 @@ export default function ApplicationDetailsPage() {
         <p className="mb-4 font-semibold">Failed to load onboarding application data.</p>
         <button 
           onClick={() => router.push('/onboarding')}
-          className="px-4 py-2 bg-indigo-650 text-white text-xs font-bold rounded-xl transition"
+          className="px-4 py-2 bg-indigo-600 text-white text-xs font-bold rounded-xl transition"
         >
           Go to Onboarding
         </button>
@@ -240,7 +240,7 @@ export default function ApplicationDetailsPage() {
                         rel="noopener noreferrer" 
                         className="p-1.5 bg-slate-50 border border-slate-200 rounded-lg hover:bg-slate-100 transition shrink-0"
                       >
-                        <Download className="w-3.5 h-3.5 text-indigo-650" />
+                        <Download className="w-3.5 h-3.5 text-indigo-600" />
                       </a>
                     </div>
                   ) : (

@@ -129,11 +129,11 @@ export default function OverviewModule() {
               value={newProdTitle}
               onChange={(e) => setNewProdTitle(e.target.value)}
               required
-              className="w-full sm:w-64 bg-white border border-slate-250 rounded-xl py-1.5 px-3 text-xs text-slate-900 focus:outline-none focus:border-indigo-650"
+              className="w-full sm:w-64 bg-white border border-slate-250 rounded-xl py-1.5 px-3 text-xs text-slate-900 focus:outline-none focus:border-indigo-600"
             />
             <button 
               type="submit"
-              className="py-1.5 px-4 bg-indigo-650 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition cursor-pointer shadow-xs whitespace-nowrap"
+              className="py-1.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition cursor-pointer shadow-xs whitespace-nowrap"
             >
               <Plus size={14} /> Create Project
             </button>
@@ -183,7 +183,7 @@ export default function OverviewModule() {
                     <div className="text-right">
                       <span className="font-bold text-slate-700 block">{cc.roleInProduction}</span>
                       {cc.characterId && (
-                        <span className="text-[10px] text-indigo-650 font-bold mt-0.5 block">Plays: {cc.characterId.name}</span>
+                        <span className="text-[10px] text-indigo-600 font-bold mt-0.5 block">Plays: {cc.characterId.name}</span>
                       )}
                     </div>
                   </div>
@@ -200,7 +200,7 @@ export default function OverviewModule() {
                   value={assignUser}
                   onChange={(e) => setAssignUser(e.target.value)}
                   required
-                  className="bg-white border border-slate-250 rounded-xl py-1.5 px-3 text-xs text-slate-900 focus:outline-none focus:border-indigo-650 appearance-none cursor-pointer"
+                  className="bg-white border border-slate-250 rounded-xl py-1.5 px-3 text-xs text-slate-900 focus:outline-none focus:border-indigo-600 appearance-none cursor-pointer"
                 >
                   <option value="">Select User...</option>
                   {systemUsers.filter(u => u.isActive && !castCrewList.some(cc => cc.userId?._id === u._id)).map((u: any) => (
@@ -213,12 +213,12 @@ export default function OverviewModule() {
                   value={assignRole}
                   onChange={(e) => setAssignRole(e.target.value)}
                   required
-                  className="bg-white border border-slate-250 rounded-xl py-1.5 px-3 text-xs text-slate-900 focus:outline-none focus:border-indigo-650"
+                  className="bg-white border border-slate-250 rounded-xl py-1.5 px-3 text-xs text-slate-900 focus:outline-none focus:border-indigo-600"
                 />
                 <select
                   value={assignChar}
                   onChange={(e) => setAssignChar(e.target.value)}
-                  className="bg-white border border-slate-250 rounded-xl py-1.5 px-3 text-xs text-slate-900 focus:outline-none focus:border-indigo-650 appearance-none cursor-pointer"
+                  className="bg-white border border-slate-250 rounded-xl py-1.5 px-3 text-xs text-slate-900 focus:outline-none focus:border-indigo-600 appearance-none cursor-pointer"
                 >
                   <option value="">No character role...</option>
                   {characters.map((c) => (
@@ -227,7 +227,7 @@ export default function OverviewModule() {
                 </select>
                 <button 
                   type="submit"
-                  className="py-1.5 px-3 bg-indigo-650 hover:bg-indigo-700 rounded-xl text-white text-xs font-bold cursor-pointer text-center transition shadow-xs"
+                  className="py-1.5 px-3 bg-indigo-600 hover:bg-indigo-700 rounded-xl text-white text-xs font-bold cursor-pointer text-center transition shadow-xs"
                 >
                   Assign User
                 </button>
@@ -271,18 +271,18 @@ export default function OverviewModule() {
                   value={newCharName}
                   onChange={(e) => setNewCharName(e.target.value)}
                   required
-                  className="flex-1 bg-white border border-slate-250 rounded-xl py-1.5 px-3.5 text-xs text-slate-900 focus:outline-none focus:border-indigo-650"
+                  className="flex-1 bg-white border border-slate-250 rounded-xl py-1.5 px-3.5 text-xs text-slate-900 focus:outline-none focus:border-indigo-600"
                 />
                 <input 
                   type="text" 
                   placeholder="Description (e.g. Lead protagonist, age 30s)"
                   value={newCharDesc}
                   onChange={(e) => setNewCharDesc(e.target.value)}
-                  className="flex-2 bg-white border border-slate-250 rounded-xl py-1.5 px-3.5 text-xs text-slate-900 focus:outline-none focus:border-indigo-650"
+                  className="flex-2 bg-white border border-slate-250 rounded-xl py-1.5 px-3.5 text-xs text-slate-900 focus:outline-none focus:border-indigo-600"
                 />
                 <button 
                   type="submit"
-                  className="py-1.5 px-4 bg-indigo-650 hover:bg-indigo-700 rounded-xl text-white text-xs font-bold cursor-pointer transition shadow-xs"
+                  className="py-1.5 px-4 bg-indigo-600 hover:bg-indigo-700 rounded-xl text-white text-xs font-bold cursor-pointer transition shadow-xs"
                 >
                   Create Character
                 </button>

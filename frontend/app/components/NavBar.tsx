@@ -125,9 +125,9 @@ export default function NavBar({ title: propTitle, subtitle: propSubtitle }: Nav
         <div className="relative">
           <button
             onClick={() => setShowUserDropdown(!showUserDropdown)}
-            className="flex items-center gap-2.5 text-left focus:outline-none focus:ring-2 focus:ring-indigo-650/20 rounded-xl p-1 cursor-pointer"
+            className="flex items-center gap-2.5 text-left focus:outline-none focus:ring-2 focus:ring-indigo-600/20 rounded-xl p-1 cursor-pointer"
           >
-            <div className="w-8 h-8 rounded-full bg-indigo-600/10 border border-indigo-650/20 flex items-center justify-center text-xs font-bold text-[#4f46e5] overflow-hidden shrink-0">
+            <div className="w-8 h-8 rounded-full bg-indigo-600/10 border border-indigo-600/20 flex items-center justify-center text-xs font-bold text-[#4f46e5] overflow-hidden shrink-0">
               {photoUrl ? (
                 <img src={photoUrl} alt="Avatar" className="w-full h-full object-cover" />
               ) : (

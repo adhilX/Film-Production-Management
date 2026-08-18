@@ -31,7 +31,7 @@ export class FundsController {
   constructor(private readonly fundsService: FundsService) {}
 
   @Post()
-  @Permissions('funds.request')
+  @Permissions('funds.create')
   @ApiOperation({ summary: 'Submit a budget / fund request for a production' })
   @ApiResponse({
     status: 201,

@@ -64,7 +64,7 @@ export default function AdminRolesPage() {
         <div className="flex justify-end">
           <button
             onClick={handleCreate}
-            className="flex items-center gap-2 px-4 py-2.5 bg-indigo-650 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-xs transition cursor-pointer text-xs"
+            className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-xs transition cursor-pointer text-xs"
           >
             <Plus className="w-4 h-4" />
             Create Role

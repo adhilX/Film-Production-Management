@@ -128,7 +128,7 @@ export default function UserEditModal({ isOpen, onClose, user, onSave }: UserEdi
                 value={formData.name}
                 onChange={handleChange}
                 required
-                className="w-full bg-white border border-slate-250 rounded-xl px-4 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-indigo-650 transition"
+                className="w-full bg-white border border-slate-250 rounded-xl px-4 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-indigo-600 transition"
                 placeholder="John Doe"
               />
             </div>
@@ -141,7 +141,7 @@ export default function UserEditModal({ isOpen, onClose, user, onSave }: UserEdi
                 value={formData.email}
                 onChange={handleChange}
                 required
-                className="w-full bg-white border border-slate-250 rounded-xl px-4 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-indigo-650 transition"
+                className="w-full bg-white border border-slate-250 rounded-xl px-4 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-indigo-600 transition"
                 placeholder="john@example.com"
               />
             </div>
@@ -154,7 +154,7 @@ export default function UserEditModal({ isOpen, onClose, user, onSave }: UserEdi
                   name="contractorType"
                   value={formData.contractorType}
                   onChange={handleChange}
-                  className="w-full bg-white border border-slate-250 rounded-xl px-4 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-indigo-650 transition"
+                  className="w-full bg-white border border-slate-250 rounded-xl px-4 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-indigo-600 transition"
                   placeholder="e.g. Cast, Crew"
                 />
               </div>
@@ -165,7 +165,7 @@ export default function UserEditModal({ isOpen, onClose, user, onSave }: UserEdi
                   name="onboardingStatus"
                   value={formData.onboardingStatus}
                   onChange={handleChange}
-                  className="w-full bg-white border border-slate-250 rounded-xl px-4 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-indigo-650 transition appearance-none cursor-pointer"
+                  className="w-full bg-white border border-slate-250 rounded-xl px-4 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-indigo-600 transition appearance-none cursor-pointer"
                 >
                   <option value="draft">Draft</option>
                   <option value="pending-review">Pending Review</option>
@@ -181,7 +181,7 @@ export default function UserEditModal({ isOpen, onClose, user, onSave }: UserEdi
                 name="systemRoleId"
                 value={formData.systemRoleId}
                 onChange={handleChange}
-                className="w-full bg-white border border-slate-250 rounded-xl px-4 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-indigo-650 transition appearance-none cursor-pointer"
+                className="w-full bg-white border border-slate-250 rounded-xl px-4 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-indigo-600 transition appearance-none cursor-pointer"
               >
                 <option value="">-- No Specific Role (Pending) --</option>
                 {roles.map(r => (
@@ -219,7 +219,7 @@ export default function UserEditModal({ isOpen, onClose, user, onSave }: UserEdi
             type="submit"
             form="user-form"
             disabled={loading}
-            className="px-4 py-2 rounded-xl bg-indigo-650 hover:bg-indigo-750 text-white transition text-xs font-bold flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+            className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white transition text-xs font-bold flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
           >
             {loading ? 'Saving...' : (
               <>

@@ -51,7 +51,7 @@ export default function CostumesModule() {
                 {costumes.map((c) => (
                   <tr key={c._id} className="hover:bg-slate-50/50 transition">
                     <td className="py-3 px-4 font-bold text-slate-800">{c.name}</td>
-                    <td className="py-3 px-4 text-indigo-650 font-bold">{c.category}</td>
+                    <td className="py-3 px-4 text-indigo-600 font-bold">{c.category}</td>
                     <td className="py-3 px-4 font-mono text-slate-600">{c.size}</td>
                     <td className="py-3 px-4 text-slate-700 font-bold">{c.quantity} items</td>
                   </tr>
@@ -74,7 +74,7 @@ export default function CostumesModule() {
                 value={newCostumeName}
                 onChange={(e) => setNewCostumeName(e.target.value)}
                 required
-                className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-900"
+                className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900"
               />
             </div>
             <div>
@@ -85,7 +85,7 @@ export default function CostumesModule() {
                 value={newCostumeCategory}
                 onChange={(e) => setNewCostumeCategory(e.target.value)}
                 required
-                className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-900"
+                className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900"
               />
             </div>
             <div>
@@ -96,7 +96,7 @@ export default function CostumesModule() {
                 value={newCostumeSize}
                 onChange={(e) => setNewCostumeSize(e.target.value)}
                 required
-                className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-900"
+                className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900"
               />
             </div>
             <div>
@@ -108,13 +108,13 @@ export default function CostumesModule() {
                 onChange={(e) => setNewCostumeQty(e.target.value)}
                 required
                 min={1}
-                className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-900"
+                className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900"
               />
             </div>
             
             <button 
               type="submit"
-              className="w-full py-2.5 bg-indigo-650 hover:bg-indigo-755 rounded-xl text-white text-xs font-bold cursor-pointer transition shadow-xs"
+              className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 rounded-xl text-white text-xs font-bold cursor-pointer transition shadow-xs"
             >
               Add Costume Asset
             </button>

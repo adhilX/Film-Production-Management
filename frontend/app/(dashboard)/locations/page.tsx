@@ -5,7 +5,7 @@ import { PermissionGuard } from '@/app/components/permission-guard';
 
 export default function LocationsPage() {
   return (
-    <PermissionGuard permission="locations.book">
+    <PermissionGuard permission="locations.view">
       <LocationsModule />
     </PermissionGuard>
   );

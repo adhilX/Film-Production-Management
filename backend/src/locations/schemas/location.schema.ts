@@ -14,18 +14,23 @@ export class Location {
   @Prop({ required: true })
   address: string;
 
-  @Prop({
-    required: true,
-    enum: ['Requested', 'Under Review', 'Approved', 'Booked', 'Completed'],
-    default: 'Requested',
-  })
-  status: string;
+  @Prop()
+  description?: string;
 
-  @Prop({ type: Date, required: true })
-  startDate: Date;
+  @Prop({ type: Number })
+  latitude?: number;
 
-  @Prop({ type: Date, required: true })
-  endDate: Date;
+  @Prop({ type: Number })
+  longitude?: number;
+
+  @Prop()
+  locationType?: string;
+
+  @Prop()
+  contactInfo?: string;
+
+  @Prop()
+  imageUrl?: string;
 }
 
 export const LocationSchema = SchemaFactory.createForClass(Location);

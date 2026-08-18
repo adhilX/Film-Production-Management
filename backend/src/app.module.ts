@@ -9,11 +9,15 @@ import { AuditLogsModule } from './audit-logs/audit-logs.module';
 import { JwtModule } from './common/jwt/jwt.module';
 
 import { AdminModule } from './admin/admin.module';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
 
 @Module({
   imports: [
     MongooseModule.forRoot(
-      process.env.MONGO_URI || 'mongodb://localhost:27017/film_production',
+      process.env.NODE_ENV === 'test'
+        ? (process.env.MONGO_URI_TEST || 'mongodb://localhost:27017/film_production_test')
+        : (process.env.MONGO_URI || 'mongodb://localhost:27017/film_production'),
     ),
     JwtModule,
     AuthModule,
@@ -24,5 +28,7 @@ import { AdminModule } from './admin/admin.module';
     FundsModule,
     AuditLogsModule,
   ],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule {}

@@ -131,7 +131,7 @@ export default function RoleEditModal({ isOpen, onClose, role, onSave }: RoleEdi
                 onChange={(e) => setName(e.target.value)}
                 disabled={!!role} // Prevent renaming existing roles for safety
                 required
-                className="w-full bg-white border border-slate-250 rounded-xl px-4 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-indigo-650 transition disabled:opacity-50"
+                className="w-full bg-white border border-slate-250 rounded-xl px-4 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-indigo-600 transition disabled:opacity-50"
                 placeholder="e.g. Guest Contractor"
               />
               {role && <p className="text-[11px] text-slate-450 mt-1.5 font-medium">Role names cannot be changed after creation to maintain RBAC integrity.</p>}
@@ -156,14 +156,14 @@ export default function RoleEditModal({ isOpen, onClose, role, onSave }: RoleEdi
                               disabled={isAdminRole} // Don't let them lock out the core Admin role
                               className="peer sr-only" 
                             />
-                            <div className="w-5 h-5 border border-slate-350 rounded bg-white peer-checked:bg-indigo-650 peer-checked:border-indigo-650 transition-all peer-focus:ring-2 peer-focus:ring-indigo-650/30 flex items-center justify-center peer-disabled:opacity-50">
+                            <div className="w-5 h-5 border border-slate-350 rounded bg-white peer-checked:bg-indigo-600 peer-checked:border-indigo-600 transition-all peer-focus:ring-2 peer-focus:ring-indigo-600/30 flex items-center justify-center peer-disabled:opacity-50">
                               <svg className="w-3 h-3 text-white opacity-0 peer-checked:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3.5">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                               </svg>
                             </div>
                           </div>
                           <div>
-                            <div className={`text-xs font-bold transition ${isAdminRole ? 'text-slate-400' : 'text-slate-700 group-hover/label:text-indigo-650'}`}>
+                            <div className={`text-xs font-bold transition ${isAdminRole ? 'text-slate-400' : 'text-slate-700 group-hover/label:text-indigo-600'}`}>
                               {perm.label}
                             </div>
                             <div className="text-[9px] text-slate-450 font-mono mt-0.5">{perm.id}</div>
@@ -197,7 +197,7 @@ export default function RoleEditModal({ isOpen, onClose, role, onSave }: RoleEdi
             type="submit"
             form="role-form"
             disabled={loading || isAdminRole}
-            className="px-4 py-2 rounded-xl bg-indigo-650 hover:bg-indigo-750 text-white transition text-xs font-bold flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+            className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white transition text-xs font-bold flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
           >
             {loading ? 'Saving...' : (
               <>

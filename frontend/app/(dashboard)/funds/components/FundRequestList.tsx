@@ -66,12 +66,12 @@ export const FundRequestList: React.FC<FundRequestListProps> = ({ funds, loading
         <input
           type="text"
           placeholder="Search by justification..."
-          className="flex-1 bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-900"
+          className="flex-1 bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
         <select
-          className="bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-705 cursor-pointer"
+          className="bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-705 cursor-pointer"
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
         >
@@ -152,7 +152,7 @@ export const FundRequestList: React.FC<FundRequestListProps> = ({ funds, loading
                             Approve
                           </button>
                         </PermissionGuard>
-                        <PermissionGuard permission="funds.reject">
+                        <PermissionGuard permission="funds.approve">
                           <button
                             disabled={processingId === fund._id}
                             onClick={() => handleReject(fund._id)}

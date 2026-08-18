@@ -52,14 +52,36 @@ export interface CastCrew {
   characterId?: Character | null;
 }
 
-export interface LocationBooking {
+export interface Location {
   _id: string;
   productionId: string;
   name: string;
   address: string;
-  status: 'Requested' | 'Under Review' | 'Approved' | 'Booked' | 'Completed';
+  description?: string;
+  latitude?: number;
+  longitude?: number;
+  locationType?: string;
+  contactInfo?: string;
+  imageUrl?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface LocationBooking {
+  _id: string;
+  productionId: string;
+  locationId: Location;
+  requestedBy: {
+    _id: string;
+    name: string;
+    email: string;
+  };
+  status: 'Pending' | 'Approved' | 'Rejected' | 'Cancelled';
   startDate: string;
   endDate: string;
+  rejectionReason?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface FundRequest {

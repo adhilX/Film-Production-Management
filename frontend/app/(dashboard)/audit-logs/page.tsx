@@ -55,7 +55,7 @@ export default function AdminAuditLogsPage() {
             placeholder="Search by Action, Actor ID, or Target ID..." 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-white border border-slate-250 rounded-xl pl-10 pr-4 py-2 text-slate-800 focus:outline-none focus:border-indigo-650 transition font-mono text-xs"
+            className="w-full bg-white border border-slate-250 rounded-xl pl-10 pr-4 py-2 text-slate-800 focus:outline-none focus:border-indigo-600 transition font-mono text-xs"
           />
         </div>
 

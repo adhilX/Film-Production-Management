@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Patch,
+  Delete,
   Body,
   Param,
   UseGuards,
@@ -16,13 +17,15 @@ import {
 } from '@nestjs/swagger';
 import { LocationsService } from './locations.service';
 import { CreateLocationDto } from './dto/create-location.dto';
-import { UpdateLocationStatusDto } from './dto/update-location-status.dto';
+import { UpdateLocationDto } from './dto/update-location.dto';
+import { CreateBookingDto } from './dto/create-booking.dto';
+import { UpdateBookingStatusDto } from './dto/update-booking-status.dto';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { PermissionsGuard } from '../auth/guards/permissions.guard';
 import { Permissions } from '../auth/decorators/permissions.decorator';
 import { CheckProduction } from '../auth/decorators/check-production.decorator';
 
-@ApiTags('Location Bookings')
+@ApiTags('Locations Management')
 @ApiBearerAuth('JWT-auth')
 @Controller('productions/:productionId/locations')
 @UseGuards(AuthGuard, PermissionsGuard)
@@ -30,51 +33,115 @@ import { CheckProduction } from '../auth/decorators/check-production.decorator';
 export class LocationsController {
   constructor(private readonly locationsService: LocationsService) {}
 
-  @Post()
+  // ==========================================
+  // BOOKING ENDPOINTS
+  // ==========================================
+
+  @Post('bookings')
   @Permissions('locations.book')
-  @ApiOperation({
-    summary: 'Submit a new location booking request for a production',
-  })
-  @ApiResponse({
-    status: 201,
-    description: 'Location booking request submitted.',
-  })
-  @ApiResponse({
-    status: 422,
-    description: 'Double-booking date conflict or invalid date range.',
-  })
-  create(@Body() createDto: CreateLocationDto) {
-    return this.locationsService.create(createDto);
+  @ApiOperation({ summary: 'Submit a new booking request for a location' })
+  @ApiResponse({ status: 201, description: 'Booking request created.' })
+  @ApiResponse({ status: 400, description: 'Invalid date range.' })
+  createBooking(
+    @Param('productionId') productionId: string,
+    @Body() createDto: CreateBookingDto,
+    @Req() req: any,
+  ) {
+    return this.locationsService.createBooking(productionId, createDto, req.user._id);
+  }
+
+  @Get('bookings')
+  @Permissions('locations.view')
+  @ApiOperation({ summary: 'List all bookings for a production' })
+  @ApiResponse({ status: 200, description: 'List of bookings.' })
+  getBookings(@Param('productionId') productionId: string) {
+    return this.locationsService.getBookings(productionId);
+  }
+
+  @Patch('bookings/:id/status')
+  @ApiOperation({ summary: 'Update booking status (Approve, Reject, or Cancel)' })
+  @ApiResponse({ status: 200, description: 'Booking status updated.' })
+  @ApiResponse({ status: 403, description: 'Insufficient permissions.' })
+  @ApiResponse({ status: 409, description: 'Collision / overlap check conflict.' })
+  updateBookingStatus(
+    @Param('productionId') productionId: string,
+    @Param('id') id: string,
+    @Body() updateDto: UpdateBookingStatusDto,
+    @Req() req: any,
+  ) {
+    const userPermissions = req.user.permissions || [];
+    const isSuperAdmin = userPermissions.includes('roles.manage');
+    return this.locationsService.updateBookingStatus(
+      productionId,
+      id,
+      updateDto,
+      req.user._id,
+      userPermissions,
+      isSuperAdmin,
+    );
+  }
+
+  // ==========================================
+  // PHYSICAL LOCATION ENDPOINTS
+  // ==========================================
+
+  @Post()
+  @Permissions('locations.create')
+  @ApiOperation({ summary: 'Create a new physical location' })
+  @ApiResponse({ status: 201, description: 'Location created.' })
+  @ApiResponse({ status: 409, description: 'Location name duplicate.' })
+  create(
+    @Param('productionId') productionId: string,
+    @Body() createDto: CreateLocationDto,
+    @Req() req: any,
+  ) {
+    return this.locationsService.create(productionId, createDto, req.user._id);
   }
 
   @Get()
-  @ApiOperation({
-    summary: 'List all scheduled location bookings for a production',
-  })
-  @ApiResponse({ status: 200, description: 'Array of location bookings.' })
+  @Permissions('locations.view')
+  @ApiOperation({ summary: 'List all physical locations for a production' })
+  @ApiResponse({ status: 200, description: 'List of locations.' })
   findAll(@Param('productionId') productionId: string) {
     return this.locationsService.findAll(productionId);
   }
 
-  @Patch(':id/status')
-  @Permissions('locations.approve')
-  @ApiOperation({
-    summary:
-      'Update location booking status with Mongoose transaction & overlap conflict checks',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Location booking status updated successfully.',
-  })
-  @ApiResponse({
-    status: 422,
-    description: 'Date collision conflict with an existing booked location.',
-  })
-  updateStatus(
+  @Get(':id')
+  @Permissions('locations.view')
+  @ApiOperation({ summary: 'Get a single location by ID' })
+  @ApiResponse({ status: 200, description: 'The location.' })
+  @ApiResponse({ status: 404, description: 'Location not found.' })
+  findOne(
+    @Param('productionId') productionId: string,
     @Param('id') id: string,
-    @Body() updateDto: UpdateLocationStatusDto,
+  ) {
+    return this.locationsService.findOne(productionId, id);
+  }
+
+  @Patch(':id')
+  @Permissions('locations.update')
+  @ApiOperation({ summary: 'Update a physical location' })
+  @ApiResponse({ status: 200, description: 'Location updated.' })
+  @ApiResponse({ status: 409, description: 'Location name duplicate.' })
+  update(
+    @Param('productionId') productionId: string,
+    @Param('id') id: string,
+    @Body() updateDto: UpdateLocationDto,
     @Req() req: any,
   ) {
-    return this.locationsService.updateStatus(id, updateDto, req.user._id);
+    return this.locationsService.update(productionId, id, updateDto, req.user._id);
+  }
+
+  @Delete(':id')
+  @Permissions('locations.delete')
+  @ApiOperation({ summary: 'Delete a physical location' })
+  @ApiResponse({ status: 200, description: 'Location deleted.' })
+  @ApiResponse({ status: 409, description: 'Cannot delete location with active bookings.' })
+  delete(
+    @Param('productionId') productionId: string,
+    @Param('id') id: string,
+    @Req() req: any,
+  ) {
+    return this.locationsService.delete(productionId, id, req.user._id);
   }
 }

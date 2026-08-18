@@ -61,7 +61,7 @@ export default function PermissionMatrix({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search matrix permissions..."
-            className="w-full bg-white border border-slate-250 rounded-xl pl-10 pr-10 py-2 text-slate-900 text-xs focus:outline-none focus:border-indigo-650 transition"
+            className="w-full bg-white border border-slate-250 rounded-xl pl-10 pr-10 py-2 text-slate-900 text-xs focus:outline-none focus:border-indigo-600 transition"
           />
           {searchQuery && (
             <button 
@@ -130,7 +130,7 @@ export default function PermissionMatrix({
                       <div className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-slate-100 text-slate-500 rounded text-[9px] font-mono border border-slate-200/60">
                         {perm.name}
                       </div>
-                      <span className="text-[9px] text-indigo-650 font-bold uppercase bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100/50 ml-2">
+                      <span className="text-[9px] text-indigo-600 font-bold uppercase bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100/50 ml-2">
                         {perm.group || 'Custom'}
                       </span>
                     </div>
@@ -153,7 +153,7 @@ export default function PermissionMatrix({
                               type="checkbox"
                               checked={hasPermission}
                               onChange={() => handleToggleMatrixPermission(role, perm._id)}
-                              className="w-4.5 h-4.5 rounded border-slate-350 bg-white text-indigo-650 focus:ring-indigo-650/20 focus:ring-offset-0 transition cursor-pointer"
+                              className="w-4.5 h-4.5 rounded border-slate-350 bg-white text-indigo-600 focus:ring-indigo-600/20 focus:ring-offset-0 transition cursor-pointer"
                             />
                           )}
                         </div>

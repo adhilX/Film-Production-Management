@@ -122,7 +122,7 @@ export default function LeftSidebar({ step, stepsList }: LeftSidebarProps) {
         </p>
         <a
           href="mailto:support@tendagon.com"
-          className="inline-flex items-center gap-1 text-[11px] font-bold text-[#4f46e5] hover:text-indigo-650 transition"
+          className="inline-flex items-center gap-1 text-[11px] font-bold text-[#4f46e5] hover:text-indigo-600 transition"
         >
           Contact Support &rarr;
         </a>

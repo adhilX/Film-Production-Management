@@ -103,7 +103,7 @@ export default function ApprovalDetails() {
         <div className="flex items-center">
           <button
             onClick={() => router.back()}
-            className="flex items-center gap-2 text-slate-700 hover:text-indigo-650 transition text-xs font-bold cursor-pointer bg-white px-4 py-2 rounded-lg border border-slate-200 shadow-xs"
+            className="flex items-center gap-2 text-slate-700 hover:text-indigo-600 transition text-xs font-bold cursor-pointer bg-white px-4 py-2 rounded-lg border border-slate-200 shadow-xs"
           >
             <ArrowLeft className="w-4 h-4" /> Back to Queue
           </button>
@@ -152,7 +152,7 @@ export default function ApprovalDetails() {
           <div className="space-y-2.5">
             <div className="flex items-center justify-between p-3.5 bg-white border border-slate-200/80 rounded-2xl shadow-sm">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-indigo-50 text-indigo-650 rounded-xl">
+                <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
                   <User className="w-4 h-4" />
                 </div>
                 <span className="text-[11px] font-bold text-slate-500">Contractor Type</span>
@@ -162,7 +162,7 @@ export default function ApprovalDetails() {
 
             <div className="flex items-center justify-between p-3.5 bg-white border border-slate-200/80 rounded-2xl shadow-sm">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-indigo-50 text-indigo-650 rounded-xl">
+                <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
                   <Building2 className="w-4 h-4" />
                 </div>
                 <span className="text-[11px] font-bold text-slate-500">Department</span>
@@ -172,7 +172,7 @@ export default function ApprovalDetails() {
 
             <div className="flex items-center justify-between p-3.5 bg-white border border-slate-200/80 rounded-2xl shadow-sm">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-indigo-50 text-indigo-650 rounded-xl">
+                <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
                   <Award className="w-4 h-4" />
                 </div>
                 <span className="text-[11px] font-bold text-slate-500">Position / Title</span>
@@ -182,7 +182,7 @@ export default function ApprovalDetails() {
 
             <div className="flex items-center justify-between p-3.5 bg-white border border-slate-200/80 rounded-2xl shadow-sm">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-indigo-50 text-indigo-650 rounded-xl">
+                <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
                   <Shield className="w-4 h-4" />
                 </div>
                 <span className="text-[11px] font-bold text-slate-500">Experience & Credits</span>
@@ -236,7 +236,7 @@ export default function ApprovalDetails() {
           <div className="space-y-2.5">
             <div className="flex items-center justify-between p-3.5 bg-white border border-slate-200/80 rounded-2xl shadow-sm">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-indigo-50 text-indigo-650 rounded-xl">
+                <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
                   <Building className="w-4 h-4" />
                 </div>
                 <span className="text-[11px] font-bold text-slate-500">Bank Name</span>
@@ -246,7 +246,7 @@ export default function ApprovalDetails() {
 
             <div className="flex items-center justify-between p-3.5 bg-white border border-slate-200/80 rounded-2xl shadow-sm">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-indigo-50 text-indigo-650 rounded-xl">
+                <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
                   <CreditCard className="w-4 h-4" />
                 </div>
                 <span className="text-[11px] font-bold text-slate-500">Account Number</span>
@@ -256,7 +256,7 @@ export default function ApprovalDetails() {
 
             <div className="flex items-center justify-between p-3.5 bg-white border border-slate-200/80 rounded-2xl shadow-sm">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-indigo-50 text-indigo-650 rounded-xl">
+                <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
                   <FileText className="w-4 h-4" />
                 </div>
                 <span className="text-[11px] font-bold text-slate-500">Routing Number</span>
@@ -501,7 +501,7 @@ export default function ApprovalDetails() {
                   handleDecision('approved');
                 }}
                 disabled={submitting || !roleOverride}
-                className="flex-1 py-2.5 bg-indigo-650 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-extrabold rounded-lg transition"
+                className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-extrabold rounded-lg transition"
               >
                 Confirm & Approve
               </button>

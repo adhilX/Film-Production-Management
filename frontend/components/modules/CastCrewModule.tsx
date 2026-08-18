@@ -429,7 +429,7 @@ export default function CastCrewModule() {
               placeholder={`Search ${activeTab}...`}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-slate-50/50 border border-slate-200 rounded-xl pl-10 pr-4 py-2 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-650/20 focus:border-indigo-650 transition"
+              className="w-full bg-slate-50/50 border border-slate-200 rounded-xl pl-10 pr-4 py-2 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 transition"
             />
           </div>
 
@@ -439,7 +439,7 @@ export default function CastCrewModule() {
               <select 
                 value={roleFilter}
                 onChange={(e) => setRoleFilter(e.target.value)}
-                className="bg-slate-50/50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-650/20 transition cursor-pointer flex-1 sm:flex-none"
+                className="bg-slate-50/50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-600/20 transition cursor-pointer flex-1 sm:flex-none"
               >
                 <option value="All">All Departments</option>
                 <option value="Camera">Camera / G&E</option>
@@ -477,7 +477,7 @@ export default function CastCrewModule() {
                               <div className="flex items-center gap-1">
                                 <button 
                                   onClick={() => openEditCharacter(char)}
-                                  className="p-1.5 text-slate-450 hover:text-indigo-650 hover:bg-indigo-50 rounded-lg transition"
+                                  className="p-1.5 text-slate-450 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
                                   title="Edit Character"
                                 >
                                   <Edit size={14} />
@@ -559,7 +559,7 @@ export default function CastCrewModule() {
                           </td>
                           <td className="px-6 py-4 font-semibold text-slate-700">
                             {cc.characterId ? (
-                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-50 border border-indigo-100 text-indigo-750 text-xs font-bold">
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-50 border border-indigo-100 text-indigo-700 text-xs font-bold">
                                 {cc.characterId.name}
                               </span>
                             ) : (
@@ -574,7 +574,7 @@ export default function CastCrewModule() {
                               <div className="flex items-center justify-end gap-1.5">
                                 <button 
                                   onClick={() => openEditAssignment(cc)}
-                                  className="p-1.5 text-slate-450 hover:text-indigo-650 hover:bg-indigo-50 rounded-lg transition"
+                                  className="p-1.5 text-slate-450 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
                                   title="Edit Assignment"
                                 >
                                   <Edit size={14} />
@@ -645,7 +645,7 @@ export default function CastCrewModule() {
                               <div className="flex items-center justify-end gap-1.5">
                                 <button 
                                   onClick={() => openEditAssignment(cc)}
-                                  className="p-1.5 text-slate-450 hover:text-indigo-650 hover:bg-indigo-50 rounded-lg transition"
+                                  className="p-1.5 text-slate-450 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
                                   title="Edit Position"
                                 >
                                   <Edit size={14} />
@@ -699,7 +699,7 @@ export default function CastCrewModule() {
                   placeholder="e.g. Iron Man / Tony Stark"
                   value={characterForm.name}
                   onChange={(e) => setCharacterForm({ ...characterForm, name: e.target.value })}
-                  className="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-650/20 focus:border-indigo-650 transition"
+                  className="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 transition"
                 />
               </div>
 
@@ -710,7 +710,7 @@ export default function CastCrewModule() {
                   placeholder="Describe the script details, key attributes, or costume requirements..."
                   value={characterForm.description}
                   onChange={(e) => setCharacterForm({ ...characterForm, description: e.target.value })}
-                  className="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-650/20 focus:border-indigo-650 transition"
+                  className="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 transition"
                 />
               </div>
 
@@ -752,7 +752,7 @@ export default function CastCrewModule() {
                   required
                   value={castForm.userId}
                   onChange={(e) => setCastForm({ ...castForm, userId: e.target.value })}
-                  className="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-650/20 focus:border-indigo-650 transition cursor-pointer font-medium"
+                  className="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 transition cursor-pointer font-medium"
                 >
                   <option value="">-- Choose registered actor --</option>
                   {eligibleCast.map(u => (
@@ -772,7 +772,7 @@ export default function CastCrewModule() {
                   placeholder="e.g. Lead / Supporting / Stunt Double"
                   value={castForm.roleInProduction}
                   onChange={(e) => setCastForm({ ...castForm, roleInProduction: e.target.value })}
-                  className="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-650/20 focus:border-indigo-650 transition"
+                  className="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 transition"
                 />
               </div>
 
@@ -781,7 +781,7 @@ export default function CastCrewModule() {
                 <select 
                   value={castForm.characterId}
                   onChange={(e) => setCastForm({ ...castForm, characterId: e.target.value })}
-                  className="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-650/20 focus:border-indigo-650 transition cursor-pointer font-medium"
+                  className="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 transition cursor-pointer font-medium"
                 >
                   <option value="">-- Select Character --</option>
                   {characters.filter(c => !c.assignments || c.assignments.length === 0).map(c => (
@@ -828,7 +828,7 @@ export default function CastCrewModule() {
                   required
                   value={crewForm.userId}
                   onChange={(e) => setCrewForm({ ...crewForm, userId: e.target.value })}
-                  className="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-650/20 focus:border-indigo-650 transition cursor-pointer font-medium"
+                  className="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 transition cursor-pointer font-medium"
                 >
                   <option value="">-- Choose registered crew --</option>
                   {eligibleCrew.map(u => (
@@ -848,7 +848,7 @@ export default function CastCrewModule() {
                   placeholder="e.g. Director of Photography / Camera Assistant"
                   value={crewForm.roleInProduction}
                   onChange={(e) => setCrewForm({ ...crewForm, roleInProduction: e.target.value })}
-                  className="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-650/20 focus:border-indigo-650 transition"
+                  className="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 transition"
                 />
               </div>
 
@@ -897,7 +897,7 @@ export default function CastCrewModule() {
                   required
                   value={editForm.roleInProduction}
                   onChange={(e) => setEditForm({ ...editForm, roleInProduction: e.target.value })}
-                  className="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-650/20 focus:border-indigo-650 transition"
+                  className="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 transition"
                 />
               </div>
 
@@ -908,7 +908,7 @@ export default function CastCrewModule() {
                   <select 
                     value={editForm.characterId}
                     onChange={(e) => setEditForm({ ...editForm, characterId: e.target.value })}
-                    className="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-650/20 focus:border-indigo-650 transition cursor-pointer font-medium"
+                    className="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 transition cursor-pointer font-medium"
                   >
                     <option value="">-- No character mapped --</option>
                     
