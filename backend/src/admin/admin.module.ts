@@ -4,6 +4,7 @@ import { AdminService } from './admin.service';
 import { UsersModule } from '../users/users.module';
 import { AuthModule } from '../auth/auth.module';
 import { AuditLogsModule } from '../audit-logs/audit-logs.module';
+import { ProductionsModule } from '../productions/productions.module';
 import { AdminRbacService } from './services/admin-rbac.service';
 import { AdminOnboardingService } from './services/admin-onboarding.service';
 
@@ -12,6 +13,7 @@ import { AdminOnboardingService } from './services/admin-onboarding.service';
     UsersModule,
     AuthModule,
     AuditLogsModule,
+    ProductionsModule,
   ],
   controllers: [AdminController],
   providers: [AdminService, AdminRbacService, AdminOnboardingService],

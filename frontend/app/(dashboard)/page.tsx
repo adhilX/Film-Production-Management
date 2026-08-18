@@ -17,7 +17,8 @@ import {
   ChevronRight,
   MoreVertical,
   ArrowUpRight,
-  TrendingUp
+  TrendingUp,
+  TrendingDown
 } from 'lucide-react';
 import Link from 'next/link';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -26,6 +27,30 @@ import { PERMISSIONS } from '@/constants/permissions';
 import { adminService } from '@/services/adminService';
 import { productionsService } from '@/services/productionsService';
 import OverviewModule from '@/components/modules/OverviewModule';
+
+// Time formatting helper
+function formatTimeAgo(dateString?: string | Date) {
+  if (!dateString) return 'recently';
+  const now = new Date();
+  const date = new Date(dateString);
+  const diffMs = now.getTime() - date.getTime();
+  if (diffMs < 0) return 'just now';
+
+  const diffMins = Math.floor(diffMs / (60 * 1000));
+  if (diffMins < 1) return 'just now';
+  if (diffMins < 60) return `${diffMins}m ago`;
+
+  const diffHours = Math.floor(diffMins / 60);
+  if (diffHours < 24) return `${diffHours}h ago`;
+
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffDays === 1) return 'yesterday';
+  if (diffDays < 30) return `${diffDays}d ago`;
+
+  const diffMonths = Math.floor(diffDays / 30);
+  if (diffMonths === 1) return '1 month ago';
+  return `${diffMonths}mo ago`;
+}
 
 // Sparkline Chart Component
 function Sparkline({ points, color, id }: { points: number[]; color: string; id: string }) {
@@ -36,7 +61,7 @@ function Sparkline({ points, color, id }: { points: number[]; color: string; id:
   const range = max - min || 1;
 
   const coords = points.map((p, i) => ({
-    x: (i / (points.length - 1)) * width,
+    x: points.length > 1 ? (i / (points.length - 1)) * width : width / 2,
     y: height - ((p - min) / range) * height + 2,
   }));
 
@@ -117,7 +142,7 @@ function DonutChart({ segments }: { segments: { label: string; count: number; co
       </svg>
       {/* Center Label */}
       <div className="absolute text-center">
-        <span className="block text-2xl font-black text-slate-900 leading-none">{total === 1 && segments.every(s => s.count === 0) ? 0 : total}</span>
+        <span className="block text-2xl font-black text-slate-900 leading-none">{segments.every(s => s.count === 0) ? 0 : total}</span>
         <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-1 block">Total</span>
       </div>
     </div>
@@ -134,6 +159,25 @@ export default function DashboardPage() {
     totalUsers: 0,
     pendingApprovals: 0,
     urgentApprovals: 0,
+    trends: {
+      projectsChange: '0%',
+      activeProjectsChange: '0%',
+      newUsersThisMonth: '+0',
+    }
+  });
+
+  const [sparklines, setSparklines] = useState({
+    projects: [0, 0, 0, 0, 0, 0],
+    active: [0, 0, 0, 0, 0, 0],
+    users: [0, 0, 0, 0, 0, 0],
+    approvals: [0, 0, 0, 0, 0, 0],
+  });
+
+  const [statusDistribution, setStatusDistribution] = useState({
+    active: 0,
+    draft: 0,
+    onHold: 0,
+    completed: 0,
   });
 
   const [projectsList, setProjectsList] = useState<any[]>([]);
@@ -141,61 +185,63 @@ export default function DashboardPage() {
   const [activitiesList, setActivitiesList] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Fallback defaults from screenshot design
-  const defaultApprovals = [
-    { id: '1', name: 'Jane Doe', type: 'New User Registration', initial: 'JD' },
-    { id: '2', name: 'John Smith', type: 'Location Booking - Mumbai Studio', initial: 'JS' },
-    { id: '3', name: 'Alex Thomas', type: 'Costume & Asset Request', initial: 'AT' },
-  ];
-
-  const defaultProjects = [
-    { id: '1', title: 'Avatar 3', manager: 'James Cameron', status: 'Active', updated: '2h ago', managerInitial: 'JC' },
-    { id: '2', title: 'Project Horizon', manager: 'Sarah Johnson', status: 'Draft', updated: '1d ago', managerInitial: 'SJ' },
-    { id: '3', title: 'The Last Journey', manager: 'Michael Brown', status: 'On Hold', updated: '2d ago', managerInitial: 'MB' },
-    { id: '4', title: 'Beyond The Stars', manager: 'Emily Davis', status: 'Completed', updated: '1w ago', managerInitial: 'ED' }
-  ];
-
-  const defaultActivities = [
-    { id: '1', type: 'user', text: 'New user "William Carter" has been approved', time: '2h ago' },
-    { id: '2', type: 'project', text: 'Project "The Last Journey" was updated', time: '4h ago' },
-    { id: '3', type: 'role', text: 'Role "Location Manager" was updated', time: '6h ago' },
-    { id: '4', type: 'fund', text: 'Fund request for "Avatar 3" was approved', time: '1d ago' },
-    { id: '5', type: 'project_created', text: 'New project "Project Horizon" was created', time: '2d ago' },
-  ];
-
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [pendingApps, usersList, allProductions, auditLogs] = await Promise.all([
-          adminService.getApplications(),
+        const [statsData, pendingApps, usersList, allProductions, auditLogs] = await Promise.all([
+          adminService.getDashboardStats().catch(() => null),
+          adminService.getApplications().catch(() => ({ applications: [] })),
           adminService.getUsers(1, 10).catch(() => ({ users: [], total: 0 })),
-          productionsService.getProductions(),
+          productionsService.getProductions().catch(() => []),
           adminService.getAuditLogs({ limit: 10 }).catch(() => ({ logs: [], total: 0, page: 1, pages: 1, limit: 10 }))
         ]);
 
-        const totalProjects = allProductions.length;
-        const activeProjects = allProductions.filter((p: any) => p.status?.toLowerCase() === 'active').length;
-        const totalUsers = usersList.total || 0;
-        const pendingAppsList = pendingApps.applications || [];
-        const pendingApprovals = pendingAppsList.length;
+        if (statsData) {
+          setMetrics(statsData.metrics);
+          setSparklines(statsData.sparklines);
+          setStatusDistribution(statsData.statusDistribution);
+        } else {
+          // Fallback to client-side derived counts if stats endpoint fails
+          const totalProjects = Array.isArray(allProductions) ? allProductions.length : 0;
+          const activeProjects = Array.isArray(allProductions) ? allProductions.filter((p: any) => p.status?.toLowerCase() === 'active').length : 0;
+          const totalUsers = usersList?.total || 0;
+          const pendingAppsList = pendingApps?.applications || [];
+          const pendingApprovals = pendingAppsList.length;
 
-        const now = new Date().getTime();
-        const urgentApprovals = pendingAppsList.filter((app: any) => {
-          const updatedAt = new Date(app.updatedAt).getTime();
-          return (now - updatedAt) > (3 * 24 * 60 * 60 * 1000); // 3 Days
-        }).length;
+          const now = new Date().getTime();
+          const urgentApprovals = pendingAppsList.filter((app: any) => {
+            const updatedAt = new Date(app.updatedAt).getTime();
+            return (now - updatedAt) > (3 * 24 * 60 * 60 * 1000);
+          }).length;
 
-        setMetrics({
-          totalProjects,
-          activeProjects,
-          totalUsers,
-          pendingApprovals,
-          urgentApprovals,
-        });
+          setMetrics({
+            totalProjects,
+            activeProjects,
+            totalUsers,
+            pendingApprovals,
+            urgentApprovals,
+            trends: {
+              projectsChange: '0%',
+              activeProjectsChange: '0%',
+              newUsersThisMonth: '+0',
+            }
+          });
+          
+          setStatusDistribution({
+            active: activeProjects,
+            draft: Array.isArray(allProductions) ? allProductions.filter((p: any) => p.status?.toLowerCase() === 'draft').length : 0,
+            onHold: Array.isArray(allProductions) ? allProductions.filter((p: any) => p.status?.toLowerCase() === 'on hold' || p.status?.toLowerCase() === 'onhold').length : 0,
+            completed: Array.isArray(allProductions) ? allProductions.filter((p: any) => p.status?.toLowerCase() === 'completed').length : 0,
+          });
+        }
 
-        setProjectsList(allProductions);
-        setApprovalsList(pendingAppsList);
-        setActivitiesList(auditLogs.logs || []);
+        const resolvedProductions = Array.isArray(allProductions) 
+          ? allProductions 
+          : (allProductions?.productions || []);
+
+        setProjectsList(resolvedProductions);
+        setApprovalsList(pendingApps?.applications || []);
+        setActivitiesList(auditLogs?.logs || []);
       } catch (error) {
         console.error('Failed to load admin metrics', error);
       } finally {
@@ -218,33 +264,21 @@ export default function DashboardPage() {
     return <OverviewModule />;
   }
 
-  // Choose display lists (loaded values if present, else fallback)
-  const displayProjects = projectsList.length > 0 ? projectsList.slice(0, 4) : defaultProjects;
-  const displayApprovals = approvalsList.length > 0 ? approvalsList.slice(0, 3) : defaultApprovals;
-  const displayActivities = activitiesList.length > 0 ? activitiesList.slice(0, 5) : defaultActivities;
+  const displayProjects = projectsList.slice(0, 4);
+  const displayApprovals = approvalsList.slice(0, 3);
+  const displayActivities = activitiesList.slice(0, 5);
 
-  // Segment values for Donut Chart
-  let activeCount = projectsList.filter((p: any) => p.status?.toLowerCase() === 'active').length;
-  let draftCount = projectsList.filter((p: any) => p.status?.toLowerCase() === 'draft').length;
-  let onHoldCount = projectsList.filter((p: any) => p.status?.toLowerCase() === 'on hold' || p.status?.toLowerCase() === 'onhold').length;
-  let completedCount = projectsList.filter((p: any) => p.status?.toLowerCase() === 'completed').length;
-
-  if (projectsList.length === 0) {
-    activeCount = 12;
-    draftCount = 6;
-    onHoldCount = 3;
-    completedCount = 3;
-  }
-  const totalCount = activeCount + draftCount + onHoldCount + completedCount || 1;
+  const totalCount = statusDistribution.active + statusDistribution.draft + statusDistribution.onHold + statusDistribution.completed || 0;
 
   const donutSegments = [
-    { label: 'Active', count: activeCount, color: '#8b5cf6' },
-    { label: 'Draft', count: draftCount, color: '#3b82f6' },
-    { label: 'On Hold', count: onHoldCount, color: '#f97316' },
-    { label: 'Completed', count: completedCount, color: '#10b981' }
+    { label: 'Active', count: statusDistribution.active, color: '#8b5cf6' },
+    { label: 'Draft', count: statusDistribution.draft, color: '#3b82f6' },
+    { label: 'On Hold', count: statusDistribution.onHold, color: '#f97316' },
+    { label: 'Completed', count: statusDistribution.completed, color: '#10b981' }
   ];
 
   const getStatusColorClass = (status: string) => {
+    if (!status) return 'bg-slate-50 text-slate-700 border-slate-100';
     switch (status.toLowerCase()) {
       case 'active':
         return 'bg-emerald-50 text-emerald-700 border-emerald-100';
@@ -296,6 +330,68 @@ export default function DashboardPage() {
     }
   };
 
+  const getActivityType = (action: string) => {
+    if (!action) return 'activity';
+    if (action.startsWith('USER_') || action.startsWith('PERMISSION_')) return 'user';
+    if (action.startsWith('PROJECT_')) return 'project';
+    if (action.startsWith('ROLE_')) return 'role';
+    if (action.startsWith('FUND_')) return 'fund';
+    return 'activity';
+  };
+
+  const getActivityText = (act: any) => {
+    const userName = act.userId?.name || 'System';
+    if (!act.action) return `System activity by ${userName}`;
+    switch (act.action) {
+      case 'USER_CREATED':
+        return `New user account was created by ${userName}`;
+      case 'USER_UPDATED':
+        return `User settings were updated by ${userName}`;
+      case 'USER_ROLE_CHANGED':
+        return `User role was changed by ${userName}`;
+      case 'USER_ACTIVATED':
+        return `User was activated by ${userName}`;
+      case 'USER_DEACTIVATED':
+        return `User was deactivated by ${userName}`;
+      case 'USER_ONBOARDING_APPROVED':
+        return `Onboarding application was approved by ${userName}`;
+      case 'USER_ONBOARDING_CHANGES_REQUESTED':
+        return `Changes were requested on onboarding by ${userName}`;
+      case 'USER_DOCUMENT_UPLOADED':
+        return `New document uploaded by ${userName}`;
+      case 'PROJECT_CREATED':
+        return `New project was created by ${userName}`;
+      case 'PROJECT_UPDATED':
+        return `Project details were updated by ${userName}`;
+      case 'LOCATION_BOOKING_CREATED':
+        return `New location booking request by ${userName}`;
+      case 'LOCATION_BOOKING_APPROVED':
+        return `Location booking was approved by ${userName}`;
+      case 'LOCATION_BOOKING_REJECTED':
+        return `Location booking was rejected by ${userName}`;
+      default:
+        const actionWord = act.action.replace(/_/g, ' ').toLowerCase();
+        return `${actionWord.charAt(0).toUpperCase() + actionWord.slice(1)} by ${userName}`;
+    }
+  };
+
+  const getManagerName = (proj: any) => {
+    if (proj.productionManager && typeof proj.productionManager === 'object') {
+      return proj.productionManager.name;
+    }
+    return 'None';
+  };
+
+  const getManagerInitial = (proj: any) => {
+    if (proj.productionManager && typeof proj.productionManager === 'object') {
+      return proj.productionManager.name.charAt(0).toUpperCase();
+    }
+    return '—';
+  };
+
+  const isProjectsTrendPositive = !metrics.trends.projectsChange.startsWith('-');
+  const isActiveTrendPositive = !metrics.trends.activeProjectsChange.startsWith('-');
+
   return (
     <div className="flex-1 bg-[#f8fafc] px-6 md:px-8 py-8 space-y-6 overflow-y-auto">
       {loading ? (
@@ -303,7 +399,7 @@ export default function DashboardPage() {
           {/* Skeleton Metrics Row */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {[1, 2, 3, 4].map(i => (
-              <div key={i} className="bg-white border border-slate-100 rounded-2xl p-5 flex flex-col justify-between h-32 shadow-2xs">
+              <div key={i} className="bg-white border border-slate-200 rounded-2xl p-5 flex flex-col justify-between h-32 shadow-2xs">
                 <div className="flex justify-between items-start">
                   <div className="space-y-2 w-2/3">
                     <div className="h-2.5 bg-slate-200 rounded-md w-3/4" />
@@ -434,7 +530,7 @@ export default function DashboardPage() {
               <div className="flex justify-between items-start">
                 <div className="space-y-1">
                   <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Total Projects</span>
-                  <span className="text-3xl font-black text-slate-900 leading-none">{metrics.totalProjects || 24}</span>
+                  <span className="text-3xl font-black text-slate-900 leading-none">{metrics.totalProjects}</span>
                 </div>
                 <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center text-purple-600">
                   <FolderOpen className="w-5.5 h-5.5" />
@@ -442,13 +538,14 @@ export default function DashboardPage() {
               </div>
               <div className="flex items-end justify-between mt-4">
                 <div className="flex items-center gap-1.5 text-xs text-slate-450">
-                  <span className="font-extrabold text-emerald-600 flex items-center gap-0.5">
-                    <TrendingUp className="w-3.5 h-3.5" /> 12%
+                  <span className={`font-extrabold flex items-center gap-0.5 ${isProjectsTrendPositive ? 'text-emerald-600' : 'text-rose-650'}`}>
+                    {isProjectsTrendPositive ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
+                    {metrics.trends.projectsChange}
                   </span>
                   <span>from last month</span>
                 </div>
                 <div className="translate-y-1">
-                  <Sparkline points={[10, 15, 12, 18, 16, 24]} color="#8b5cf6" id="projects" />
+                  <Sparkline points={sparklines.projects} color="#8b5cf6" id="projects" />
                 </div>
               </div>
             </div>
@@ -458,7 +555,7 @@ export default function DashboardPage() {
               <div className="flex justify-between items-start">
                 <div className="space-y-1">
                   <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Active Projects</span>
-                  <span className="text-3xl font-black text-slate-900 leading-none">{metrics.activeProjects || 12}</span>
+                  <span className="text-3xl font-black text-slate-900 leading-none">{metrics.activeProjects}</span>
                 </div>
                 <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
                   <Film className="w-5.5 h-5.5" />
@@ -466,13 +563,14 @@ export default function DashboardPage() {
               </div>
               <div className="flex items-end justify-between mt-4">
                 <div className="flex items-center gap-1.5 text-xs text-slate-450">
-                  <span className="font-extrabold text-emerald-600 flex items-center gap-0.5">
-                    <TrendingUp className="w-3.5 h-3.5" /> 8%
+                  <span className={`font-extrabold flex items-center gap-0.5 ${isActiveTrendPositive ? 'text-emerald-600' : 'text-rose-650'}`}>
+                    {isActiveTrendPositive ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
+                    {metrics.trends.activeProjectsChange}
                   </span>
-                  <span>50% of total projects</span>
+                  <span>from last month</span>
                 </div>
                 <div className="translate-y-1">
-                  <Sparkline points={[8, 10, 9, 11, 10, 12]} color="#3b82f6" id="active" />
+                  <Sparkline points={sparklines.active} color="#3b82f6" id="active" />
                 </div>
               </div>
             </div>
@@ -482,7 +580,7 @@ export default function DashboardPage() {
               <div className="flex justify-between items-start">
                 <div className="space-y-1">
                   <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Total Users</span>
-                  <span className="text-3xl font-black text-slate-900 leading-none">{metrics.totalUsers || 148}</span>
+                  <span className="text-3xl font-black text-slate-900 leading-none">{metrics.totalUsers}</span>
                 </div>
                 <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
                   <Users className="w-5.5 h-5.5" />
@@ -491,12 +589,12 @@ export default function DashboardPage() {
               <div className="flex items-end justify-between mt-4">
                 <div className="flex items-center gap-1.5 text-xs text-slate-450">
                   <span className="font-extrabold text-emerald-600 flex items-center gap-0.5">
-                    <TrendingUp className="w-3.5 h-3.5" /> 14%
+                    <TrendingUp className="w-3.5 h-3.5" /> {metrics.trends.newUsersThisMonth}
                   </span>
-                  <span>+14 this month</span>
+                  <span>this month</span>
                 </div>
                 <div className="translate-y-1">
-                  <Sparkline points={[120, 128, 125, 135, 140, 148]} color="#10b981" id="users" />
+                  <Sparkline points={sparklines.users} color="#10b981" id="users" />
                 </div>
               </div>
             </div>
@@ -506,7 +604,7 @@ export default function DashboardPage() {
               <div className="flex justify-between items-start">
                 <div className="space-y-1">
                   <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Pending Approvals</span>
-                  <span className="text-3xl font-black text-slate-900 leading-none">{metrics.pendingApprovals || 8}</span>
+                  <span className="text-3xl font-black text-slate-900 leading-none">{metrics.pendingApprovals}</span>
                 </div>
                 <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center text-orange-600">
                   <UserPlus className="w-5.5 h-5.5" />
@@ -514,12 +612,12 @@ export default function DashboardPage() {
               </div>
               <div className="flex items-end justify-between mt-4">
                 <div className="flex items-center gap-1.5 text-xs">
-                  <span className="font-extrabold text-red-600 block">
-                    {metrics.urgentApprovals || 3} urgent
+                  <span className="font-extrabold text-rose-650 block">
+                    {metrics.urgentApprovals} urgent
                   </span>
                 </div>
                 <div className="translate-y-1">
-                  <Sparkline points={[4, 6, 5, 8, 7, 8]} color="#f97316" id="approvals" />
+                  <Sparkline points={sparklines.approvals} color="#f97316" id="approvals" />
                 </div>
               </div>
             </div>
@@ -544,7 +642,9 @@ export default function DashboardPage() {
                       </div>
                       <div className="flex items-center gap-4 text-right">
                         <span className="font-bold text-slate-800">{seg.count}</span>
-                        <span className="text-slate-400 font-semibold w-10">{Math.round((seg.count / totalCount) * 105) / 1.05 > 0 ? `${Math.round((seg.count / totalCount) * 100)}%` : '0%'}</span>
+                        <span className="text-slate-400 font-semibold w-10">
+                          {totalCount > 0 ? `${Math.round((seg.count / totalCount) * 100)}%` : '0%'}
+                        </span>
                       </div>
                     </div>
                   ))}
@@ -563,26 +663,32 @@ export default function DashboardPage() {
                 <h3 className="text-sm font-black text-slate-900 leading-none">Pending Approvals</h3>
               </div>
               <div className="my-4 space-y-3.5">
-                {displayApprovals.map((app) => (
-                  <div key={app.id || app._id} className="flex items-center justify-between p-3.5 bg-slate-50/50 hover:bg-slate-50 border border-slate-100 rounded-xl transition duration-150">
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full bg-purple-100 flex items-center justify-center text-xs font-bold text-purple-700">
-                        {app.initial || (app.userId?.name ? app.userId.name.charAt(0).toUpperCase() : 'C')}
+                {displayApprovals.length > 0 ? (
+                  displayApprovals.map((app) => (
+                    <div key={app.id || app._id} className="flex items-center justify-between p-3.5 bg-slate-50/50 hover:bg-slate-50 border border-slate-100 rounded-xl transition duration-150">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-full bg-purple-100 flex items-center justify-center text-xs font-bold text-purple-700">
+                          {app.initial || (app.name ? app.name.charAt(0).toUpperCase() : 'C')}
+                        </div>
+                        <div className="leading-none">
+                          <span className="block text-xs font-bold text-slate-900 leading-none">
+                            {app.name || 'Unknown User'}
+                          </span>
+                          <span className="block text-[10px] text-slate-400 font-semibold leading-none mt-1.5">
+                            {app.contractorType ? `${app.contractorType} Onboarding` : 'New Application'}
+                          </span>
+                        </div>
                       </div>
-                      <div className="leading-none">
-                        <span className="block text-xs font-bold text-slate-900 leading-none">
-                          {app.name || app.userId?.name || 'Jane Doe'}
-                        </span>
-                        <span className="block text-[10px] text-slate-400 font-semibold leading-none mt-1.5">
-                          {app.type || (app.contractorType ? `${app.contractorType} Onboarding` : 'New Application')}
-                        </span>
-                      </div>
+                      <Link href={`/approvals`} className="py-1 px-3 bg-white border border-slate-200 hover:border-purple-200 text-purple-700 rounded-lg text-[10px] font-bold shadow-3xs hover:bg-purple-50/20 transition cursor-pointer">
+                        Review
+                      </Link>
                     </div>
-                    <Link href={`/approvals`} className="py-1 px-3 bg-white border border-slate-200 hover:border-purple-200 text-purple-700 rounded-lg text-[10px] font-bold shadow-3xs hover:bg-purple-50/20 transition cursor-pointer">
-                      Review
-                    </Link>
+                  ))
+                ) : (
+                  <div className="text-xs text-slate-400 text-center py-10 font-semibold">
+                    No pending approvals.
                   </div>
-                ))}
+                )}
               </div>
               <div className="border-t border-slate-100 pt-4 flex justify-start">
                 <Link href="/approvals" className="text-xs font-bold text-purple-750 hover:text-purple-900 transition flex items-center gap-1 group">
@@ -611,44 +717,52 @@ export default function DashboardPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50/50">
-                    {displayProjects.map((proj) => (
-                      <tr key={proj.id || proj._id} className="hover:bg-slate-50/30 transition duration-150">
-                        <td className="py-3 font-bold text-slate-900 flex items-center gap-2">
-                          {proj.imageUrl ? (
-                            <img
-                              src={proj.imageUrl}
-                              alt={proj.title}
-                              className="w-10 h-[52px] object-cover rounded-lg shrink-0 border border-slate-200/60"
-                            />
-                          ) : (
-                            <div className="w-10 h-[52px] bg-slate-50 border border-slate-200 rounded-lg flex flex-col items-center justify-center shrink-0 text-slate-400 text-xs">
-                              <span>🎬</span>
-                              <span className="text-[7px] text-slate-350 tracking-tighter mt-0.5">—</span>
+                    {displayProjects.length > 0 ? (
+                      displayProjects.map((proj) => (
+                        <tr key={proj.id || proj._id} className="hover:bg-slate-50/30 transition duration-150">
+                          <td className="py-3 font-bold text-slate-900 flex items-center gap-2">
+                            {proj.imageUrl ? (
+                              <img
+                                src={proj.imageUrl}
+                                alt={proj.title}
+                                className="w-10 h-[52px] object-cover rounded-lg shrink-0 border border-slate-200/60"
+                              />
+                            ) : (
+                              <div className="w-10 h-[52px] bg-slate-50 border border-slate-200 rounded-lg flex flex-col items-center justify-center shrink-0 text-slate-400 text-xs">
+                                <span>🎬</span>
+                                <span className="text-[7px] text-slate-350 tracking-tighter mt-0.5">—</span>
+                              </div>
+                            )}
+                            <span>{proj.title}</span>
+                          </td>
+                          <td className="py-3 text-slate-650 font-semibold">
+                            <div className="flex items-center gap-2">
+                              <div className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center text-[9px] font-bold text-slate-600">
+                                {getManagerInitial(proj)}
+                              </div>
+                              <span>{getManagerName(proj)}</span>
                             </div>
-                          )}
-                          <span>{proj.title}</span>
-                        </td>
-                        <td className="py-3 text-slate-650 font-semibold">
-                          <div className="flex items-center gap-2">
-                            <div className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center text-[9px] font-bold text-slate-600">
-                              {proj.managerInitial || (proj.managerId?.name ? proj.managerId.name.charAt(0).toUpperCase() : 'M')}
-                            </div>
-                            <span>{proj.manager || proj.managerId?.name || 'James Cameron'}</span>
-                          </div>
-                        </td>
-                        <td className="py-3">
-                          <span className={`inline-block py-0.5 px-2 border rounded-full text-[9px] font-extrabold uppercase tracking-wider ${getStatusColorClass(proj.status)}`}>
-                            {proj.status}
-                          </span>
-                        </td>
-                        <td className="py-3 text-slate-450 font-semibold">{proj.updated || '2h ago'}</td>
-                        <td className="py-3 text-right">
-                          <button className="p-1 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-50 transition cursor-pointer">
-                            <MoreVertical className="w-3.5 h-3.5" />
-                          </button>
+                          </td>
+                          <td className="py-3">
+                            <span className={`inline-block py-0.5 px-2 border rounded-full text-[9px] font-extrabold uppercase tracking-wider ${getStatusColorClass(proj.status)}`}>
+                              {proj.status}
+                            </span>
+                          </td>
+                          <td className="py-3 text-slate-450 font-semibold">{formatTimeAgo(proj.updatedAt)}</td>
+                          <td className="py-3 text-right">
+                            <button className="p-1 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-50 transition cursor-pointer">
+                              <MoreVertical className="w-3.5 h-3.5" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={5} className="py-10 text-center text-slate-400 font-semibold">
+                          No recent projects found.
                         </td>
                       </tr>
-                    ))}
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -665,17 +779,23 @@ export default function DashboardPage() {
                 <h3 className="text-sm font-black text-slate-900 leading-none">System Activity</h3>
               </div>
               <div className="my-4 space-y-4">
-                {displayActivities.map((act) => (
-                  <div key={act.id || act._id} className="flex items-start justify-between gap-3 text-xs">
-                    <div className="flex items-start gap-3">
-                      {getActivityIcon(act.type || 'activity')}
-                      <div className="leading-none mt-0.5">
-                        <p className="font-bold text-slate-800 leading-normal">{act.text}</p>
+                {displayActivities.length > 0 ? (
+                  displayActivities.map((act) => (
+                    <div key={act.id || act._id} className="flex items-start justify-between gap-3 text-xs">
+                      <div className="flex items-start gap-3">
+                        {getActivityIcon(getActivityType(act.action))}
+                        <div className="leading-none mt-0.5">
+                          <p className="font-bold text-slate-800 leading-normal">{getActivityText(act)}</p>
+                        </div>
                       </div>
+                      <span className="text-slate-450 font-semibold text-[10px] shrink-0">{formatTimeAgo(act.timestamp)}</span>
                     </div>
-                    <span className="text-slate-450 font-semibold text-[10px] shrink-0">{act.time || '2h ago'}</span>
+                  ))
+                ) : (
+                  <div className="text-xs text-slate-400 text-center py-10 font-semibold">
+                    No recent activities.
                   </div>
-                ))}
+                )}
               </div>
               <div className="border-t border-slate-100 pt-4 flex justify-start">
                 <Link href="/logs" className="text-xs font-bold text-purple-750 hover:text-purple-900 transition flex items-center gap-1 group">

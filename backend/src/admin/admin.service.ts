@@ -17,6 +17,7 @@ import {
   Permission,
   PermissionDocument,
 } from '../auth/schemas/permission.schema';
+import { Production, ProductionDocument } from '../productions/schemas/production.schema';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import * as bcrypt from 'bcryptjs';
 import { getTransactionSession } from '../common/utils/transaction.util';
@@ -34,6 +35,7 @@ export class AdminService {
     @InjectModel(Role.name) private roleModel: Model<RoleDocument>,
     @InjectModel(Permission.name)
     private permissionModel: Model<PermissionDocument>,
+    @InjectModel(Production.name) private productionModel: Model<ProductionDocument>,
     @InjectConnection() private connection: Connection,
     private auditLogsService: AuditLogsService,
     private readonly adminRbacService: AdminRbacService,
@@ -323,5 +325,120 @@ export class AdminService {
     payload: { name: string; description?: string; group?: string },
   ): Promise<Permission> {
     return this.adminRbacService.createPermission(adminId, payload);
+  }
+
+  async getDashboardStats(): Promise<any> {
+    const now = new Date();
+    
+    // Generate dates for the end of the last 6 months (cumulative points)
+    const dates: Date[] = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i + 1, 1, 0, 0, 0, 0);
+      d.setTime(d.getTime() - 1);
+      dates.push(d);
+    }
+
+    const threeDaysAgo = new Date();
+    threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+
+    // Month-over-month date boundaries
+    const startOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+
+    const [
+      totalProjects,
+      activeProjects,
+      totalUsers,
+      pendingApprovals,
+      urgentApprovals,
+      
+      // Project status distribution counts
+      activeProjectsCount,
+      draftProjectsCount,
+      onHoldProjectsCount,
+      completedProjectsCount,
+
+      // MoM metrics (previous month counts for trend calculation)
+      projectsLastMonth,
+      activeProjectsLastMonth,
+      usersLastMonth,
+    ] = await Promise.all([
+      this.productionModel.countDocuments().exec(),
+      this.productionModel.countDocuments({ status: { $regex: /^active$/i } }).exec(),
+      this.userModel.countDocuments().exec(),
+      this.userModel.countDocuments({ onboardingStatus: 'pending-review' }).exec(),
+      this.userModel.countDocuments({ onboardingStatus: 'pending-review', updatedAt: { $lt: threeDaysAgo } }).exec(),
+
+      this.productionModel.countDocuments({ status: { $regex: /^active$/i } }).exec(),
+      this.productionModel.countDocuments({ status: { $regex: /^draft$/i } }).exec(),
+      this.productionModel.countDocuments({ status: { $regex: /^(on hold|onhold)$/i } }).exec(),
+      this.productionModel.countDocuments({ status: { $regex: /^completed$/i } }).exec(),
+
+      this.productionModel.countDocuments({ createdAt: { $lt: startOfThisMonth } }).exec(),
+      this.productionModel.countDocuments({ createdAt: { $lt: startOfThisMonth }, status: { $regex: /^active$/i } }).exec(),
+      this.userModel.countDocuments({ createdAt: { $lt: startOfThisMonth } }).exec(),
+    ]);
+
+    // Sparkline points queries (cumulative counts up to the end of each month)
+    const projectsSparklinePromises = dates.map(date => 
+      this.productionModel.countDocuments({ createdAt: { $lte: date } }).exec()
+    );
+    const activeProjectsSparklinePromises = dates.map(date => 
+      this.productionModel.countDocuments({ createdAt: { $lte: date }, status: { $regex: /^active$/i } }).exec()
+    );
+    const usersSparklinePromises = dates.map(date => 
+      this.userModel.countDocuments({ createdAt: { $lte: date } }).exec()
+    );
+    const approvalsSparklinePromises = dates.map(date => 
+      this.userModel.countDocuments({ createdAt: { $lte: date }, onboardingStatus: 'pending-review' }).exec()
+    );
+
+    const [
+      projectsSparkline,
+      activeProjectsSparkline,
+      usersSparkline,
+      approvalsSparkline
+    ] = await Promise.all([
+      Promise.all(projectsSparklinePromises),
+      Promise.all(activeProjectsSparklinePromises),
+      Promise.all(usersSparklinePromises),
+      Promise.all(approvalsSparklinePromises)
+    ]);
+
+    // Calculate percentage change or absolute difference
+    const calculatePctChange = (current: number, previous: number) => {
+      if (previous === 0) return current > 0 ? 100 : 0;
+      return Math.round(((current - previous) / previous) * 100);
+    };
+
+    const projectsChange = calculatePctChange(totalProjects, projectsLastMonth);
+    const activeProjectsChange = calculatePctChange(activeProjects, activeProjectsLastMonth);
+    const newUsersThisMonth = await this.userModel.countDocuments({ createdAt: { $gte: startOfThisMonth } }).exec();
+
+    return {
+      metrics: {
+        totalProjects,
+        activeProjects,
+        totalUsers,
+        pendingApprovals,
+        urgentApprovals,
+        trends: {
+          projectsChange: `${projectsChange >= 0 ? '+' : ''}${projectsChange}%`,
+          activeProjectsChange: `${activeProjectsChange >= 0 ? '+' : ''}${activeProjectsChange}%`,
+          newUsersThisMonth: `+${newUsersThisMonth}`,
+        }
+      },
+      sparklines: {
+        projects: projectsSparkline,
+        active: activeProjectsSparkline,
+        users: usersSparkline,
+        approvals: approvalsSparkline,
+      },
+      statusDistribution: {
+        active: activeProjectsCount,
+        draft: draftProjectsCount,
+        onHold: onHoldProjectsCount,
+        completed: completedProjectsCount,
+      }
+    };
   }
 }

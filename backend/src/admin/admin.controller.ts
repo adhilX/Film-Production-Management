@@ -35,6 +35,14 @@ import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}
 
+  @Get('dashboard-stats')
+  @Permissions('users.approve')
+  @ApiOperation({ summary: 'Get overall admin dashboard statistics' })
+  @ApiResponse({ status: 200, description: 'Dashboard metrics, sparklines, and status distributions.' })
+  getDashboardStats() {
+    return this.adminService.getDashboardStats();
+  }
+
   @Get('applications')
   @Permissions('users.approve')
   @ApiOperation({

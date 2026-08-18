@@ -2,8 +2,15 @@ import { roleService } from '@/features/roles/services/role.service';
 import { approvalService } from '@/features/approvals/services/approval.service';
 import { userService } from '@/features/users/services/user.service';
 import { logService } from '@/features/logs/services/log.service';
+import { apiClient } from '@/services/api/api-client';
 
 export const adminService = {
+  // Dashboard Stats
+  async getDashboardStats(): Promise<any> {
+    const res = await apiClient.get<any>('/admin/dashboard-stats');
+    return res.data;
+  },
+
   // Roles
   getRoles: roleService.getRoles.bind(roleService),
   createRole: roleService.createRole.bind(roleService),

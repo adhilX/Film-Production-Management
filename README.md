@@ -1,4 +1,4 @@
-# Tendagon
+# Film Production Management
 
 [![TypeScript](https://img.shields.io/badge/Language-TypeScript-blue.svg)](https://www.typescriptlang.org/)
 [![Next.js](https://img.shields.io/badge/Frontend-Next.js%2016-black.svg)](https://nextjs.org/)
@@ -7,20 +7,20 @@
 [![Node.js](https://img.shields.io/badge/Runtime-Node.js%20v18+-green.svg)](https://nodejs.org/)
 [![License](https://img.shields.io/badge/License-Proprietary-orange.svg)](#)
 
-Tendagon is a comprehensive, production-grade web platform for film production logistics, contractor onboarding, location scheduling, budget tracking, and compliance auditing. Designed to support modern entertainment production workflows, it bridges the gap between administrative oversight and operational cast/crew tasks. Tendagon ensures robust data isolation, conflict-free resource scheduling, and role-based operational safety.
+Film Production Management is a comprehensive, production-grade web platform for film production logistics, contractor onboarding, location scheduling, budget tracking, and compliance auditing. Designed to support modern entertainment production workflows, it bridges the gap between administrative oversight and operational cast/crew tasks. Film Production Management ensures robust data isolation, conflict-free resource scheduling, and role-based operational safety.
 
 ---
 
 ## 1. Overview
 
-Tendagon manages the end-to-end logistics of film productions, solving the chaotic planning problem faced by studios and independent production managers. It handles:
+Film Production Management manages the end-to-end logistics of film productions, solving the chaotic planning problem faced by studios and independent production managers. It handles:
 - **Contractor Onboarding:** Onboards freelancers, actors, and crew via a structured profile setup, secure document storage, and digital signature signing.
 - **Resource Management:** Assigns and tracks physical locations, wardrobe inventory, and film budgets.
 - **Project Isolation:** Enforces strict data access rules ensuring users only see their designated productions.
 - **Auditing & Compliance:** Records detailed system activities to maintain accountability.
 
 ### User Roles & Hierarchies
-1. **Super Admin:** Full access to the entire Tendagon system, configuration schemas, audit trails, and administrative overrides.
+1. **Super Admin:** Full access to the entire Film Production Management system, configuration schemas, audit trails, and administrative overrides.
 2. **Production Admin:** Manages multiple projects, approves contractor onboarding, schedules locations, approves budgets, and allocates costumes.
 3. **Production Manager:** Manages assigned projects, schedules local locations, requests funds, and coordinates local wardrobe assignments.
 4. **Cast:** Accesses schedules, locations, assigned costumes, and submits expense/fund requests for their assigned productions.
@@ -243,7 +243,7 @@ backend/
 
 ## 6. Security & Permission Reference
 
-Tendagon seeds 5 roles and 28 permissions on startup. Below is the capability matrix:
+Film Production Management seeds 5 roles and 28 permissions on startup. Below is the capability matrix:
 
 | Permission Group | Permission Name | Description |
 | :--- | :--- | :--- |
