@@ -15,7 +15,7 @@ export class CastCrew {
   roleInProduction: string;
 
   @Prop({ type: Types.ObjectId, ref: 'Character', default: null })
-  characterId: Types.ObjectId;
+  characterId: Types.ObjectId | null;
 }
 
 export const CastCrewSchema = SchemaFactory.createForClass(CastCrew);

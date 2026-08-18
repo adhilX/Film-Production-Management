@@ -13,6 +13,7 @@ export interface User {
   systemRoleId?: string | { _id: string; name: string } | null;
   status: 'Draft' | 'Pending' | 'UnderReview' | 'Approved' | 'Rejected';
   isActive: boolean;
+  profile?: any;
 }
 
 export interface Production {

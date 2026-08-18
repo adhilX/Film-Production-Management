@@ -51,7 +51,7 @@ export default function NavBar({ title: propTitle, subtitle: propSubtitle }: Nav
       return { title: 'Costumes & Wardrobe', subtitle: 'Manage costume inventories and wardrobe assignments.' };
     }
     if (pathname.startsWith('/cast-crew')) {
-      return { title: 'Cast & Crew Assignments', subtitle: 'Manage personnel schedules and assignments.' };
+      return { title: 'Cast & Crew', subtitle: 'Manage project characters, actors, and crew assignments.' };
     }
     if (pathname.startsWith('/locations')) {
       return { title: 'Location Bookings', subtitle: 'Track set locations, permits, and shoots.' };

@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Patch,
+  Delete,
   Body,
   Param,
   UseGuards,
@@ -18,7 +19,9 @@ import { ProductionsService } from './productions.service';
 import { CreateProductionDto } from './dto/create-production.dto';
 import { UpdateProductionDto } from './dto/update-production.dto';
 import { AssignCastCrewDto } from './dto/assign-cast-crew.dto';
+import { UpdateCastCrewDto } from './dto/update-cast-crew.dto';
 import { CreateCharacterDto } from './dto/create-character.dto';
+import { UpdateCharacterDto } from './dto/update-character.dto';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { PermissionsGuard } from '../auth/guards/permissions.guard';
 import { Permissions } from '../auth/decorators/permissions.decorator';
@@ -92,7 +95,7 @@ export class ProductionsController {
 
   @Post(':productionId/cast-crew')
   @CheckProduction()
-  @Permissions('productions.create')
+  @Permissions('productions.update')
   @ApiOperation({
     summary: 'Assign a user / contractor to a production cast-crew role',
   })
@@ -100,8 +103,9 @@ export class ProductionsController {
   assignCastCrew(
     @Param('productionId') productionId: string,
     @Body() assignDto: AssignCastCrewDto,
+    @Req() req: any,
   ) {
-    return this.productionsService.assignCastCrew(productionId, assignDto);
+    return this.productionsService.assignCastCrew(productionId, assignDto, req.user._id);
   }
 
   @Get(':productionId/cast-crew')
@@ -114,16 +118,44 @@ export class ProductionsController {
     return this.productionsService.getCastCrew(productionId);
   }
 
+  @Patch(':productionId/cast-crew/:castCrewId')
+  @CheckProduction()
+  @Permissions('productions.update')
+  @ApiOperation({ summary: 'Update a cast/crew assignment' })
+  @ApiResponse({ status: 200, description: 'Updated assignment document.' })
+  updateCastCrew(
+    @Param('productionId') productionId: string,
+    @Param('castCrewId') castCrewId: string,
+    @Body() updateDto: UpdateCastCrewDto,
+    @Req() req: any,
+  ) {
+    return this.productionsService.updateCastCrew(productionId, castCrewId, updateDto, req.user._id);
+  }
+
+  @Delete(':productionId/cast-crew/:castCrewId')
+  @CheckProduction()
+  @Permissions('productions.update')
+  @ApiOperation({ summary: 'Remove a cast/crew assignment' })
+  @ApiResponse({ status: 200, description: 'Assignment removed.' })
+  removeCastCrew(
+    @Param('productionId') productionId: string,
+    @Param('castCrewId') castCrewId: string,
+    @Req() req: any,
+  ) {
+    return this.productionsService.removeCastCrew(productionId, castCrewId, req.user._id);
+  }
+
   @Post(':productionId/characters')
   @CheckProduction()
-  @Permissions('productions.create')
+  @Permissions('productions.update')
   @ApiOperation({ summary: 'Create a script character entry for a production' })
   @ApiResponse({ status: 201, description: 'Script character created.' })
   createCharacter(
     @Param('productionId') productionId: string,
     @Body() createDto: CreateCharacterDto,
+    @Req() req: any,
   ) {
-    return this.productionsService.createCharacter(productionId, createDto);
+    return this.productionsService.createCharacter(productionId, createDto, req.user._id);
   }
 
   @Get(':productionId/characters')
@@ -133,4 +165,50 @@ export class ProductionsController {
   getCharacters(@Param('productionId') productionId: string) {
     return this.productionsService.getCharacters(productionId);
   }
+
+  @Patch(':productionId/characters/:characterId')
+  @CheckProduction()
+  @Permissions('productions.update')
+  @ApiOperation({ summary: 'Update a script character entry' })
+  @ApiResponse({ status: 200, description: 'Script character updated.' })
+  updateCharacter(
+    @Param('productionId') productionId: string,
+    @Param('characterId') characterId: string,
+    @Body() updateDto: UpdateCharacterDto,
+    @Req() req: any,
+  ) {
+    return this.productionsService.updateCharacter(productionId, characterId, updateDto, req.user._id);
+  }
+
+  @Delete(':productionId/characters/:characterId')
+  @CheckProduction()
+  @Permissions('productions.update')
+  @ApiOperation({ summary: 'Delete a script character entry' })
+  @ApiResponse({ status: 200, description: 'Script character deleted.' })
+  deleteCharacter(
+    @Param('productionId') productionId: string,
+    @Param('characterId') characterId: string,
+    @Req() req: any,
+  ) {
+    return this.productionsService.deleteCharacter(productionId, characterId, req.user._id);
+  }
+
+  @Get(':productionId/eligible-cast')
+  @CheckProduction()
+  @Permissions('productions.view')
+  @ApiOperation({ summary: 'Get active, approved users eligible for cast assignment' })
+  @ApiResponse({ status: 200, description: 'Array of eligible cast users.' })
+  getEligibleCast(@Param('productionId') productionId: string) {
+    return this.productionsService.getEligibleCast(productionId);
+  }
+
+  @Get(':productionId/eligible-crew')
+  @CheckProduction()
+  @Permissions('productions.view')
+  @ApiOperation({ summary: 'Get active, approved users eligible for crew assignment' })
+  @ApiResponse({ status: 200, description: 'Array of eligible crew users.' })
+  getEligibleCrew(@Param('productionId') productionId: string) {
+    return this.productionsService.getEligibleCrew(productionId);
+  }
 }
+

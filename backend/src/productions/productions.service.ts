@@ -11,9 +11,11 @@ import { Character, CharacterDocument } from './schemas/character.schema';
 import { User, UserDocument } from '../users/schemas/user.schema';
 import { CreateProductionDto } from './dto/create-production.dto';
 import { AssignCastCrewDto } from './dto/assign-cast-crew.dto';
+import { UpdateCastCrewDto } from './dto/update-cast-crew.dto';
 import { CreateCharacterDto } from './dto/create-character.dto';
-
+import { UpdateCharacterDto } from './dto/update-character.dto';
 import { UpdateProductionDto } from './dto/update-production.dto';
+import { AuditLogsService } from '../audit-logs/audit-logs.service';
 
 @Injectable()
 export class ProductionsService {
@@ -24,6 +26,7 @@ export class ProductionsService {
     @InjectModel(Character.name)
     private characterModel: Model<CharacterDocument>,
     @InjectModel(User.name) private userModel: Model<UserDocument>,
+    private readonly auditLogsService: AuditLogsService,
   ) {}
 
   async create(
@@ -224,16 +227,20 @@ export class ProductionsService {
   async assignCastCrew(
     productionId: string,
     assignDto: AssignCastCrewDto,
+    requesterId: string,
   ): Promise<CastCrew> {
     const { userId, roleInProduction, characterId } = assignDto;
 
-    // Verify user exists and is active
+    // Verify user exists and is active/approved
     const user = await this.userModel.findById(userId).exec();
     if (!user) {
       throw new NotFoundException('User not found');
     }
     if (!user.isActive) {
       throw new BadRequestException('Cannot assign an inactive/pending user');
+    }
+    if (user.onboardingStatus !== 'approved') {
+      throw new BadRequestException('Cannot assign user whose onboarding is not approved');
     }
 
     // Verify production exists
@@ -242,12 +249,38 @@ export class ProductionsService {
       throw new NotFoundException('Production not found');
     }
 
+    // Check if the user is already assigned to this project
+    const existingCastCrew = await this.castCrewModel.findOne({
+      userId: new Types.ObjectId(userId),
+      productionId: new Types.ObjectId(productionId),
+    }).exec();
+    if (existingCastCrew) {
+      throw new BadRequestException('User is already assigned to this project.');
+    }
+
     let charObjId: Types.ObjectId | null = null;
     if (characterId) {
       const char = await this.characterModel.findById(characterId).exec();
       if (!char) {
         throw new NotFoundException('Character not found');
       }
+      if (char.productionId.toString() !== productionId) {
+        throw new BadRequestException('Character does not belong to this project');
+      }
+      if (char.assignments && char.assignments.length > 0) {
+        throw new BadRequestException('Character is already assigned to another cast member');
+      }
+
+      // Check actor exclusivity
+      const userAssignedChar = await this.castCrewModel.findOne({
+        productionId: new Types.ObjectId(productionId),
+        userId: new Types.ObjectId(userId),
+        characterId: { $ne: null }
+      }).exec();
+      if (userAssignedChar) {
+        throw new BadRequestException('Cast member is already assigned to another character in this project.');
+      }
+
       charObjId = char._id;
 
       // Update Character Assignments
@@ -265,20 +298,205 @@ export class ProductionsService {
     });
 
     await castCrew.save();
+
+    const action = characterId ? 'CAST_ASSIGNED' : 'CREW_ASSIGNED';
+    await this.auditLogsService.log(
+      requesterId,
+      action,
+      castCrew._id.toString(),
+      'CastCrew',
+      '',
+      JSON.stringify({ userId, roleInProduction, characterId }),
+      undefined,
+      'Productions',
+      { productionId }
+    );
+
     return castCrew;
   }
 
   async getCastCrew(productionId: string): Promise<any[]> {
     return this.castCrewModel
       .find({ productionId: new Types.ObjectId(productionId) })
-      .populate('userId', '-passwordHash')
+      .populate({
+        path: 'userId',
+        select: '-passwordHash',
+        populate: { path: 'profile' }
+      })
       .populate('characterId')
       .exec();
+  }
+
+  async updateCastCrew(
+    productionId: string,
+    castCrewId: string,
+    updateDto: UpdateCastCrewDto,
+    requesterId: string,
+  ): Promise<CastCrew> {
+    const prod = await this.productionModel.findById(productionId).exec();
+    if (!prod) {
+      throw new NotFoundException('Production not found');
+    }
+
+    const castCrew = await this.castCrewModel.findById(castCrewId).exec();
+    if (!castCrew) {
+      throw new NotFoundException('Assignment not found');
+    }
+
+    if (castCrew.productionId.toString() !== productionId) {
+      throw new BadRequestException('Assignment does not belong to this project');
+    }
+
+    const oldState = JSON.stringify({
+      roleInProduction: castCrew.roleInProduction,
+      characterId: castCrew.characterId ? castCrew.characterId.toString() : null
+    });
+
+    const oldCharId = castCrew.characterId;
+
+    if (updateDto.characterId !== undefined) {
+      const newCharId = updateDto.characterId;
+
+      if (oldCharId?.toString() !== newCharId) {
+        // 1. Remove user from old character assignments
+        if (oldCharId) {
+          const oldChar = await this.characterModel.findById(oldCharId).exec();
+          if (oldChar) {
+            oldChar.assignments = oldChar.assignments.filter(
+              id => id.toString() !== castCrew.userId.toString()
+            );
+            await oldChar.save();
+          }
+        }
+
+        // 2. Add user to new character assignments
+        if (newCharId) {
+          const char = await this.characterModel.findById(newCharId).exec();
+          if (!char) {
+            throw new NotFoundException('Character not found');
+          }
+          if (char.productionId.toString() !== productionId) {
+            throw new BadRequestException('Character does not belong to this project');
+          }
+
+          // Exclusivity: character assigned to another actor?
+          if (char.assignments && char.assignments.length > 0) {
+            throw new BadRequestException('Character is already assigned to another cast member');
+          }
+
+          // Exclusivity: actor assigned to another character?
+          const otherAssigned = await this.castCrewModel.findOne({
+            productionId: new Types.ObjectId(productionId),
+            userId: castCrew.userId,
+            _id: { $ne: castCrew._id },
+            characterId: { $ne: null }
+          }).exec();
+          if (otherAssigned) {
+            throw new BadRequestException('Cast member is already assigned to another character in this project.');
+          }
+
+          if (!char.assignments.some(id => id.toString() === castCrew.userId.toString())) {
+            char.assignments.push(new Types.ObjectId(castCrew.userId));
+            await char.save();
+          }
+
+          castCrew.characterId = new Types.ObjectId(newCharId);
+        } else {
+          castCrew.characterId = null;
+        }
+      }
+    }
+
+    if (updateDto.roleInProduction !== undefined) {
+      castCrew.roleInProduction = updateDto.roleInProduction;
+    }
+
+    await castCrew.save();
+
+    const newState = JSON.stringify({
+      roleInProduction: castCrew.roleInProduction,
+      characterId: castCrew.characterId ? castCrew.characterId.toString() : null
+    });
+
+    let finalAction = 'CAST_UPDATED';
+    if (oldCharId && !castCrew.characterId) {
+      finalAction = 'CAST_REMOVED';
+    } else if (!oldCharId && castCrew.characterId) {
+      finalAction = 'CAST_ASSIGNED';
+    } else if (!castCrew.characterId) {
+      finalAction = 'CREW_UPDATED';
+    }
+
+    await this.auditLogsService.log(
+      requesterId,
+      finalAction,
+      castCrew._id.toString(),
+      'CastCrew',
+      oldState,
+      newState,
+      undefined,
+      'Productions',
+      { productionId }
+    );
+
+    return castCrew;
+  }
+
+  async removeCastCrew(
+    productionId: string,
+    castCrewId: string,
+    requesterId: string,
+  ): Promise<void> {
+    const prod = await this.productionModel.findById(productionId).exec();
+    if (!prod) {
+      throw new NotFoundException('Production not found');
+    }
+
+    const castCrew = await this.castCrewModel.findById(castCrewId).exec();
+    if (!castCrew) {
+      throw new NotFoundException('Assignment not found');
+    }
+
+    if (castCrew.productionId.toString() !== productionId) {
+      throw new BadRequestException('Assignment does not belong to this project');
+    }
+
+    const oldState = JSON.stringify({
+      userId: castCrew.userId.toString(),
+      roleInProduction: castCrew.roleInProduction,
+      characterId: castCrew.characterId ? castCrew.characterId.toString() : null
+    });
+
+    if (castCrew.characterId) {
+      const char = await this.characterModel.findById(castCrew.characterId).exec();
+      if (char) {
+        char.assignments = char.assignments.filter(
+          id => id.toString() !== castCrew.userId.toString()
+        );
+        await char.save();
+      }
+    }
+
+    await this.castCrewModel.findByIdAndDelete(castCrewId).exec();
+
+    const action = castCrew.characterId ? 'CAST_REMOVED' : 'CREW_REMOVED';
+    await this.auditLogsService.log(
+      requesterId,
+      action,
+      castCrewId,
+      'CastCrew',
+      oldState,
+      '',
+      undefined,
+      'Productions',
+      { productionId }
+    );
   }
 
   async createCharacter(
     productionId: string,
     createDto: CreateCharacterDto,
+    requesterId: string,
   ): Promise<Character> {
     const prod = await this.productionModel.findById(productionId).exec();
     if (!prod) {
@@ -292,14 +510,164 @@ export class ProductionsService {
     });
 
     await character.save();
+
+    await this.auditLogsService.log(
+      requesterId,
+      'CHARACTER_CREATED',
+      character._id.toString(),
+      'Character',
+      '',
+      JSON.stringify({ name: character.name, description: character.description }),
+      undefined,
+      'Productions',
+      { productionId }
+    );
+
     return character;
   }
 
   async getCharacters(productionId: string): Promise<Character[]> {
     return this.characterModel
       .find({ productionId: new Types.ObjectId(productionId) })
-      .populate('assignments', '-passwordHash')
+      .populate({
+        path: 'assignments',
+        select: '-passwordHash',
+        populate: { path: 'profile' }
+      })
       .exec();
+  }
+
+  async updateCharacter(
+    productionId: string,
+    characterId: string,
+    updateDto: UpdateCharacterDto,
+    requesterId: string,
+  ): Promise<Character> {
+    const prod = await this.productionModel.findById(productionId).exec();
+    if (!prod) {
+      throw new NotFoundException('Production not found');
+    }
+
+    const character = await this.characterModel.findById(characterId).exec();
+    if (!character) {
+      throw new NotFoundException('Character not found');
+    }
+
+    if (character.productionId.toString() !== productionId) {
+      throw new BadRequestException('Character does not belong to this project');
+    }
+
+    const oldState = JSON.stringify({ name: character.name, description: character.description });
+
+    if (updateDto.name !== undefined) {
+      character.name = updateDto.name;
+    }
+    if (updateDto.description !== undefined) {
+      character.description = updateDto.description;
+    }
+
+    await character.save();
+
+    const newState = JSON.stringify({ name: character.name, description: character.description });
+
+    await this.auditLogsService.log(
+      requesterId,
+      'CHARACTER_UPDATED',
+      character._id.toString(),
+      'Character',
+      oldState,
+      newState,
+      undefined,
+      'Productions',
+      { productionId }
+    );
+
+    return character;
+  }
+
+  async deleteCharacter(
+    productionId: string,
+    characterId: string,
+    requesterId: string,
+  ): Promise<void> {
+    const prod = await this.productionModel.findById(productionId).exec();
+    if (!prod) {
+      throw new NotFoundException('Production not found');
+    }
+
+    const character = await this.characterModel.findById(characterId).exec();
+    if (!character) {
+      throw new NotFoundException('Character not found');
+    }
+
+    if (character.productionId.toString() !== productionId) {
+      throw new BadRequestException('Character does not belong to this project');
+    }
+
+    const oldState = JSON.stringify({ name: character.name, description: character.description });
+
+    // Nullify references in CastCrew
+    await this.castCrewModel.updateMany(
+      { productionId: new Types.ObjectId(productionId), characterId: new Types.ObjectId(characterId) },
+      { $set: { characterId: null } }
+    ).exec();
+
+    await this.characterModel.findByIdAndDelete(characterId).exec();
+
+    await this.auditLogsService.log(
+      requesterId,
+      'CHARACTER_DELETED',
+      characterId,
+      'Character',
+      oldState,
+      '',
+      undefined,
+      'Productions',
+      { productionId }
+    );
+  }
+
+  async getEligibleCast(productionId: string): Promise<any[]> {
+    const users = await this.userModel.find({
+      isActive: true,
+      onboardingStatus: 'approved',
+      contractorType: { $in: ['Cast', 'Freelancer', 'None'] }
+    }).populate('profile').exec();
+
+    const assignedCastCrew = await this.castCrewModel.find({
+      productionId: new Types.ObjectId(productionId),
+      characterId: { $ne: null }
+    }).exec();
+    const assignedUserIds = new Set(assignedCastCrew.map(c => c.userId.toString()));
+
+    const eligible = users.filter(u => !assignedUserIds.has(u._id.toString()));
+
+    return eligible.map(u => ({
+      _id: u._id,
+      name: u.name,
+      avatar: u.profile?.photoUrl || null
+    }));
+  }
+
+  async getEligibleCrew(productionId: string): Promise<any[]> {
+    const users = await this.userModel.find({
+      isActive: true,
+      onboardingStatus: 'approved',
+      contractorType: { $ne: 'Cast' }
+    }).populate('profile').exec();
+
+    const assignedCastCrew = await this.castCrewModel.find({
+      productionId: new Types.ObjectId(productionId)
+    }).exec();
+    const assignedUserIds = new Set(assignedCastCrew.map(c => c.userId.toString()));
+
+    const eligible = users.filter(u => !assignedUserIds.has(u._id.toString()));
+
+    return eligible.map(u => ({
+      _id: u._id,
+      name: u.name,
+      avatar: u.profile?.photoUrl || null
+    }));
   }
 
   async findEligibleManagers(): Promise<any[]> {
