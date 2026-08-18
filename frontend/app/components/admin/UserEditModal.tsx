@@ -118,7 +118,7 @@ export default function UserEditModal({ isOpen, onClose, user, onSave }: UserEdi
 
     try {
       if (user) {
-        await adminService.updateUser(user._id, formData);
+        await adminService.updateUser(user._id, formData as any);
         
         // Doc 5 sync: Refresh local store user profile on current logged-in user profile update
         const currentUser = useAuthStore.getState().user;
@@ -128,7 +128,7 @@ export default function UserEditModal({ isOpen, onClose, user, onSave }: UserEdi
           useAuthStore.setState({ user: freshProfile });
         }
       } else {
-        await adminService.createUser(formData);
+        await adminService.createUser(formData as any);
       }
       onSave();
       onClose();

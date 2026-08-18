@@ -20,6 +20,7 @@ export const metadata: Metadata = {
 import { AuthProvider } from "./components/auth-context";
 import AuthInitializer from "./components/auth-initializer";
 import OnboardingGuard from "./components/onboarding-guard";
+import { Toaster } from "react-hot-toast";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -28,6 +29,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        <Toaster position="top-right" toastOptions={{ duration: 4000 }} />
         <AuthProvider>
           <AuthInitializer>
             <OnboardingGuard>
@@ -39,3 +41,4 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     </html>
   );
 }
+
