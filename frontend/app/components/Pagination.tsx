@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
 
 interface PaginationProps {
   page: number;
@@ -9,6 +9,8 @@ interface PaginationProps {
   total: number;
   limit: number;
   onPageChange: (page: number) => void;
+  onLimitChange?: (limit: number) => void;
+  itemName?: string;
 }
 
 export const Pagination: React.FC<PaginationProps> = ({
@@ -17,87 +19,112 @@ export const Pagination: React.FC<PaginationProps> = ({
   total,
   limit,
   onPageChange,
+  onLimitChange,
+  itemName = 'results',
 }) => {
-  if (pages <= 1) return null;
+  if (pages <= 0) return null;
 
-  const startRange = (page - 1) * limit + 1;
-  const endRange = Math.min(page * limit, total);
+  const startRange = Math.min(total, (page - 1) * limit + 1);
+  const endRange = Math.min(total, page * limit);
 
-  // Generate page numbers to display
+  // Generate page numbers with ellipsis (e.g. 1 ... 4 5 6 ... 10)
   const getPageNumbers = () => {
-    const pageNumbers = [];
-    const maxVisible = 5;
-
-    if (pages <= maxVisible) {
-      for (let i = 1; i <= pages; i++) {
-        pageNumbers.push(i);
-      }
-    } else {
-      let start = Math.max(1, page - 2);
-      let end = Math.min(pages, page + 2);
-
-      if (page <= 3) {
-        end = maxVisible;
-      } else if (page >= pages - 2) {
-        start = pages - maxVisible + 1;
-      }
-
-      for (let i = start; i <= end; i++) {
-        pageNumbers.push(i);
+    const range = [];
+    const delta = 1; // show 1 page before and after current
+    for (let i = 1; i <= pages; i++) {
+      if (i === 1 || i === pages || (i >= page - delta && i <= page + delta)) {
+        range.push(i);
+      } else if (range[range.length - 1] !== '...') {
+        range.push('...');
       }
     }
-    return pageNumbers;
+    return range;
   };
 
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-4 py-4 bg-white dark:bg-zinc-900 border-t border-zinc-150 dark:border-zinc-800 rounded-b-xl select-none">
-      {/* Page Info */}
-      <div className="text-sm text-zinc-500 dark:text-zinc-400">
-        Showing{' '}
-        <span className="font-medium text-zinc-800 dark:text-zinc-200">{startRange}</span>{' '}
-        to{' '}
-        <span className="font-medium text-zinc-800 dark:text-zinc-200">{endRange}</span>{' '}
-        of{' '}
-        <span className="font-medium text-zinc-800 dark:text-zinc-200">{total}</span>{' '}
-        results
+    <div className="p-4 border-t border-slate-100 grid grid-cols-1 md:grid-cols-3 items-center gap-4 bg-white">
+      {/* Left Info Panel */}
+      <div className="text-slate-450 font-semibold text-xs text-center md:text-left">
+        Showing {startRange} to {endRange} of {total} {itemName}
       </div>
 
-      {/* Navigation Buttons */}
-      <div className="flex items-center gap-1.5">
-        {/* Previous Button */}
+      {/* Navigation Controls */}
+      <div className="flex items-center justify-center gap-1">
+        {/* Previous Page Button */}
         <button
-          onClick={() => onPageChange(page - 1)}
+          onClick={() => onPageChange(Math.max(1, page - 1))}
           disabled={page === 1}
-          className="flex items-center justify-center p-2 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 hover:scale-102 active:scale-98"
+          className="p-1.5 border border-slate-200 rounded-xl bg-white hover:bg-slate-50 transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
           aria-label="Previous Page"
         >
-          <ChevronLeft className="w-4 h-4" />
+          <ChevronLeft className="w-4 h-4 text-slate-500" />
         </button>
 
-        {/* Page Numbers */}
-        {getPageNumbers().map((pageNum) => (
-          <button
-            key={pageNum}
-            onClick={() => onPageChange(pageNum)}
-            className={`flex items-center justify-center min-w-[36px] h-9 px-3 text-sm font-medium rounded-lg transition-all duration-200 active:scale-95 ${
-              page === pageNum
-                ? 'bg-amber-500 hover:bg-amber-600 text-white shadow-sm shadow-amber-500/20'
-                : 'border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:scale-102'
-            }`}
-          >
-            {pageNum}
-          </button>
-        ))}
+        {/* Page Buttons & Ellipsis */}
+        {getPageNumbers().map((pageNum, idx) => {
+          if (pageNum === '...') {
+            return (
+              <span
+                key={`ellipsis-${idx}`}
+                className="w-7 h-7 flex items-center justify-center text-xs font-semibold text-slate-400 select-none"
+              >
+                ...
+              </span>
+            );
+          }
+          return (
+            <button
+              key={`page-${pageNum}`}
+              onClick={() => onPageChange(Number(pageNum))}
+              className={`w-7 h-7 rounded-xl text-xs font-bold transition cursor-pointer flex items-center justify-center ${
+                page === pageNum
+                  ? 'bg-purple-600 text-white shadow-sm hover:bg-purple-700'
+                  : 'border border-slate-200 bg-white hover:bg-slate-50 text-slate-600'
+              }`}
+            >
+              {pageNum}
+            </button>
+          );
+        })}
 
-        {/* Next Button */}
+        {/* Next Page Button */}
         <button
-          onClick={() => onPageChange(page + 1)}
+          onClick={() => onPageChange(Math.min(pages, page + 1))}
           disabled={page === pages}
-          className="flex items-center justify-center p-2 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 hover:scale-102 active:scale-98"
+          className="p-1.5 border border-slate-200 rounded-xl bg-white hover:bg-slate-50 transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
           aria-label="Next Page"
         >
-          <ChevronRight className="w-4 h-4" />
+          <ChevronRight className="w-4 h-4 text-slate-500" />
         </button>
+      </div>
+
+      {/* Optional Page Size selector */}
+      <div className="flex items-center justify-center md:justify-end gap-2 text-slate-450 font-semibold text-xs">
+        {onLimitChange ? (
+          <>
+            <span>Rows per page</span>
+            <div className="relative">
+              <select
+                value={limit}
+                onChange={e => {
+                  onLimitChange(Number(e.target.value));
+                }}
+                className="bg-white border border-slate-200 rounded-xl py-1 pl-3 pr-8 focus:outline-none focus:border-purple-500 cursor-pointer text-slate-700 font-bold text-xs appearance-none"
+              >
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+              </select>
+              <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                <ChevronDown className="w-3.5 h-3.5" />
+              </div>
+            </div>
+          </>
+        ) : (
+          /* Empty spacer to align center elements when there's no limit selector */
+          <div className="hidden md:block w-32" />
+        )}
       </div>
     </div>
   );

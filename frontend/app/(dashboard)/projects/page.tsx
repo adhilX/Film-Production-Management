@@ -28,6 +28,7 @@ import { useProductionStore } from '@/store/useProductionStore';
 import productionsService from '@/services/productionsService';
 import { authService } from '@/services/authService';
 import type { Production } from '@/app/types';
+import Pagination from '@/app/components/Pagination';
 
 export default function ProductionsPage() {
   const user = useAuthStore(state => state.user);
@@ -395,7 +396,7 @@ export default function ProductionsPage() {
   const metricCompleted = productions.filter(p => p.status === 'Completed').length;
 
   return (
-    <div className="flex-1 bg-slate-50 px-6 md:px-8 py-8 space-y-6 overflow-y-auto min-h-screen">
+    <div className="max-w-[1400px] mx-auto px-6 md:px-8 lg:px-10 py-8 space-y-6 animate-in fade-in duration-300 w-full">
       {/* Upper Metrics Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Metric 1 */}
@@ -660,8 +661,8 @@ export default function ProductionsPage() {
                                 }}
                                 disabled={isCurrentActive}
                                 className={`w-full text-left px-3.5 py-2 text-xs font-semibold flex items-center gap-2 transition ${isCurrentActive
-                                    ? 'text-slate-350 cursor-not-allowed bg-slate-50/30'
-                                    : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900'
+                                  ? 'text-slate-350 cursor-not-allowed bg-slate-50/30'
+                                  : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900'
                                   }`}
                               >
                                 <Check className="w-3.5 h-3.5 text-slate-400" /> Set as Active
@@ -696,60 +697,20 @@ export default function ProductionsPage() {
           </div>
         )}
 
-        {/* Pagination Toolbar */}
+        {/* Reusable Pagination Component */}
         {!loading && totalItems > 0 && (
-          <div className="p-4 border-t border-slate-100 flex items-center justify-between bg-slate-50/50 flex-col sm:flex-row gap-3">
-            <div className="flex items-center gap-4 text-slate-450 font-semibold text-xs">
-              <span>
-                Showing {Math.min(totalItems, (currentPage - 1) * pageSize + 1)} to{' '}
-                {Math.min(totalItems, currentPage * pageSize)} of {totalItems} projects
-              </span>
-              <div className="flex items-center gap-2">
-                <span>Show:</span>
-                <select
-                  value={pageSize}
-                  onChange={e => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
-                  className="bg-white border border-slate-200 rounded-lg py-1 px-2 focus:outline-none focus:border-purple-500 cursor-pointer text-slate-650"
-                >
-                  <option value={5}>5</option>
-                  <option value={10}>10</option>
-                  <option value={20}>20</option>
-                  <option value={50}>50</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                disabled={currentPage === 1}
-                className="p-1.5 border border-slate-200 rounded-xl bg-white hover:bg-slate-50 transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-              >
-                <ChevronLeft className="w-4 h-4 text-slate-500" />
-              </button>
-
-              {Array.from({ length: totalPages }).map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setCurrentPage(i + 1)}
-                  className={`w-7 h-7 rounded-xl text-xs font-bold transition cursor-pointer flex items-center justify-center ${currentPage === i + 1
-                      ? 'bg-purple-650 text-white shadow-sm'
-                      : 'border border-slate-200 bg-white hover:bg-slate-50 text-slate-655'
-                    }`}
-                >
-                  {i + 1}
-                </button>
-              ))}
-
-              <button
-                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                disabled={currentPage === totalPages}
-                className="p-1.5 border border-slate-200 rounded-xl bg-white hover:bg-slate-50 transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-              >
-                <ChevronRight className="w-4 h-4 text-slate-500" />
-              </button>
-            </div>
-          </div>
+          <Pagination
+            page={currentPage}
+            pages={totalPages}
+            total={totalItems}
+            limit={pageSize}
+            onPageChange={setCurrentPage}
+            onLimitChange={(size) => {
+              setPageSize(size);
+              setCurrentPage(1);
+            }}
+            itemName="projects"
+          />
         )}
       </div>
 

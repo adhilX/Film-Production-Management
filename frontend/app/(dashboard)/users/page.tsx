@@ -15,7 +15,7 @@ export default function AdminUsersPage() {
 
   // Pagination State
   const [page, setPage] = useState(1);
-  const [limit] = useState(10);
+  const [limit, setLimit] = useState(10);
   const [total, setTotal] = useState(0);
   const [pages, setPages] = useState(1);
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -215,6 +215,11 @@ export default function AdminUsersPage() {
           total={total}
           limit={limit}
           onPageChange={setPage}
+          onLimitChange={(size) => {
+            setLimit(size);
+            setPage(1);
+          }}
+          itemName="users"
         />
       </div>
 

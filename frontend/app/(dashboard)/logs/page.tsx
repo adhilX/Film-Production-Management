@@ -4,6 +4,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { adminService } from '@/services/adminService';
 import { AuditFilterBar } from './components/AuditFilterBar';
 import { AuditTableBody } from './components/AuditTableBody';
+import Pagination from '@/app/components/Pagination';
 
 export default function AuditLogsPage() {
   const [logs, setLogs] = useState<any[]>([]);
@@ -16,7 +17,7 @@ export default function AuditLogsPage() {
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const [pageSize, setPageSize] = useState(10);
 
   useEffect(() => {
     const fetchLogs = async () => {
@@ -61,10 +62,10 @@ export default function AuditLogsPage() {
     setCurrentPage(1);
   }, [search, moduleFilter, actionFilter]);
 
-  const totalPages = Math.ceil(filteredLogs.length / itemsPerPage);
+  const totalPages = Math.ceil(filteredLogs.length / pageSize) || 1;
   const paginatedLogs = filteredLogs.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
   );
 
   return (
@@ -94,37 +95,18 @@ export default function AuditLogsPage() {
         
         {/* Pagination Controls */}
         {!loading && filteredLogs.length > 0 && (
-          <div className="bg-slate-50/50 px-6 py-4 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-slate-400">
-            <div className="flex-1 flex items-center justify-between">
-              <div>
-                <p>
-                  Showing <span className="font-bold text-slate-700">{((currentPage - 1) * itemsPerPage) + 1}</span> to{' '}
-                  <span className="font-bold text-slate-700">
-                    {Math.min(currentPage * itemsPerPage, filteredLogs.length)}
-                  </span>{' '}
-                  of <span className="font-bold text-slate-700">{filteredLogs.length}</span> results
-                </p>
-              </div>
-              <div>
-                <nav className="inline-flex rounded-xl shadow-xs gap-1" aria-label="Pagination">
-                  <button
-                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                    disabled={currentPage === 1}
-                    className="px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg text-slate-700 text-xs font-bold transition cursor-pointer disabled:opacity-50"
-                  >
-                    Previous
-                  </button>
-                  <button
-                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                    disabled={currentPage === totalPages}
-                    className="px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg text-slate-700 text-xs font-bold transition cursor-pointer disabled:opacity-50"
-                  >
-                    Next
-                  </button>
-                </nav>
-              </div>
-            </div>
-          </div>
+          <Pagination
+            page={currentPage}
+            pages={totalPages}
+            total={filteredLogs.length}
+            limit={pageSize}
+            onPageChange={setCurrentPage}
+            onLimitChange={(size) => {
+              setPageSize(size);
+              setCurrentPage(1);
+            }}
+            itemName="results"
+          />
         )}
       </div>
     </div>
