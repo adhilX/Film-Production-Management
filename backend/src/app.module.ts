@@ -5,6 +5,7 @@ import { UsersModule } from './users/users.module';
 import { ProductionsModule } from './productions/productions.module';
 import { LocationsModule } from './locations/locations.module';
 import { FundsModule } from './funds/funds.module';
+import { CostumesModule } from './costumes/costumes.module';
 import { AuditLogsModule } from './audit-logs/audit-logs.module';
 import { JwtModule } from './common/jwt/jwt.module';
 
@@ -26,6 +27,7 @@ import { AppService } from './app.service';
     ProductionsModule,
     LocationsModule,
     FundsModule,
+    CostumesModule,
     AuditLogsModule,
   ],
   controllers: [AppController],

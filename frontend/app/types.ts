@@ -114,3 +114,39 @@ export interface AuditLog {
   newState?: string;
   timestamp: string;
 }
+
+export interface Costume {
+  _id: string;
+  productionId: string;
+  name: string;
+  category: string;
+  description?: string;
+  size?: string;
+  imageUrl?: string;
+  quantity: number;
+  availableQuantity: number;
+  condition: 'New' | 'Good' | 'Fair' | 'Damaged';
+  status: 'Available' | 'Assigned' | 'Damaged' | 'Lost';
+  createdBy: string | User;
+  updatedBy?: string | User;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface CostumeAssignment {
+  _id: string;
+  productionId: string;
+  costumeId: Costume;
+  characterId?: Character | null;
+  assignedTo?: User | null;
+  assignedBy: User;
+  assignedAt: string;
+  returnedAt?: string;
+  quantity: number;
+  status: 'Assigned' | 'Returned';
+  conditionAtAssignment: string;
+  conditionAtReturn?: string;
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
