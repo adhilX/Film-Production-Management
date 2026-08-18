@@ -125,7 +125,7 @@ export default function OverviewModule() {
           <form onSubmit={handleCreateProduction} className="flex gap-3 items-center w-full sm:w-auto">
             <input 
               type="text" 
-              placeholder="New Production Title"
+              placeholder="New Project Title"
               value={newProdTitle}
               onChange={(e) => setNewProdTitle(e.target.value)}
               required
@@ -135,7 +135,7 @@ export default function OverviewModule() {
               type="submit"
               className="py-1.5 px-4 bg-indigo-650 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition cursor-pointer shadow-xs whitespace-nowrap"
             >
-              <Plus size={14} /> Create Production
+              <Plus size={14} /> Create Project
             </button>
           </form>
         </div>
@@ -144,9 +144,9 @@ export default function OverviewModule() {
       {selectedProduction ? (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           
-          {/* Production Stats Card */}
+          {/* Project Stats Card */}
           <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-xs space-y-4">
-            <h3 className="text-xs font-bold text-slate-450 uppercase tracking-wider">Production Metadata</h3>
+            <h3 className="text-xs font-bold text-slate-450 uppercase tracking-wider">Project Metadata</h3>
             <div className="space-y-4 text-xs">
               <div>
                 <span className="text-slate-400 block font-semibold uppercase tracking-wider text-[10px]">Title</span>
@@ -209,7 +209,7 @@ export default function OverviewModule() {
                 </select>
                 <input 
                   type="text" 
-                  placeholder="Role in Production"
+                  placeholder="Role in Project"
                   value={assignRole}
                   onChange={(e) => setAssignRole(e.target.value)}
                   required
@@ -294,7 +294,7 @@ export default function OverviewModule() {
       ) : (
         <div className="bg-white border border-slate-200/80 rounded-2xl p-16 text-center text-slate-450 space-y-4 max-w-2xl mx-auto shadow-xs">
           <Film size={44} className="mx-auto text-indigo-500/40" />
-          <p className="text-sm font-bold text-slate-800">You are not assigned to any active film productions yet.</p>
+          <p className="text-sm font-bold text-slate-800">You are not assigned to any active film projects yet.</p>
           <p className="text-xs text-slate-450 leading-relaxed">Ask your system administrator or project manager to assign you to a project.</p>
         </div>
       )}

@@ -71,6 +71,7 @@ export interface FundRequest {
   amount: number;
   justification: string;
   status: 'Pending' | 'Approved' | 'Rejected';
+  rejectionReason?: string;
   createdAt?: string;
   updatedAt?: string;
 }

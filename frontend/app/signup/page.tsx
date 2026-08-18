@@ -33,7 +33,7 @@ export default function SignupPage() {
     { title: 'Role Based Access', description: 'Secure dashboards for every team member.', icon: Users },
     { title: 'Secure & Reliable', description: 'Enterprise grade security and data protection.', icon: Shield },
     { title: 'Built for Film Industry', description: 'Designed specifically for modern production houses.', icon: Clapperboard },
-    { title: 'Smart & Organized', description: 'Track, manage and grow your productions.', icon: BarChart3 }
+    { title: 'Smart & Organized', description: 'Track, manage and grow your projects.', icon: BarChart3 }
   ];
 
   const [formData, setFormData] = useState({
@@ -131,7 +131,7 @@ export default function SignupPage() {
             {/* Form Heading */}
             <div className="text-center space-y-1.5">
               <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">Create Your Account</h2>
-              <p className="text-slate-500 text-sm">Join Tendagon and manage your productions with ease.</p>
+              <p className="text-slate-500 text-sm">Join Tendagon and manage your projects with ease.</p>
             </div>
 
             {/* Error & Success Alerts */}

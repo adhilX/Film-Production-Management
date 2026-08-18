@@ -62,16 +62,16 @@ export const FundRequestList: React.FC<FundRequestListProps> = ({ funds, loading
   return (
     <div className="space-y-4">
       {/* Search and Filter */}
-      <div className="flex flex-col sm:flex-row gap-4 mb-4">
+      <div className="flex flex-col sm:flex-row gap-3 mb-2">
         <input
           type="text"
           placeholder="Search by justification..."
-          className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+          className="flex-1 bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-900"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
         <select
-          className="px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+          className="bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-705 cursor-pointer"
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
         >
@@ -83,68 +83,71 @@ export const FundRequestList: React.FC<FundRequestListProps> = ({ funds, loading
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+      <div className="overflow-x-auto border border-slate-200/80 rounded-2xl bg-white shadow-xs">
+        <table className="min-w-full divide-y divide-slate-100 text-xs text-left">
+          <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] tracking-wider border-b border-slate-200/80">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Requested By</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Justification</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+              <th className="py-3 px-4 font-bold">Date</th>
+              <th className="py-3 px-4 font-bold">Requested By</th>
+              <th className="py-3 px-4 font-bold">Amount</th>
+              <th className="py-3 px-4 font-bold">Justification</th>
+              <th className="py-3 px-4 font-bold">Status</th>
+              <th className="py-3 px-4 font-bold">Actions</th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="divide-y divide-slate-100 bg-white">
             {loading ? (
               [...Array(3)].map((_, i) => (
                 <tr key={i} className="animate-pulse">
-                  <td className="px-6 py-4"><div className="h-4 bg-gray-200 rounded w-24"></div></td>
-                  <td className="px-6 py-4"><div className="h-4 bg-gray-200 rounded w-32"></div></td>
-                  <td className="px-6 py-4"><div className="h-4 bg-gray-200 rounded w-20"></div></td>
-                  <td className="px-6 py-4"><div className="h-4 bg-gray-200 rounded w-48"></div></td>
-                  <td className="px-6 py-4"><div className="h-4 bg-gray-200 rounded w-20"></div></td>
-                  <td className="px-6 py-4"><div className="h-4 bg-gray-200 rounded w-24"></div></td>
+                  <td className="py-4 px-4"><div className="h-3.5 bg-slate-100 rounded w-20"></div></td>
+                  <td className="py-4 px-4"><div className="h-3.5 bg-slate-100 rounded w-28"></div></td>
+                  <td className="py-4 px-4"><div className="h-3.5 bg-slate-100 rounded w-16"></div></td>
+                  <td className="py-4 px-4"><div className="h-3.5 bg-slate-100 rounded w-44"></div></td>
+                  <td className="py-4 px-4"><div className="h-3.5 bg-slate-100 rounded w-16"></div></td>
+                  <td className="py-4 px-4"><div className="h-3.5 bg-slate-100 rounded w-20"></div></td>
                 </tr>
               ))
             ) : filteredFunds.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
+                <td colSpan={6} className="py-8 px-4 text-center text-slate-400 font-medium">
                   No fund requests found matching your criteria.
                 </td>
               </tr>
             ) : (
               filteredFunds.map((fund) => (
-                <tr key={fund._id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                <tr key={fund._id} className="hover:bg-slate-50/40 transition">
+                  <td className="py-3.5 px-4 text-slate-600 font-medium whitespace-nowrap">
                     {new Date(fund.createdAt || '').toLocaleDateString()}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="py-3.5 px-4 text-slate-800 font-semibold whitespace-nowrap">
                     {(fund.requestedBy as any)?.name || 'Unknown User'}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
+                  <td className="py-3.5 px-4 text-slate-900 font-bold whitespace-nowrap">
                     ${fund.amount?.toLocaleString()}
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate" title={fund.justification}>
-                    {fund.justification}
+                  <td className="py-3.5 px-4 text-slate-600 max-w-xs truncate" title={fund.justification}>
+                    <span className="text-slate-800 font-medium block">{fund.justification}</span>
+                    {fund.status === 'Rejected' && fund.rejectionReason && (
+                      <span className="text-[10px] text-rose-600 block mt-0.5">Rejected: {fund.rejectionReason}</span>
+                    )}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                      fund.status === 'Approved' ? 'bg-green-100 text-green-800' :
-                      fund.status === 'Rejected' ? 'bg-red-100 text-red-800' :
-                      'bg-yellow-100 text-yellow-800'
+                  <td className="py-3.5 px-4 whitespace-nowrap">
+                    <span className={`px-2 py-0.5 border rounded-lg text-[9px] font-extrabold uppercase tracking-wider ${
+                      fund.status === 'Approved' ? 'bg-emerald-50 border-emerald-100 text-emerald-700' :
+                      fund.status === 'Rejected' ? 'bg-rose-50 border-rose-100 text-rose-700' :
+                      'bg-amber-50 border-amber-100 text-amber-700'
                     }`}>
                       {fund.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  <td className="py-3.5 px-4 whitespace-nowrap text-xs font-bold">
                     {fund.status === 'Pending' && (
-                      <div className="flex space-x-2">
+                      <div className="flex gap-2">
                         <PermissionGuard permission="funds.approve">
                           <button
                             disabled={processingId === fund._id}
                             onClick={() => handleApprove(fund._id)}
-                            className="text-indigo-600 hover:text-indigo-900 disabled:opacity-50"
+                            className="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 rounded-lg text-[10px] font-bold transition cursor-pointer disabled:opacity-50"
                           >
                             Approve
                           </button>
@@ -153,7 +156,7 @@ export const FundRequestList: React.FC<FundRequestListProps> = ({ funds, loading
                           <button
                             disabled={processingId === fund._id}
                             onClick={() => handleReject(fund._id)}
-                            className="text-red-600 hover:text-red-900 disabled:opacity-50"
+                            className="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 rounded-lg text-[10px] font-bold transition cursor-pointer disabled:opacity-50"
                           >
                             Reject
                           </button>

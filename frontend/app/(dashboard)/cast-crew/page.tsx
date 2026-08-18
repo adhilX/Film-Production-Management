@@ -32,27 +32,21 @@ export default function FundsPage() {
 
   if (!selectedProduction) {
     return (
-      <div className="p-6 flex justify-center text-gray-500">
-        Please select a production to view funds.
+      <div className="max-w-[1400px] mx-auto px-6 md:px-8 lg:px-10 py-16 text-center text-slate-450">
+        Please select a project to view funds.
       </div>
     );
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex flex-col gap-4 justify-between items-start">
-        <h1 className="text-2xl font-bold">Fund Management</h1>
+    <div className="max-w-[1400px] mx-auto px-6 md:px-8 lg:px-10 py-8 space-y-6 animate-in fade-in duration-300">
+      {/* Only visible to those who can request funds */}
+      <PermissionGuard permission="funds.request">
+        <CreateFundForm onSuccess={fetchFunds} />
+      </PermissionGuard>
 
-        {/* Only visible to those who can request funds */}
-        <div className="w-full">
-          <PermissionGuard permission="funds.request">
-            <CreateFundForm onSuccess={fetchFunds} />
-          </PermissionGuard>
-        </div>
-      </div>
-
-      <section className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-lg font-semibold mb-4">Request History</h2>
+      <section className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-xs space-y-4">
+        <h3 className="text-xs font-bold text-slate-455 uppercase tracking-wider border-b border-slate-100 pb-3">Request History</h3>
         <FundRequestList funds={funds} loading={loading} onRefresh={fetchFunds} />
       </section>
     </div>

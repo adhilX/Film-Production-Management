@@ -43,42 +43,37 @@ export default function CastCrewModule() {
   if (!selectedProduction || !user) return null;
 
   return (
-    <div className="space-y-6 animate-fadeIn">
-      <div>
-        <h2 className="text-2xl font-bold text-slate-100">Cast Roles & Assignments</h2>
-        <p className="text-xs text-slate-400 mt-1">Review your assigned characters and production tasks.</p>
-      </div>
-
+    <div className="max-w-[1400px] mx-auto px-6 md:px-8 lg:px-10 py-8 space-y-6 animate-in fade-in duration-300">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         
         {/* My character roles */}
-        <div className="bg-slate-900/40 border border-slate-800 rounded-xl p-5 space-y-4">
-          <h3 className="text-sm font-semibold text-purple-400 uppercase tracking-wider flex items-center gap-1.5">
-            <Info size={16} /> My Characters
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-xs space-y-4">
+          <h3 className="text-xs font-bold text-slate-450 uppercase tracking-wider border-b border-slate-100 pb-3 flex items-center gap-2">
+            <Info size={14} className="text-indigo-650" /> My Characters
           </h3>
 
           {castCrewList.filter(cc => cc.userId?._id === user.id && cc.characterId).length > 0 ? (
             <div className="space-y-4">
               {castCrewList.filter(cc => cc.userId?._id === user.id && cc.characterId).map((cc) => (
-                <div key={cc._id} className="bg-slate-950/40 border border-slate-850 p-4 rounded-xl space-y-2">
-                  <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold block">Character Name</span>
-                  <h4 className="font-bold text-base text-purple-300">{cc.characterId?.name}</h4>
-                  <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold block pt-2">Description</span>
-                  <p className="text-xs text-slate-355 leading-relaxed">{cc.characterId?.description || 'No script details provided.'}</p>
+                <div key={cc._id} className="bg-slate-50/50 border border-slate-150 p-4 rounded-xl space-y-2">
+                  <span className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold block">Character Name</span>
+                  <h4 className="font-bold text-base text-indigo-650">{cc.characterId?.name}</h4>
+                  <span className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold block pt-2">Description</span>
+                  <p className="text-xs text-slate-600 leading-relaxed">{cc.characterId?.description || 'No script details provided.'}</p>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="text-xs text-slate-500 text-center py-10 bg-slate-950/20 border border-slate-850 rounded-xl">
+            <div className="text-xs text-slate-400 text-center py-10 bg-slate-50 border border-slate-150 rounded-xl font-medium">
               You have not been mapped to any script characters yet. Ask the casting manager.
             </div>
           )}
         </div>
 
         {/* Schedule listing */}
-        <div className="bg-slate-900/40 border border-slate-800 rounded-xl p-5 space-y-4">
-          <h3 className="text-sm font-semibold text-purple-400 uppercase tracking-wider flex items-center gap-1.5">
-            <Calendar size={16} /> Shoot Schedule Overview
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-xs space-y-4">
+          <h3 className="text-xs font-bold text-slate-450 uppercase tracking-wider border-b border-slate-100 pb-3 flex items-center gap-2">
+            <Calendar size={14} className="text-indigo-650" /> Shoot Schedule Overview
           </h3>
 
           {locations.filter(l => l.status === 'Booked').length > 0 ? (
@@ -87,18 +82,18 @@ export default function CastCrewModule() {
                 const start = new Date(loc.startDate).toLocaleDateString();
                 const end = new Date(loc.endDate).toLocaleDateString();
                 return (
-                  <div key={loc._id} className="p-3 bg-slate-950/40 border border-slate-850 rounded-lg flex justify-between items-center text-xs">
+                  <div key={loc._id} className="p-4 bg-slate-50/50 border border-slate-150 rounded-xl flex justify-between items-center text-xs">
                     <div>
-                      <span className="font-semibold text-slate-200 block">{loc.name}</span>
-                      <span className="text-[10px] text-slate-500 block">{loc.address}</span>
+                      <span className="font-bold text-slate-800 block">{loc.name}</span>
+                      <span className="text-[10px] text-slate-450 block mt-0.5">{loc.address}</span>
                     </div>
-                    <span className="text-purple-400 font-semibold">{start} — {end}</span>
+                    <span className="text-indigo-650 font-bold bg-indigo-50 border border-indigo-100 px-2 py-1 rounded-lg">{start} — {end}</span>
                   </div>
                 );
               })}
             </div>
           ) : (
-            <div className="text-xs text-slate-500 text-center py-10 bg-slate-950/20 border border-slate-850 rounded-xl">
+            <div className="text-xs text-slate-400 text-center py-10 bg-slate-50 border border-slate-150 rounded-xl font-medium">
               No booked shoot schedules on locations.
             </div>
           )}

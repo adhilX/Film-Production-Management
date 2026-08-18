@@ -5,7 +5,6 @@ import { AlertTriangle, Check, Calendar } from 'lucide-react';
 import { useAuth } from '@/app/components/auth-context';
 import { useProductionStore } from '@/store/useProductionStore';
 import { PermissionGuard } from '@/app/components/permission-guard';
-import type { LocationBooking } from '@/app/types'; // Need to make sure this type is exported
 import productionsService from '@/services/productionsService';
 
 export default function LocationsModule() {
@@ -58,7 +57,7 @@ export default function LocationsModule() {
       setNewLocEnd('');
       fetchLocations();
     } catch (err: any) {
-      setNewLocError(err.message);
+      setNewLocError(err.message || 'Failed to request location booking.');
     }
   };
 
@@ -71,29 +70,24 @@ export default function LocationsModule() {
       setNewLocSuccess(`Location booking status successfully set to "${status}".`);
       fetchLocations();
     } catch (err: any) {
-      setNewLocError(err.message);
+      setNewLocError(err.message || 'Failed to update location status.');
     }
   };
 
   if (!selectedProduction) return null;
 
   return (
-    <div className="space-y-6 animate-fadeIn">
-      <div>
-        <h2 className="text-2xl font-bold text-slate-100">Location Booking Calendar</h2>
-        <p className="text-xs text-slate-400 mt-1">Schedule conflicts are dynamically checked on booking state transitions.</p>
-      </div>
-
+    <div className="max-w-[1400px] mx-auto px-6 md:px-8 lg:px-10 py-8 space-y-6 animate-in fade-in duration-300">
       {newLocError && (
-        <div className="p-3.5 bg-red-950/40 border border-red-800 text-red-300 rounded-lg text-xs font-semibold leading-relaxed">
-          <AlertTriangle size={14} className="inline mr-2 text-red-500" />
+        <div className="p-3.5 bg-red-50 border border-red-200 text-red-800 rounded-xl text-xs font-semibold leading-relaxed">
+          <AlertTriangle size={14} className="inline mr-2 text-red-650" />
           {newLocError}
         </div>
       )}
 
       {newLocSuccess && (
-        <div className="p-3.5 bg-emerald-950/40 border border-emerald-800 text-emerald-300 rounded-lg text-xs font-semibold">
-          <Check size={14} className="inline mr-2 text-emerald-500" />
+        <div className="p-3.5 bg-emerald-50 border border-emerald-200 text-emerald-850 rounded-xl text-xs font-semibold">
+          <Check size={14} className="inline mr-2 text-emerald-600" />
           {newLocSuccess}
         </div>
       )}
@@ -102,7 +96,7 @@ export default function LocationsModule() {
         
         {/* Active Bookings List */}
         <div className="lg:col-span-2 space-y-4">
-          <h3 className="text-sm font-semibold text-purple-400 uppercase tracking-wider">Scheduled Locations</h3>
+          <h3 className="text-xs font-bold text-slate-450 uppercase tracking-wider">Scheduled Locations</h3>
           
           {locations.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -119,30 +113,30 @@ export default function LocationsModule() {
                 );
 
                 return (
-                  <div key={loc._id} className="bg-slate-900/40 border border-slate-800 rounded-xl p-5 space-y-3 relative">
+                  <div key={loc._id} className="bg-white border border-slate-200/80 rounded-2xl p-5 space-y-3 relative shadow-xs">
                     {hasVisualOverlap && loc.status !== 'Booked' && (
-                      <div className="absolute top-2 right-2 flex items-center gap-1 py-0.5 px-2 bg-amber-950/40 border border-amber-900 text-amber-400 rounded text-[9px] font-semibold">
-                        <AlertTriangle size={10} /> Schedule Collision Warning
+                      <div className="absolute top-3 right-3 flex items-center gap-1 py-0.5 px-2 bg-amber-50 border border-amber-100 text-amber-705 rounded-lg text-[9px] font-extrabold uppercase tracking-wider">
+                        <AlertTriangle size={10} /> Collision Warning
                       </div>
                     )}
 
                     <div>
-                      <span className="font-semibold text-slate-200 block text-sm">{loc.name}</span>
-                      <span className="text-[10px] text-slate-500 block">{loc.address}</span>
+                      <span className="font-bold text-slate-800 block text-sm">{loc.name}</span>
+                      <span className="text-[10px] text-slate-450 block mt-0.5">{loc.address}</span>
                     </div>
 
-                    <div className="flex items-center gap-2 text-xs text-slate-400 bg-slate-950/40 py-1.5 px-3 rounded-lg border border-slate-850">
-                      <Calendar size={12} className="text-purple-400" />
-                      <span>{startStr} — {endStr}</span>
+                    <div className="flex items-center gap-2 text-xs text-slate-600 bg-slate-50 py-1.5 px-3 rounded-xl border border-slate-150">
+                      <Calendar size={12} className="text-indigo-650" />
+                      <span className="font-medium">{startStr} — {endStr}</span>
                     </div>
 
-                    <div className="flex justify-between items-center border-t border-slate-850 pt-3">
-                      <span className={`py-0.5 px-2 rounded text-[10px] font-semibold ${
+                    <div className="flex justify-between items-center border-t border-slate-100 pt-3">
+                      <span className={`py-0.5 px-2 border rounded-lg text-[9px] font-extrabold uppercase tracking-wider ${
                         loc.status === 'Booked' 
-                          ? 'bg-emerald-950 border border-emerald-800 text-emerald-400' 
+                          ? 'bg-emerald-50 border-emerald-100 text-emerald-700' 
                           : loc.status === 'Completed' 
-                          ? 'bg-indigo-950 border border-indigo-800 text-indigo-400' 
-                          : 'bg-slate-950 border border-slate-800 text-slate-400'
+                          ? 'bg-blue-50 border-blue-100 text-blue-700' 
+                          : 'bg-slate-50 border-slate-150 text-slate-500'
                       }`}>
                         {loc.status}
                       </span>
@@ -152,7 +146,7 @@ export default function LocationsModule() {
                           {loc.status !== 'Booked' && loc.status !== 'Completed' && (
                             <button
                               onClick={() => handleUpdateLocationStatus(loc._id, 'Booked')}
-                              className="py-1 px-2.5 bg-emerald-700/20 hover:bg-emerald-700/30 border border-emerald-700/40 rounded text-[10px] font-semibold text-emerald-400 cursor-pointer"
+                              className="py-1 px-3 bg-emerald-50 hover:bg-emerald-100 border border-emerald-250 rounded-lg text-[10px] font-bold text-emerald-700 cursor-pointer transition"
                             >
                               Book
                             </button>
@@ -160,7 +154,7 @@ export default function LocationsModule() {
                           {loc.status !== 'Completed' && (
                             <button
                               onClick={() => handleUpdateLocationStatus(loc._id, 'Completed')}
-                              className="py-1 px-2.5 bg-indigo-700/20 hover:bg-indigo-700/30 border border-indigo-700/40 rounded text-[10px] font-semibold text-indigo-400 cursor-pointer"
+                              className="py-1 px-3 bg-indigo-50 hover:bg-indigo-100 border border-indigo-250 rounded-lg text-[10px] font-bold text-indigo-700 cursor-pointer transition"
                             >
                               Complete
                             </button>
@@ -173,7 +167,7 @@ export default function LocationsModule() {
               })}
             </div>
           ) : (
-            <div className="text-xs text-slate-500 text-center py-12 bg-slate-900/20 border border-slate-800 rounded-xl">
+            <div className="text-xs text-slate-400 text-center py-12 bg-white border border-slate-200/80 rounded-2xl shadow-xs font-medium">
               No locations scheduled.
             </div>
           )}
@@ -181,55 +175,55 @@ export default function LocationsModule() {
 
         {/* Book location form */}
         <div className="space-y-4">
-          <h3 className="text-sm font-semibold text-purple-400 uppercase tracking-wider">Request Booking</h3>
+          <h3 className="text-xs font-bold text-slate-450 uppercase tracking-wider">Request Booking</h3>
           
-          <form onSubmit={handleBookLocation} className="bg-slate-900/40 border border-slate-800 rounded-xl p-5 space-y-4">
+          <form onSubmit={handleBookLocation} className="bg-white border border-slate-200/80 rounded-2xl p-6 space-y-4 shadow-xs">
             <div>
-              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Location Name</label>
+              <label className="block text-[10px] font-bold text-slate-450 uppercase tracking-wider mb-2">Location Name</label>
               <input 
                 type="text" 
                 placeholder="e.g. Stage B"
                 value={newLocName}
                 onChange={(e) => setNewLocName(e.target.value)}
                 required
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-xs focus:outline-none focus:border-purple-500 text-slate-200"
+                className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-900"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Address / Set Description</label>
+              <label className="block text-[10px] font-bold text-slate-450 uppercase tracking-wider mb-2">Address / Set Description</label>
               <input 
                 type="text" 
                 placeholder="e.g. Studio Lot 4, Burbank"
                 value={newLocAddress}
                 onChange={(e) => setNewLocAddress(e.target.value)}
                 required
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-xs focus:outline-none focus:border-purple-500 text-slate-200"
+                className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-900"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Filming Start Date</label>
+              <label className="block text-[10px] font-bold text-slate-450 uppercase tracking-wider mb-2">Filming Start Date</label>
               <input 
                 type="date" 
                 value={newLocStart}
                 onChange={(e) => setNewLocStart(e.target.value)}
                 required
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-xs focus:outline-none focus:border-purple-500 text-slate-200"
+                className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-700 cursor-pointer"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Filming End Date</label>
+              <label className="block text-[10px] font-bold text-slate-450 uppercase tracking-wider mb-2">Filming End Date</label>
               <input 
                 type="date" 
                 value={newLocEnd}
                 onChange={(e) => setNewLocEnd(e.target.value)}
                 required
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-xs focus:outline-none focus:border-purple-500 text-slate-200"
+                className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-700 cursor-pointer"
               />
             </div>
             
             <button 
               type="submit"
-              className="w-full py-2 bg-purple-600 hover:bg-purple-500 rounded-lg text-white text-xs font-semibold transition-all cursor-pointer shadow-[0_0_10px_rgba(147,51,234,0.2)]"
+              className="w-full py-2 bg-indigo-650 hover:bg-indigo-700 rounded-xl text-white text-xs font-bold transition cursor-pointer shadow-xs"
             >
               Submit Booking Request
             </button>

@@ -1,65 +1,74 @@
-import { ClipboardList, Film, Users, MapPin, DollarSign, Shirt, FileLock2, UserCheck, Activity } from 'lucide-react';
+import { Film, Users, MapPin, DollarSign, Shirt, FileLock2, UserCheck, Activity, LayoutDashboard } from 'lucide-react';
 
 export const USER_MENU_ITEMS = [
-  { 
-    label: 'Project Overview', 
-    href: '/', 
-    permission: 'productions.view', 
-    icon: ClipboardList 
+  {
+    label: 'Dashboard',
+    href: '/',
+    permission: 'productions.view',
+    icon: LayoutDashboard,
+    group: 'project'
   },
-  { 
-    label: 'Productions', 
-    href: '/productions', 
-    permission: 'productions.view', 
-    icon: Film 
+  {
+    label: 'Projects',
+    href: '/projects',
+    permission: 'productions.view',
+    icon: Film,
+    group: 'project'
   },
-
-  { 
-    label: 'Costumes & Assets', 
-    href: '/costumes', 
-    permission: 'costumes.view', 
-    icon: Shirt 
+  {
+    label: 'Cast & Crew',
+    href: '/cast-crew',
+    permission: 'productions.view',
+    icon: Users,
+    group: 'project'
   },
-  { 
-    label: 'Cast Assignments', 
-    href: '/crew', 
-    permission: 'productions.view', 
-    icon: Users 
+  {
+    label: 'Costumes & Assets',
+    href: '/costumes',
+    permission: 'costumes.view',
+    icon: Shirt,
+    group: 'project'
   },
-  { 
-    label: 'Location Bookings', 
-    href: '/locations', 
-    permission: 'locations.view', 
-    icon: MapPin 
+  {
+    label: 'Location Bookings',
+    href: '/locations',
+    permission: 'locations.view',
+    icon: MapPin,
+    group: 'project'
   },
-  { 
-    label: 'Budget & Funds', 
-    href: '/funds', 
-    permission: 'funds.view', 
-    icon: DollarSign 
+  {
+    label: 'Budget & Funds',
+    href: '/funds',
+    permission: 'funds.view',
+    icon: DollarSign,
+    group: 'project'
   },
-  { 
-    label: 'Onboarding Approvals', 
-    href: '/approvals', 
-    permission: 'users.approve', 
-    icon: UserCheck 
+  {
+    label: 'Onboarding Approvals',
+    href: '/approvals',
+    permission: 'users.approve',
+    icon: UserCheck,
+    group: 'admin'
   },
-  { 
-    label: 'User Management', 
-    href: '/users', 
-    permission: 'users.view', 
-    icon: Users 
+  {
+    label: 'User Management',
+    href: '/users',
+    permission: 'users.view',
+    icon: Users,
+    group: 'admin'
   },
-  { 
-    label: 'Roles & Permissions', 
-    href: '/roles', 
-    permission: 'roles.manage', 
-    icon: FileLock2 
+  {
+    label: 'Roles & Permissions',
+    href: '/roles',
+    permission: 'roles.manage',
+    icon: FileLock2,
+    group: 'admin'
   },
-  { 
-    label: 'System Logs', 
-    href: '/logs', 
-    permission: 'audit_logs.view', 
-    icon: Activity 
+  {
+    label: 'System Logs',
+    href: '/logs',
+    permission: 'audit_logs.view',
+    icon: Activity,
+    group: 'admin'
   }
 ];

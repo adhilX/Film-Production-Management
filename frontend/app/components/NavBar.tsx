@@ -29,12 +29,45 @@ export default function NavBar({ title: propTitle, subtitle: propSubtitle }: Nav
     }
 
     // 3. Fallback based on route pathnames
+    if (pathname === '/') {
+      return { title: 'Admin Dashboard', subtitle: 'System overview and high-level metrics.' };
+    }
+    if (pathname.startsWith('/approvals')) {
+      if (pathname.includes('/[id]') || pathname !== '/approvals') {
+        return { title: 'Approval Review', subtitle: 'Evaluating onboarding submission' };
+      }
+      return { title: 'Onboarding Approvals', subtitle: 'Review and verify contractor applications.' };
+    }
+    if (pathname.startsWith('/users')) {
+      return { title: 'User Directory', subtitle: 'Manage system access, roles, and profiles for all personnel.' };
+    }
+    if (pathname.startsWith('/roles')) {
+      return { title: 'Roles & Permissions', subtitle: 'Configure system access levels and granular permission policies.' };
+    }
+    if (pathname.startsWith('/audit-logs') || pathname.startsWith('/logs')) {
+      return { title: 'System Logs', subtitle: 'Track admin actions, modifications, and system events.' };
+    }
+    if (pathname.startsWith('/costumes')) {
+      return { title: 'Costumes & Wardrobe', subtitle: 'Manage costume inventories and wardrobe assignments.' };
+    }
+    if (pathname.startsWith('/crew')) {
+      return { title: 'Cast & Crew Assignments', subtitle: 'Manage personnel schedules and assignments.' };
+    }
+    if (pathname.startsWith('/locations')) {
+      return { title: 'Location Bookings', subtitle: 'Track set locations, permits, and shoots.' };
+    }
+    if (pathname.startsWith('/funds')) {
+      return { title: 'Budget & Funds', subtitle: 'Monitor transaction histories and fund requests.' };
+    }
+    if (pathname.startsWith('/productions')) {
+      return { title: 'Project Overview', subtitle: 'Manage and overview film projects.' };
+    }
     if (pathname.startsWith('/onboarding')) {
       return { title: 'Onboarding Process', subtitle: 'Complete all steps to join Tendagon' };
     }
     
-      return { title: '', subtitle: '' };
-    };
+    return { title: 'Tendagon', subtitle: 'Film Project Management' };
+  };
 
   const { title, subtitle } = getHeaderDetails();
 

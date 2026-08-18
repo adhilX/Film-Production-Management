@@ -78,9 +78,9 @@ export default function DynamicSidebar({ isMobile }: DynamicSidebarProps) {
           </div>
         )}
 
-        {/* Active Production Selector */}
+        {/* Active Project Selector */}
         <div className="bg-slate-50 border border-slate-200/60 p-2.5 rounded-xl mb-4">
-          <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-2 block px-1">Active Production</span>
+          <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-2 block px-1">Active Project</span>
           {productions.length > 0 ? (
             <div className="relative flex items-center">
               <span className="absolute left-2.5 text-slate-400 text-xs">🎬</span>
@@ -100,35 +100,79 @@ export default function DynamicSidebar({ isMobile }: DynamicSidebarProps) {
             </div>
           ) : (
             <div className="text-xs text-slate-400 bg-white p-2 rounded-lg border border-slate-100 text-center font-medium">
-              No active productions
+              No active projects
             </div>
           )}
         </div>
 
         {/* Navigation Links */}
-        <div>
-          <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-2 block px-2">Main Menu</span>
-          <nav className="space-y-1">
-            {visibleItems.map((item) => {
-              const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
-              const Icon = item.icon;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => isMobile && setSidebarOpen(false)}
-                  className={`w-full text-left py-2 px-3 rounded-xl text-xs font-semibold flex items-center gap-2.5 transition cursor-pointer ${
-                    isActive 
-                      ? 'bg-purple-50 border border-purple-100/50 text-purple-700 shadow-xs' 
-                      : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
-                  }`}
-                >
-                  <Icon size={14} className={isActive ? 'text-purple-600' : 'text-slate-400'} /> 
-                  {item.label}
-                </Link>
-              );
-            })}
-          </nav>
+        <div className="space-y-4">
+          {(() => {
+            const projectItems = visibleItems.filter(item => item.group === 'project');
+            const adminItems = visibleItems.filter(item => item.group === 'admin');
+            
+            return (
+              <>
+                {projectItems.length > 0 && (
+                  <div>
+                    <span className="text-[10px] uppercase font-extrabold text-slate-400 tracking-wider mb-2 block px-2">Main Menu</span>
+                    <nav className="space-y-1">
+                      {projectItems.map((item) => {
+                        const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
+                        const Icon = item.icon;
+                        return (
+                          <Link
+                            key={item.href}
+                            href={item.href}
+                            onClick={() => isMobile && setSidebarOpen(false)}
+                            className={`w-full text-left py-2 px-3 rounded-xl text-xs font-semibold flex items-center gap-2.5 transition cursor-pointer ${
+                              isActive 
+                                ? 'bg-purple-50 border border-purple-100/50 text-purple-700 shadow-xs' 
+                                : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
+                            }`}
+                          >
+                            <Icon size={14} className={isActive ? 'text-purple-600' : 'text-slate-400'} /> 
+                            {item.label}
+                          </Link>
+                        );
+                      })}
+                    </nav>
+                  </div>
+                )}
+
+                {projectItems.length > 0 && adminItems.length > 0 && (
+                  <div className="border-t border-slate-100 my-4" />
+                )}
+
+                {adminItems.length > 0 && (
+                  <div>
+                    <span className="text-[10px] uppercase font-extrabold text-slate-400 tracking-wider mb-2 block px-2">Administration</span>
+                    <nav className="space-y-1">
+                      {adminItems.map((item) => {
+                        const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
+                        const Icon = item.icon;
+                        return (
+                          <Link
+                            key={item.href}
+                            href={item.href}
+                            onClick={() => isMobile && setSidebarOpen(false)}
+                            className={`w-full text-left py-2 px-3 rounded-xl text-xs font-semibold flex items-center gap-2.5 transition cursor-pointer ${
+                              isActive 
+                                ? 'bg-purple-50 border border-purple-100/50 text-purple-700 shadow-xs' 
+                                : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
+                            }`}
+                          >
+                            <Icon size={14} className={isActive ? 'text-purple-600' : 'text-slate-400'} /> 
+                            {item.label}
+                          </Link>
+                        );
+                      })}
+                    </nav>
+                  </div>
+                )}
+              </>
+            );
+          })()}
         </div>
       </div>
 
@@ -141,7 +185,7 @@ export default function DynamicSidebar({ isMobile }: DynamicSidebarProps) {
           className="w-full py-2.5 px-3 bg-purple-50 border border-purple-100 text-purple-700 rounded-xl text-xs font-bold flex items-center justify-center gap-2 hover:bg-purple-100/60 transition cursor-pointer shadow-xs"
         >
           <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-          Create New Production
+          Create Project
         </Link>
       </div>
     </aside>
