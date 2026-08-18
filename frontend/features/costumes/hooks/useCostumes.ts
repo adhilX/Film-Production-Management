@@ -6,10 +6,13 @@ import { productionsService } from '@/services/productionsService';
 import { costumeService } from '../services/costume.service';
 import { authService } from '@/services/authService';
 import { formatError } from '@/utils/format-error';
+import { usePermissions } from '@/hooks/usePermissions';
+import { PERMISSIONS } from '@/constants/permissions';
 import type { Costume, CostumeAssignment, Character, CastCrew } from '@/app/types';
 
 export function useCostumes() {
   const { user } = useAuthStore();
+  const { hasPermission } = usePermissions();
   const selectedProduction = useProductionStore((state) => state.selectedProduction);
 
   // Lists & Data
@@ -128,9 +131,9 @@ export function useCostumes() {
   };
 
   // Permission Checks
-  const canCreate = user?.permissions?.includes('costumes.create') || false;
-  const canUpdate = user?.permissions?.includes('costumes.update') || false;
-  const canDelete = user?.permissions?.includes('costumes.delete') || false;
+  const canCreate = hasPermission(PERMISSIONS.COSTUMES_CREATE);
+  const canUpdate = hasPermission(PERMISSIONS.COSTUMES_UPDATE);
+  const canDelete = hasPermission(PERMISSIONS.COSTUMES_DELETE);
 
   // Clear state when production changes
   useEffect(() => {

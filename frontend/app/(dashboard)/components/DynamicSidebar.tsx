@@ -9,6 +9,7 @@ import { useHeaderStore } from '@/store/useHeaderStore';
 import { useProductionStore } from '@/store/useProductionStore';
 import { USER_MENU_ITEMS } from '@/config/menu-config';
 import productionsService from '@/services/productionsService';
+import { usePermissions } from '@/hooks/usePermissions';
 
 interface DynamicSidebarProps {
   isMobile?: boolean;
@@ -17,6 +18,7 @@ interface DynamicSidebarProps {
 export default function DynamicSidebar({ isMobile }: DynamicSidebarProps) {
   const pathname = usePathname();
   const user = useAuthStore(state => state.user);
+  const { hasPermission: checkPerm } = usePermissions();
   const productions = useProductionStore(state => state.productions);
   const selectedProduction = useProductionStore(state => state.selectedProduction);
   const setProductions = useProductionStore(state => state.setProductions);
@@ -71,8 +73,7 @@ export default function DynamicSidebar({ isMobile }: DynamicSidebarProps) {
 
   const hasPermission = (permission: string | null): boolean => {
     if (permission === null) return true;
-    if (!user) return false;
-    return user.permissions ? user.permissions.includes(permission) : false;
+    return checkPerm(permission);
   };
 
   // Filter based on permissions

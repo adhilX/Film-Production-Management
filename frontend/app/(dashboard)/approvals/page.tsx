@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { PermissionGuard } from '@/app/components/permission-guard';
+import { UnauthorizedFallback } from '@/components/common/UnauthorizedFallback';
 import { ShieldAlert, RefreshCw, AlertCircle } from 'lucide-react';
 
 // Central hook & subcomponents
@@ -13,17 +14,6 @@ import { ApprovalsTable } from '@/features/approvals/components/ApprovalsTable';
 // Pagination component
 import Pagination from '@/app/components/Pagination';
 
-const UnauthorizedFallback = () => (
-  <div className="max-w-md mx-auto mt-16 bg-white border border-slate-200 rounded-2xl p-8 text-center shadow-xs flex flex-col items-center justify-center space-y-4">
-    <div className="w-12 h-12 rounded-full bg-rose-50 flex items-center justify-center text-rose-600 border border-rose-100 shrink-0">
-      <ShieldAlert className="w-6 h-6" />
-    </div>
-    <h3 className="font-bold text-slate-800 text-sm">Unauthorized Access</h3>
-    <p className="text-xs text-slate-500 max-w-xs leading-relaxed">
-      You don't have permission to review onboarding applications. Please contact your system administrator.
-    </p>
-  </div>
-);
 
 function ApprovalsQueueContent() {
   const {

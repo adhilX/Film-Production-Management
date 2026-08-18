@@ -7,6 +7,8 @@ import {
 } from 'lucide-react';
 import { adminService } from '@/services/adminService';
 import { useAuthStore } from '@/store/useAuthStore';
+import { usePermissions } from '@/hooks/usePermissions';
+import { PERMISSIONS } from '@/constants/permissions';
 
 interface PermissionsTabProps {
   permissions: any[];
@@ -33,7 +35,8 @@ export default function PermissionsTab({
   const [isSubmittingPerm, setIsSubmittingPerm] = useState(false);
 
   const user = useAuthStore((state) => state.user);
-  const canManage = user?.permissions?.includes('roles.manage');
+  const { hasPermission } = usePermissions();
+  const canManage = hasPermission(PERMISSIONS.ROLES_MANAGE);
 
   const handleAddPermission = async (e: React.FormEvent) => {
     e.preventDefault();

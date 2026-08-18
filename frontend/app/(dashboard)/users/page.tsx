@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { PermissionGuard } from '@/app/components/permission-guard';
+import { UnauthorizedFallback } from '@/components/common/UnauthorizedFallback';
 import { ChevronUp, ChevronDown, Filter, UserPlus } from 'lucide-react';
 
 // Central hook & subcomponents
@@ -77,15 +78,7 @@ export default function AdminUsersPage() {
   return (
     <PermissionGuard
       permission="users.view"
-      fallback={
-        <div className="w-full px-6 md:px-8 lg:px-10 py-8 space-y-6">
-          <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center gap-3">
-            <span className="text-xs text-red-750 font-bold">
-              Access Denied: You do not have permissions to view the User Management Directory.
-            </span>
-          </div>
-        </div>
-      }
+      fallback={<UnauthorizedFallback />}
     >
       <div className="w-full px-6 md:px-8 lg:px-10 py-8 space-y-6 animate-in fade-in duration-300">
         

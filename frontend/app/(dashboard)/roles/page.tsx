@@ -2,6 +2,8 @@
 
 import React from 'react';
 import { PermissionGuard } from '@/app/components/permission-guard';
+import { UnauthorizedFallback } from '@/components/common/UnauthorizedFallback';
+import { PERMISSIONS } from '@/constants/permissions';
 import { Shield, BookOpen, Plus, Crown, Briefcase, Monitor, DollarSign, Shirt, MapPin, Users } from 'lucide-react';
 
 // Central hook & subcomponents
@@ -159,7 +161,7 @@ export default function AdminRolesPage() {
   const roleColWidth = roles.length > 0 ? `${68 / roles.length}%` : '13.6%';
 
   return (
-    <PermissionGuard permission="roles.view">
+    <PermissionGuard permission={PERMISSIONS.ROLES_VIEW} fallback={<UnauthorizedFallback />}>
       <div className="w-full px-4 md:px-5 lg:px-6 py-4 space-y-4 animate-in fade-in duration-300">
         
         {/* Error / Success Banners */}

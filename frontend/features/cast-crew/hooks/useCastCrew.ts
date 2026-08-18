@@ -3,10 +3,13 @@ import toast from 'react-hot-toast';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useProductionStore } from '@/store/useProductionStore';
 import { castCrewService } from '../services/cast-crew.service';
+import { usePermissions } from '@/hooks/usePermissions';
+import { PERMISSIONS } from '@/constants/permissions';
 import type { Character, CastCrew } from '@/app/types';
 
 export function useCastCrew() {
   const user = useAuthStore(state => state.user);
+  const { hasPermission } = usePermissions();
   const selectedProduction = useProductionStore(state => state.selectedProduction);
 
   // Lists
@@ -41,7 +44,7 @@ export function useCastCrew() {
   const [editForm, setEditForm] = useState({ roleInProduction: '', characterId: '' });
 
   // Permissions check
-  const canUpdate = user?.permissions?.includes('productions.update') || false;
+  const canUpdate = hasPermission(PERMISSIONS.PRODUCTIONS_UPDATE);
 
   useEffect(() => {
     if (selectedProduction) {

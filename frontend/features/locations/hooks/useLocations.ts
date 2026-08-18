@@ -4,10 +4,13 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { useProductionStore } from '@/store/useProductionStore';
 import { locationService } from '../services/location.service';
 import { formatError } from '@/utils/format-error';
+import { usePermissions } from '@/hooks/usePermissions';
+import { PERMISSIONS } from '@/constants/permissions';
 import type { Location, LocationBooking } from '@/app/types';
 
 export function useLocations() {
   const { user } = useAuthStore();
+  const { hasPermission } = usePermissions();
   const selectedProduction = useProductionStore((state) => state.selectedProduction);
 
   // Lists & Loading
@@ -327,8 +330,8 @@ export function useLocations() {
     const isRequester = booking.requestedBy?._id === user.id;
     const isManager = selectedProduction.productionManager === user.id || 
                       (typeof selectedProduction.productionManager === 'object' && selectedProduction.productionManager?._id === user.id);
-    const hasApprovePerm = user.permissions?.includes('locations.approve');
-    const isSuperAdmin = user.permissions?.includes('roles.manage');
+    const hasApprovePerm = hasPermission(PERMISSIONS.LOCATIONS_APPROVE);
+    const isSuperAdmin = hasPermission(PERMISSIONS.ROLES_MANAGE);
     return isRequester || isManager || hasApprovePerm || isSuperAdmin;
   };
 

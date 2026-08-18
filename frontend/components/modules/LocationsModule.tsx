@@ -15,6 +15,8 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { PermissionGuard } from '@/app/components/permission-guard';
+import { usePermissions } from '@/hooks/usePermissions';
+import { PERMISSIONS } from '@/constants/permissions';
 
 // Hook & Subcomponents
 import { useLocations } from '@/features/locations/hooks/useLocations';
@@ -95,8 +97,9 @@ export default function LocationsModule() {
   const [editingLocation, setEditingLocation] = useState<Location | null>(null);
   const [isEditLocationOpen, setIsEditLocationOpen] = useState(false);
 
+  const { hasPermission: checkPerm } = usePermissions();
   const hasPermission = (perm: string): boolean => {
-    return user?.permissions?.includes(perm) || false;
+    return checkPerm(perm);
   };
 
   const handleOpenEdit = (loc: Location) => {

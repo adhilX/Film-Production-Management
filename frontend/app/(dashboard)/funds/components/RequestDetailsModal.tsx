@@ -1,6 +1,8 @@
 import React from 'react';
 import { FundRequest } from '@/app/types';
 import { useAuthStore } from '@/store/useAuthStore';
+import { usePermissions } from '@/hooks/usePermissions';
+import { PERMISSIONS } from '@/constants/permissions';
 
 interface RequestDetailsModalProps {
   request: FundRequest;
@@ -18,6 +20,7 @@ export default function RequestDetailsModal({
   onReject,
 }: RequestDetailsModalProps) {
   const user = useAuthStore((state) => state.user);
+  const { hasPermission } = usePermissions();
   
   const isRequestOwner = (requestItem: FundRequest, currentUser: any) => {
     if (!requestItem || !currentUser) return false;
@@ -28,7 +31,7 @@ export default function RequestDetailsModal({
 
   const isOwner = isRequestOwner(request, user);
   const isPending = request.status === 'Pending';
-  const hasApprovePermission = user?.permissions?.includes('funds.approve') || false;
+  const hasApprovePermission = hasPermission(PERMISSIONS.FUNDS_APPROVE);
 
   const formatCurrency = (paise: number) => {
     return new Intl.NumberFormat(currency === 'INR' ? 'en-IN' : 'en-US', {

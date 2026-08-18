@@ -2,11 +2,14 @@ import { useState, useEffect } from 'react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { userService } from '../services/user.service';
 import { roleService } from '@/features/roles/services/role.service';
+import { usePermissions } from '@/hooks/usePermissions';
+import { PERMISSIONS } from '@/constants/permissions';
 
 export function useUsers() {
   const currentUser = useAuthStore((state) => state.user);
-  const hasUpdatePerm = !!currentUser?.permissions?.includes('users.update');
-  const hasCreatePerm = !!currentUser?.permissions?.includes('users.create');
+  const { hasPermission } = usePermissions();
+  const hasUpdatePerm = hasPermission(PERMISSIONS.USERS_UPDATE);
+  const hasCreatePerm = hasPermission(PERMISSIONS.USERS_CREATE);
 
   const [users, setUsers] = useState<any[]>([]);
   const [roles, setRoles] = useState<any[]>([]);

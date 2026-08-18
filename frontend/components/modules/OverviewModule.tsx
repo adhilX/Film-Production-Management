@@ -6,6 +6,8 @@ import { useAuth } from '@/app/components/auth-context';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useProductionStore } from '@/store/useProductionStore';
 import { PermissionGuard } from '@/app/components/permission-guard';
+import { usePermissions } from '@/hooks/usePermissions';
+import { PERMISSIONS } from '@/constants/permissions';
 import productionsService from '@/services/productionsService';
 import adminService from '@/services/adminService';
 
@@ -29,16 +31,16 @@ export default function OverviewModule() {
   const [assignRole, setAssignRole] = useState('');
   const [assignChar, setAssignChar] = useState('');
 
+  const { hasPermission: checkPerm } = usePermissions();
   const hasPermission = (permission: string): boolean => {
-    if (!user) return false;
-    return user.permissions ? user.permissions.includes(permission) : false;
+    return checkPerm(permission);
   };
 
   useEffect(() => {
     if (selectedProduction && token) {
       fetchCharacters();
       fetchCastCrew();
-      if (hasPermission('users.approve')) {
+      if (hasPermission(PERMISSIONS.USERS_APPROVE)) {
         fetchSystemUsers();
       }
     }
@@ -120,7 +122,7 @@ export default function OverviewModule() {
 
   return (
     <div className="w-full px-6 md:px-8 lg:px-10 py-8 space-y-6 animate-in fade-in duration-300">
-      <PermissionGuard permission="productions.create">
+      <PermissionGuard permission={PERMISSIONS.PRODUCTIONS_CREATE}>
         <div className="flex justify-end bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs">
           <form onSubmit={handleCreateProduction} className="flex gap-3 items-center w-full sm:w-auto">
             <input 
@@ -194,7 +196,7 @@ export default function OverviewModule() {
             )}
 
             {/* Quick Crew Mapper */}
-            <PermissionGuard permission="productions.create">
+            <PermissionGuard permission={PERMISSIONS.PRODUCTIONS_CREATE}>
               <form onSubmit={handleAssignCastCrew} className="grid grid-cols-1 sm:grid-cols-4 gap-2 pt-4 border-t border-slate-100">
                 <select
                   value={assignUser}
@@ -263,7 +265,7 @@ export default function OverviewModule() {
               )}
             </div>
 
-            <PermissionGuard permission="productions.create">
+            <PermissionGuard permission={PERMISSIONS.PRODUCTIONS_CREATE}>
               <form onSubmit={handleCreateCharacter} className="flex flex-col sm:flex-row gap-2 pt-4 border-t border-slate-100">
                 <input 
                   type="text" 

@@ -25,6 +25,8 @@ import {
 import { useAuthStore } from '@/store/useAuthStore';
 import { useProductionStore } from '@/store/useProductionStore';
 import { PermissionGuard } from '@/app/components/permission-guard';
+import { UnauthorizedFallback } from '@/components/common/UnauthorizedFallback';
+import { PERMISSIONS } from '@/constants/permissions';
 import locationsService from '@/services/locationsService';
 import { authService } from '@/services/authService';
 
@@ -284,7 +286,7 @@ export default function AddLocationPage() {
   };
 
   return (
-    <PermissionGuard permission="locations.create">
+    <PermissionGuard permission={PERMISSIONS.LOCATIONS_CREATE} fallback={<UnauthorizedFallback />}>
       <div className="p-6 max-w-7xl mx-auto space-y-6">
         
         {/* Breadcrumbs & Header Section */}

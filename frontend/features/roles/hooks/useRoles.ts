@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { roleService } from '../services/role.service';
 import { userService } from '@/features/users/services/user.service';
+import { usePermissions } from '@/hooks/usePermissions';
+import { PERMISSIONS } from '@/constants/permissions';
 
 export function useRoles() {
   const [roles, setRoles] = useState<any[]>([]);
@@ -35,8 +37,9 @@ export function useRoles() {
   const [editModalRole, setEditModalRole] = useState<any | null>(null);
 
   const user = useAuthStore((state) => state.user);
+  const { hasPermission } = usePermissions();
   const isSuperAdmin = user?.systemRoleId?.name?.toLowerCase() === 'super admin';
-  const canManage = !!user?.permissions?.includes('roles.manage');
+  const canManage = hasPermission(PERMISSIONS.ROLES_MANAGE);
 
   const CORE_ROLES = ['Super Admin', 'Production Admin', 'Production Manager', 'Cast', 'Crew'];
 

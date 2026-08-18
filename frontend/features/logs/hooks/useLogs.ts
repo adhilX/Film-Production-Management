@@ -2,11 +2,14 @@ import { useState, useEffect } from 'react';
 import { useProductionStore } from '@/store/useProductionStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { logService } from '../services/log.service';
+import { usePermissions } from '@/hooks/usePermissions';
+import { PERMISSIONS } from '@/constants/permissions';
 
 export function useLogs() {
   const selectedProduction = useProductionStore((state) => state.selectedProduction);
   const user = useAuthStore((state) => state.user);
-  const isSuperAdmin = user?.permissions?.includes('roles.manage');
+  const { hasPermission } = usePermissions();
+  const isSuperAdmin = hasPermission(PERMISSIONS.ROLES_MANAGE);
 
   // Logs state
   const [logs, setLogs] = useState<any[]>([]);

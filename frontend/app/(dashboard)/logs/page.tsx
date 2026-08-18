@@ -2,6 +2,8 @@
 
 import React from 'react';
 import { PermissionGuard } from '@/app/components/permission-guard';
+import { UnauthorizedFallback } from '@/components/common/UnauthorizedFallback';
+import { PERMISSIONS } from '@/constants/permissions';
 import {
   ChevronUp,
   ChevronDown,
@@ -149,17 +151,8 @@ export default function AuditLogsPage() {
 
   return (
     <PermissionGuard
-      permission="audit_logs.view"
-      fallback={
-        <div className="w-full px-6 md:px-8 lg:px-10 py-8 animate-none">
-          <div className="bg-rose-50 border border-rose-200 rounded-xl p-4 flex items-center gap-3">
-            <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0" />
-            <span className="text-xs text-rose-800 font-bold">
-              Access Denied: You do not have the required permissions (audit_logs.view) to view the system audit logs.
-            </span>
-          </div>
-        </div>
-      }
+      permission={PERMISSIONS.AUDIT_LOGS_VIEW}
+      fallback={<UnauthorizedFallback />}
     >
       <div className="w-full px-6 md:px-8 lg:px-10 py-6 space-y-5 animate-in fade-in duration-300">
         

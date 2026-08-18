@@ -6,10 +6,13 @@ import { projectService } from '../services/project.service';
 import { authService } from '@/services/authService';
 import { projectSchema } from '../validations/project.validation';
 import { formatError } from '@/utils/format-error';
+import { usePermissions } from '@/hooks/usePermissions';
+import { PERMISSIONS } from '@/constants/permissions';
 import type { Production } from '@/app/types';
 
 export function useProjects() {
   const user = useAuthStore((state) => state.user);
+  const { hasPermission } = usePermissions();
   const selectedProduction = useProductionStore((state) => state.selectedProduction);
   const setSelectedProduction = useProductionStore((state) => state.setSelectedProduction);
 
@@ -72,10 +75,7 @@ export function useProjects() {
     fetchStaticData();
   }, []);
 
-  const hasPermission = (perm: string): boolean => {
-    if (!user) return false;
-    return user.permissions ? user.permissions.includes(perm) : false;
-  };
+
 
   const fetchStaticData = async () => {
     try {

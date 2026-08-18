@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { Search, ShieldAlert } from 'lucide-react';
 import { adminService } from '@/services/adminService';
 import { useAuthStore } from '@/store/useAuthStore';
+import { usePermissions } from '@/hooks/usePermissions';
+import { PERMISSIONS } from '@/constants/permissions';
 
 interface PermissionMatrixProps {
   roles: any[];
@@ -26,8 +28,9 @@ export default function PermissionMatrix({
   const [optimisticRoles, setOptimisticRoles] = useState<any[]>(roles);
 
   const user = useAuthStore((state) => state.user);
+  const { hasPermission } = usePermissions();
   const isSuperAdmin = user?.systemRoleId?.name?.toLowerCase() === 'super admin';
-  const canManage = user?.permissions?.includes('roles.manage');
+  const canManage = hasPermission(PERMISSIONS.ROLES_MANAGE);
 
   const CORE_ROLES = ['Super Admin', 'Production Admin', 'Production Manager', 'Cast', 'Crew'];
 

@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { X, Save, AlertTriangle, ShieldAlert } from 'lucide-react';
 import { adminService } from '@/services/adminService';
 import { useAuthStore } from '@/store/useAuthStore';
+import { usePermissions } from '@/hooks/usePermissions';
+import { PERMISSIONS } from '@/constants/permissions';
 
 interface RoleEditModalProps {
   isOpen: boolean;
@@ -20,8 +22,9 @@ export default function RoleEditModal({ isOpen, onClose, role, onSave }: RoleEdi
   const [error, setError] = useState<string | null>(null);
 
   const user = useAuthStore((state) => state.user);
+  const { hasPermission } = usePermissions();
   const isSuperAdmin = user?.systemRoleId?.name?.toLowerCase() === 'super admin';
-  const canManage = user?.permissions?.includes('roles.manage');
+  const canManage = hasPermission(PERMISSIONS.ROLES_MANAGE);
 
   const CORE_ROLES = ['Super Admin', 'Production Admin', 'Production Manager', 'Cast', 'Crew'];
   const isCoreRole = role && CORE_ROLES.includes(role.name);

@@ -2,12 +2,15 @@ import { useState, useEffect, useCallback } from 'react';
 import { useProductionStore } from '@/store/useProductionStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { fundsService } from '../services/funds.service';
+import { usePermissions } from '@/hooks/usePermissions';
+import { PERMISSIONS } from '@/constants/permissions';
 import type { Budget, FundRequest } from '@/app/types';
 import type { UserProfile } from '@/types/auth';
 
 export function useFunds() {
   const selectedProduction = useProductionStore((state) => state.selectedProduction);
   const user = useAuthStore((state) => state.user);
+  const { hasPermission: checkPerm } = usePermissions();
 
   // States
   const [budget, setBudget] = useState<Budget | null>(null);
@@ -30,7 +33,7 @@ export function useFunds() {
 
   // Check Permissions
   const hasPermission = (permission: string) => {
-    return user?.permissions?.includes(permission) || false;
+    return checkPerm(permission);
   };
 
   const isSuperAdmin = user?.systemRoleId?.name === 'Super Admin';

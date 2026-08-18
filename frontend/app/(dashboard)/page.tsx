@@ -21,6 +21,8 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useAuthStore } from '@/store/useAuthStore';
+import { usePermissions } from '@/hooks/usePermissions';
+import { PERMISSIONS } from '@/constants/permissions';
 import { adminService } from '@/services/adminService';
 import { productionsService } from '@/services/productionsService';
 import OverviewModule from '@/components/modules/OverviewModule';
@@ -124,6 +126,7 @@ function DonutChart({ segments }: { segments: { label: string; count: number; co
 
 export default function DashboardPage() {
   const user = useAuthStore(state => state.user);
+  const { hasPermission } = usePermissions();
 
   const [metrics, setMetrics] = useState({
     totalProjects: 0,
@@ -200,7 +203,7 @@ export default function DashboardPage() {
       }
     };
 
-    const hasAdminPerm = user?.permissions?.includes('users.approve') || user?.permissions?.includes('roles.manage');
+    const hasAdminPerm = hasPermission(PERMISSIONS.USERS_APPROVE) || hasPermission(PERMISSIONS.ROLES_MANAGE);
     if (hasAdminPerm) {
       fetchData();
     } else {
@@ -210,7 +213,7 @@ export default function DashboardPage() {
 
   if (!user) return null;
 
-  const hasAdminPerm = user?.permissions?.includes('users.approve') || user?.permissions?.includes('roles.manage');
+  const hasAdminPerm = hasPermission(PERMISSIONS.USERS_APPROVE) || hasPermission(PERMISSIONS.ROLES_MANAGE);
   if (!hasAdminPerm) {
     return <OverviewModule />;
   }
