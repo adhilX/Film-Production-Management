@@ -7,7 +7,6 @@ import {
   Param,
   UseGuards,
   Req,
-  BadRequestException,
   ForbiddenException,
 } from '@nestjs/common';
 import {
@@ -16,7 +15,6 @@ import {
   ApiOperation,
   ApiResponse,
 } from '@nestjs/swagger';
-import { Types } from 'mongoose';
 import { FundsService } from './funds.service';
 import { CreateFundRequestDto } from './dto/create-fund-request.dto';
 import { UpdateFundRequestDto } from './dto/update-fund-request.dto';
@@ -27,6 +25,7 @@ import { AuthGuard } from '../auth/guards/auth.guard';
 import { PermissionsGuard } from '../auth/guards/permissions.guard';
 import { Permissions } from '../auth/decorators/permissions.decorator';
 import { CheckProduction } from '../auth/decorators/check-production.decorator';
+import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
 
 @ApiTags('Budget & Funds')
 @ApiBearerAuth('JWT-auth')
@@ -36,21 +35,14 @@ import { CheckProduction } from '../auth/decorators/check-production.decorator';
 export class FundsController {
   constructor(private readonly fundsService: FundsService) {}
 
-  private validateObjectId(id: string, name: string) {
-    if (!Types.ObjectId.isValid(id)) {
-      throw new BadRequestException(`Invalid ${name} format`);
-    }
-  }
-
   @Get('budget')
   @Permissions('funds.view')
   @ApiOperation({ summary: 'Get budget configuration for a production' })
   @ApiResponse({ status: 200, description: 'Budget document.' })
   getBudget(
-    @Param('productionId') productionId: string,
+    @Param('productionId', new ParseObjectIdPipe('Invalid productionId format')) productionId: string,
     @Req() req: any,
   ) {
-    this.validateObjectId(productionId, 'productionId');
     return this.fundsService.getOrCreateBudget(productionId, req.user._id);
   }
 
@@ -59,11 +51,10 @@ export class FundsController {
   @ApiOperation({ summary: 'Update budget configuration for a production' })
   @ApiResponse({ status: 200, description: 'Updated budget document.' })
   updateBudget(
-    @Param('productionId') productionId: string,
+    @Param('productionId', new ParseObjectIdPipe('Invalid productionId format')) productionId: string,
     @Body() updateDto: UpdateBudgetDto,
     @Req() req: any,
   ) {
-    this.validateObjectId(productionId, 'productionId');
     return this.fundsService.updateBudget(productionId, updateDto, req.user._id);
   }
 
@@ -71,8 +62,9 @@ export class FundsController {
   @Permissions('funds.view')
   @ApiOperation({ summary: 'List all fund requests for a production' })
   @ApiResponse({ status: 200, description: 'Array of fund request documents.' })
-  getFundRequests(@Param('productionId') productionId: string) {
-    this.validateObjectId(productionId, 'productionId');
+  getFundRequests(
+    @Param('productionId', new ParseObjectIdPipe('Invalid productionId format')) productionId: string,
+  ) {
     return this.fundsService.findAll(productionId);
   }
 
@@ -81,8 +73,9 @@ export class FundsController {
   @Permissions('funds.view')
   @ApiOperation({ summary: 'List all fund requests for a production (fallback)' })
   @ApiResponse({ status: 200, description: 'Array of fund request documents.' })
-  findAll(@Param('productionId') productionId: string) {
-    this.validateObjectId(productionId, 'productionId');
+  findAll(
+    @Param('productionId', new ParseObjectIdPipe('Invalid productionId format')) productionId: string,
+  ) {
     return this.fundsService.findAll(productionId);
   }
 
@@ -91,11 +84,9 @@ export class FundsController {
   @ApiOperation({ summary: 'Get a specific fund request' })
   @ApiResponse({ status: 200, description: 'Fund request document.' })
   getFundRequest(
-    @Param('productionId') productionId: string,
-    @Param('id') id: string,
+    @Param('productionId', new ParseObjectIdPipe('Invalid productionId format')) productionId: string,
+    @Param('id', new ParseObjectIdPipe('Invalid requestId format')) id: string,
   ) {
-    this.validateObjectId(productionId, 'productionId');
-    this.validateObjectId(id, 'requestId');
     return this.fundsService.findOne(productionId, id);
   }
 
@@ -104,11 +95,10 @@ export class FundsController {
   @ApiOperation({ summary: 'Submit a new fund request' })
   @ApiResponse({ status: 201, description: 'Fund request created successfully.' })
   create(
-    @Param('productionId') productionId: string,
+    @Param('productionId', new ParseObjectIdPipe('Invalid productionId format')) productionId: string,
     @Body() createDto: CreateFundRequestDto,
     @Req() req: any,
   ) {
-    this.validateObjectId(productionId, 'productionId');
     return this.fundsService.create(productionId, createDto, req.user._id);
   }
 
@@ -116,14 +106,11 @@ export class FundsController {
   @ApiOperation({ summary: 'Update a pending fund request' })
   @ApiResponse({ status: 200, description: 'Fund request updated successfully.' })
   async update(
-    @Param('productionId') productionId: string,
-    @Param('id') id: string,
+    @Param('productionId', new ParseObjectIdPipe('Invalid productionId format')) productionId: string,
+    @Param('id', new ParseObjectIdPipe('Invalid requestId format')) id: string,
     @Body() updateDto: UpdateFundRequestDto,
     @Req() req: any,
   ) {
-    this.validateObjectId(productionId, 'productionId');
-    this.validateObjectId(id, 'requestId');
-    
     // Check ownership or update permission
     const requestDoc = await this.fundsService.findOne(productionId, id);
     const hasUpdatePerm = req.user.permissions?.includes('funds.update');
@@ -142,13 +129,11 @@ export class FundsController {
   @ApiOperation({ summary: 'Approve a fund request' })
   @ApiResponse({ status: 200, description: 'Fund request approved.' })
   approve(
-    @Param('productionId') productionId: string,
-    @Param('id') id: string,
+    @Param('productionId', new ParseObjectIdPipe('Invalid productionId format')) productionId: string,
+    @Param('id', new ParseObjectIdPipe('Invalid requestId format')) id: string,
     @Body() approveDto: ApproveFundRequestDto,
     @Req() req: any,
   ) {
-    this.validateObjectId(productionId, 'productionId');
-    this.validateObjectId(id, 'requestId');
     return this.fundsService.approve(productionId, id, approveDto, req.user._id);
   }
 
@@ -157,13 +142,11 @@ export class FundsController {
   @ApiOperation({ summary: 'Reject a fund request' })
   @ApiResponse({ status: 200, description: 'Fund request rejected.' })
   reject(
-    @Param('productionId') productionId: string,
-    @Param('id') id: string,
+    @Param('productionId', new ParseObjectIdPipe('Invalid productionId format')) productionId: string,
+    @Param('id', new ParseObjectIdPipe('Invalid requestId format')) id: string,
     @Body() rejectDto: RejectFundRequestDto,
     @Req() req: any,
   ) {
-    this.validateObjectId(productionId, 'productionId');
-    this.validateObjectId(id, 'requestId');
     return this.fundsService.reject(productionId, id, rejectDto, req.user._id);
   }
 
@@ -171,12 +154,10 @@ export class FundsController {
   @ApiOperation({ summary: 'Cancel a pending fund request' })
   @ApiResponse({ status: 200, description: 'Fund request cancelled.' })
   cancel(
-    @Param('productionId') productionId: string,
-    @Param('id') id: string,
+    @Param('productionId', new ParseObjectIdPipe('Invalid productionId format')) productionId: string,
+    @Param('id', new ParseObjectIdPipe('Invalid requestId format')) id: string,
     @Req() req: any,
   ) {
-    this.validateObjectId(productionId, 'productionId');
-    this.validateObjectId(id, 'requestId');
     const isSuperAdmin = req.user.role === 'Super Admin' || req.user.systemRoleId?.name === 'Super Admin';
     return this.fundsService.cancel(
       productionId,

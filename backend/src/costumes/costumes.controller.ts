@@ -25,6 +25,7 @@ import { AuthGuard } from '../auth/guards/auth.guard';
 import { PermissionsGuard } from '../auth/guards/permissions.guard';
 import { Permissions } from '../auth/decorators/permissions.decorator';
 import { CheckProduction } from '../auth/decorators/check-production.decorator';
+import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
 
 @ApiTags('Costumes & Assets')
 @ApiBearerAuth('JWT-auth')
@@ -39,7 +40,7 @@ export class CostumesController {
   @Permissions('costumes.view')
   @ApiOperation({ summary: 'Get all costume assignments for a production' })
   @ApiResponse({ status: 200, description: 'List of assignments.' })
-  getAssignments(@Param('productionId') productionId: string) {
+  getAssignments(@Param('productionId', new ParseObjectIdPipe('Invalid ID format')) productionId: string) {
     return this.costumesService.getAssignments(productionId);
   }
 
@@ -49,8 +50,8 @@ export class CostumesController {
   @ApiOperation({ summary: 'Return a costume assignment' })
   @ApiResponse({ status: 200, description: 'Costume assignment returned successfully.' })
   returnCostume(
-    @Param('productionId') productionId: string,
-    @Param('assignmentId') assignmentId: string,
+    @Param('productionId', new ParseObjectIdPipe('Invalid ID format')) productionId: string,
+    @Param('assignmentId', new ParseObjectIdPipe('Invalid ID format')) assignmentId: string,
     @Body() returnDto: ReturnCostumeDto,
     @Req() req: any,
   ) {
@@ -63,7 +64,7 @@ export class CostumesController {
   @ApiOperation({ summary: 'Create a new costume / asset' })
   @ApiResponse({ status: 201, description: 'Costume created successfully.' })
   create(
-    @Param('productionId') productionId: string,
+    @Param('productionId', new ParseObjectIdPipe('Invalid ID format')) productionId: string,
     @Body() createDto: CreateCostumeDto,
     @Req() req: any,
   ) {
@@ -76,7 +77,7 @@ export class CostumesController {
   @ApiOperation({ summary: 'List all costumes for a production' })
   @ApiResponse({ status: 200, description: 'Array of costume documents.' })
   findAll(
-    @Param('productionId') productionId: string,
+    @Param('productionId', new ParseObjectIdPipe('Invalid ID format')) productionId: string,
     @Query('status') status?: string,
     @Query('category') category?: string,
     @Query('condition') condition?: string,
@@ -91,8 +92,8 @@ export class CostumesController {
   @ApiOperation({ summary: 'Get a costume details by ID' })
   @ApiResponse({ status: 200, description: 'Costume details.' })
   findOne(
-    @Param('productionId') productionId: string,
-    @Param('id') id: string,
+    @Param('productionId', new ParseObjectIdPipe('Invalid ID format')) productionId: string,
+    @Param('id', new ParseObjectIdPipe('Invalid ID format')) id: string,
   ) {
     return this.costumesService.findOne(productionId, id);
   }
@@ -103,8 +104,8 @@ export class CostumesController {
   @ApiOperation({ summary: 'Update a costume details' })
   @ApiResponse({ status: 200, description: 'Costume updated.' })
   update(
-    @Param('productionId') productionId: string,
-    @Param('id') id: string,
+    @Param('productionId', new ParseObjectIdPipe('Invalid ID format')) productionId: string,
+    @Param('id', new ParseObjectIdPipe('Invalid ID format')) id: string,
     @Body() updateDto: UpdateCostumeDto,
     @Req() req: any,
   ) {
@@ -117,8 +118,8 @@ export class CostumesController {
   @ApiOperation({ summary: 'Delete a costume from inventory' })
   @ApiResponse({ status: 200, description: 'Costume deleted.' })
   delete(
-    @Param('productionId') productionId: string,
-    @Param('id') id: string,
+    @Param('productionId', new ParseObjectIdPipe('Invalid ID format')) productionId: string,
+    @Param('id', new ParseObjectIdPipe('Invalid ID format')) id: string,
     @Req() req: any,
   ) {
     return this.costumesService.delete(productionId, id, req.user._id);
@@ -130,8 +131,8 @@ export class CostumesController {
   @ApiOperation({ summary: 'Assign a costume to a character or cast member' })
   @ApiResponse({ status: 201, description: 'Costume assigned successfully.' })
   assignCostume(
-    @Param('productionId') productionId: string,
-    @Param('id') id: string,
+    @Param('productionId', new ParseObjectIdPipe('Invalid ID format')) productionId: string,
+    @Param('id', new ParseObjectIdPipe('Invalid ID format')) id: string,
     @Body() assignDto: AssignCostumeDto,
     @Req() req: any,
   ) {

@@ -1,23 +1,23 @@
-import { Module, Global } from '@nestjs/common';
+import { Module, Global, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AuditLogsService } from './audit-logs.service';
 import { AuditLogsController } from './audit-logs.controller';
 import { AuditLog, AuditLogSchema } from './schemas/audit-log.schema';
-import { User, UserSchema } from '../users/schemas/user.schema';
-import { CastCrew, CastCrewSchema } from '../productions/schemas/cast-crew.schema';
+import { UsersModule } from '../users/users.module';
+import { ProductionsModule } from '../productions/productions.module';
 
 @Global()
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: AuditLog.name, schema: AuditLogSchema },
-      { name: User.name, schema: UserSchema },
-      { name: CastCrew.name, schema: CastCrewSchema },
     ]),
+    UsersModule,
+    forwardRef(() => ProductionsModule),
   ],
   controllers: [AuditLogsController],
   providers: [AuditLogsService],
-  exports: [AuditLogsService],
+  exports: [MongooseModule, AuditLogsService],
 })
 export class AuditLogsModule {}
 

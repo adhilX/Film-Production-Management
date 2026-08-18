@@ -8,9 +8,7 @@ import {
   Param,
   UseGuards,
   Req,
-  BadRequestException,
 } from '@nestjs/common';
-import { Types } from 'mongoose';
 import {
   ApiTags,
   ApiBearerAuth,
@@ -26,6 +24,7 @@ import { AuthGuard } from '../auth/guards/auth.guard';
 import { PermissionsGuard } from '../auth/guards/permissions.guard';
 import { Permissions } from '../auth/decorators/permissions.decorator';
 import { CheckProduction } from '../auth/decorators/check-production.decorator';
+import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
 
 @ApiTags('Locations Management')
 @ApiBearerAuth('JWT-auth')
@@ -45,13 +44,10 @@ export class LocationsController {
   @ApiResponse({ status: 201, description: 'Booking request created.' })
   @ApiResponse({ status: 400, description: 'Invalid date range.' })
   createBooking(
-    @Param('productionId') productionId: string,
+    @Param('productionId', new ParseObjectIdPipe('Invalid production ID format')) productionId: string,
     @Body() createDto: CreateBookingDto,
     @Req() req: any,
   ) {
-    if (!Types.ObjectId.isValid(productionId)) {
-      throw new BadRequestException('Invalid production ID format');
-    }
     return this.locationsService.createBooking(productionId, createDto, req.user._id);
   }
 
@@ -59,10 +55,7 @@ export class LocationsController {
   @Permissions('locations.view')
   @ApiOperation({ summary: 'List all bookings for a production' })
   @ApiResponse({ status: 200, description: 'List of bookings.' })
-  getBookings(@Param('productionId') productionId: string) {
-    if (!Types.ObjectId.isValid(productionId)) {
-      throw new BadRequestException('Invalid production ID format');
-    }
+  getBookings(@Param('productionId', new ParseObjectIdPipe('Invalid production ID format')) productionId: string) {
     return this.locationsService.getBookings(productionId);
   }
 
@@ -72,17 +65,11 @@ export class LocationsController {
   @ApiResponse({ status: 403, description: 'Insufficient permissions.' })
   @ApiResponse({ status: 409, description: 'Collision / overlap check conflict.' })
   updateBookingStatus(
-    @Param('productionId') productionId: string,
-    @Param('id') id: string,
+    @Param('productionId', new ParseObjectIdPipe('Invalid production ID format')) productionId: string,
+    @Param('id', new ParseObjectIdPipe('Invalid booking ID format')) id: string,
     @Body() updateDto: UpdateBookingStatusDto,
     @Req() req: any,
   ) {
-    if (!Types.ObjectId.isValid(productionId)) {
-      throw new BadRequestException('Invalid production ID format');
-    }
-    if (!Types.ObjectId.isValid(id)) {
-      throw new BadRequestException('Invalid booking ID format');
-    }
     const userPermissions = req.user.permissions || [];
     const isSuperAdmin = userPermissions.includes('roles.manage');
     return this.locationsService.updateBookingStatus(
@@ -105,13 +92,10 @@ export class LocationsController {
   @ApiResponse({ status: 201, description: 'Location created.' })
   @ApiResponse({ status: 409, description: 'Location name duplicate.' })
   create(
-    @Param('productionId') productionId: string,
+    @Param('productionId', new ParseObjectIdPipe('Invalid production ID format')) productionId: string,
     @Body() createDto: CreateLocationDto,
     @Req() req: any,
   ) {
-    if (!Types.ObjectId.isValid(productionId)) {
-      throw new BadRequestException('Invalid production ID format');
-    }
     return this.locationsService.create(productionId, createDto, req.user._id);
   }
 
@@ -119,10 +103,7 @@ export class LocationsController {
   @Permissions('locations.view')
   @ApiOperation({ summary: 'List all physical locations for a production' })
   @ApiResponse({ status: 200, description: 'List of locations.' })
-  findAll(@Param('productionId') productionId: string) {
-    if (!Types.ObjectId.isValid(productionId)) {
-      throw new BadRequestException('Invalid production ID format');
-    }
+  findAll(@Param('productionId', new ParseObjectIdPipe('Invalid production ID format')) productionId: string) {
     return this.locationsService.findAll(productionId);
   }
 
@@ -132,15 +113,9 @@ export class LocationsController {
   @ApiResponse({ status: 200, description: 'The location.' })
   @ApiResponse({ status: 404, description: 'Location not found.' })
   findOne(
-    @Param('productionId') productionId: string,
-    @Param('id') id: string,
+    @Param('productionId', new ParseObjectIdPipe('Invalid production ID format')) productionId: string,
+    @Param('id', new ParseObjectIdPipe('Invalid location ID format')) id: string,
   ) {
-    if (!Types.ObjectId.isValid(productionId)) {
-      throw new BadRequestException('Invalid production ID format');
-    }
-    if (!Types.ObjectId.isValid(id)) {
-      throw new BadRequestException('Invalid location ID format');
-    }
     return this.locationsService.findOne(productionId, id);
   }
 
@@ -150,17 +125,11 @@ export class LocationsController {
   @ApiResponse({ status: 200, description: 'Location updated.' })
   @ApiResponse({ status: 409, description: 'Location name duplicate.' })
   update(
-    @Param('productionId') productionId: string,
-    @Param('id') id: string,
+    @Param('productionId', new ParseObjectIdPipe('Invalid production ID format')) productionId: string,
+    @Param('id', new ParseObjectIdPipe('Invalid location ID format')) id: string,
     @Body() updateDto: UpdateLocationDto,
     @Req() req: any,
   ) {
-    if (!Types.ObjectId.isValid(productionId)) {
-      throw new BadRequestException('Invalid production ID format');
-    }
-    if (!Types.ObjectId.isValid(id)) {
-      throw new BadRequestException('Invalid location ID format');
-    }
     return this.locationsService.update(productionId, id, updateDto, req.user._id);
   }
 
@@ -170,16 +139,10 @@ export class LocationsController {
   @ApiResponse({ status: 200, description: 'Location deleted.' })
   @ApiResponse({ status: 409, description: 'Cannot delete location with active bookings.' })
   delete(
-    @Param('productionId') productionId: string,
-    @Param('id') id: string,
+    @Param('productionId', new ParseObjectIdPipe('Invalid production ID format')) productionId: string,
+    @Param('id', new ParseObjectIdPipe('Invalid location ID format')) id: string,
     @Req() req: any,
   ) {
-    if (!Types.ObjectId.isValid(productionId)) {
-      throw new BadRequestException('Invalid production ID format');
-    }
-    if (!Types.ObjectId.isValid(id)) {
-      throw new BadRequestException('Invalid location ID format');
-    }
     return this.locationsService.delete(productionId, id, req.user._id);
   }
 }

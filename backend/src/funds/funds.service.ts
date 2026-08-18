@@ -21,6 +21,10 @@ import { ApproveFundRequestDto } from './dto/approve-fund-request.dto';
 import { RejectFundRequestDto } from './dto/reject-fund-request.dto';
 import { UpdateBudgetDto } from './dto/update-budget.dto';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
+import { getTransactionSession } from '../common/utils/transaction.util';
+import { FundApprovalService } from './services/fund-approval.service';
+
+import { BudgetService } from './services/budget.service';
 
 @Injectable()
 export class FundsService implements OnModuleInit {
@@ -35,6 +39,8 @@ export class FundsService implements OnModuleInit {
     private castCrewModel: Model<CastCrewDocument>,
     @InjectConnection() private readonly connection: Connection,
     private readonly auditLogsService: AuditLogsService,
+    private readonly fundApprovalService: FundApprovalService,
+    private readonly budgetService: BudgetService,
   ) {}
 
   /**
@@ -111,145 +117,22 @@ export class FundsService implements OnModuleInit {
     }
   }
 
-  /**
-   * Helper to retrieve a transaction session if running in a replica set environment.
-   * Otherwise returns null to bypass transactions.
-   */
-  private async getSession(): Promise<ClientSession | null> {
-    try {
-      const connAny = this.connection as any;
-      const isReplica =
-        connAny.client?.topology?.description?.type?.includes('ReplicaSet') ||
-        Array.from(
-          connAny.client?.topology?.description?.servers?.values() || [],
-        ).some((server: any) => server.type?.includes('ReplicaSet'));
-      if (isReplica) {
-        const session = await this.connection.startSession();
-        session.startTransaction();
-        return session;
-      }
-    } catch (e) {
-      // Fallback to standalone MongoDB
-    }
-    return null;
-  }
 
-  /**
-   * Retrieves or initializes the project budget.
-   */
+
   async getOrCreateBudget(
     productionId: string,
     userId: string,
     session?: ClientSession | null,
   ): Promise<BudgetDocument> {
-    if (!Types.ObjectId.isValid(productionId)) {
-      throw new NotFoundException(`Production with ID ${productionId} not found.`);
-    }
-
-    const budgetQuery = this.budgetModel.findOne({
-      productionId: new Types.ObjectId(productionId),
-    });
-    let budget = session
-      ? await budgetQuery.session(session).exec()
-      : await budgetQuery.exec();
-
-    if (!budget) {
-      const prodQuery = this.productionModel.findById(productionId);
-      const prod = session
-        ? await prodQuery.session(session).exec()
-        : await prodQuery.exec();
-
-      if (!prod) {
-        throw new NotFoundException(
-          `Production with ID ${productionId} not found.`,
-        );
-      }
-
-      // Convert initial project budget from main units to paise/cents
-      const initialBudget = Math.round(prod.budget * 100);
-
-      budget = new this.budgetModel({
-        productionId: new Types.ObjectId(productionId),
-        totalBudget: initialBudget,
-        allocatedAmount: 0,
-        remainingAmount: initialBudget,
-        currency: 'INR',
-        createdBy: new Types.ObjectId(userId),
-        updatedBy: new Types.ObjectId(userId),
-      });
-
-      if (session) {
-        await budget.save({ session });
-      } else {
-        await budget.save();
-      }
-    }
-    return budget;
+    return this.budgetService.getOrCreateBudget(productionId, userId, session);
   }
 
-  /**
-   * Updates the project budget.
-   */
   async updateBudget(
     productionId: string,
     updateDto: UpdateBudgetDto,
     userId: string,
   ): Promise<BudgetDocument> {
-    if (!Types.ObjectId.isValid(productionId)) {
-      throw new NotFoundException(`Production with ID ${productionId} not found.`);
-    }
-
-    const session = await this.getSession();
-    try {
-      const budget = await this.getOrCreateBudget(productionId, userId, session);
-
-      if (updateDto.totalBudget < budget.allocatedAmount) {
-        throw new BadRequestException(
-          'Total budget cannot be less than already allocated amount.',
-        );
-      }
-
-      const previousBudget = budget.totalBudget;
-      budget.totalBudget = updateDto.totalBudget;
-      budget.remainingAmount = budget.totalBudget - budget.allocatedAmount;
-      budget.updatedBy = new Types.ObjectId(userId);
-      if (updateDto.currency) {
-        budget.currency = updateDto.currency;
-      }
-
-      if (session) {
-        await budget.save({ session });
-      } else {
-        await budget.save();
-      }
-
-      // Write Audit Log
-      await this.auditLogsService.log(
-        userId,
-        'BUDGET_UPDATED',
-        budget._id.toString(),
-        'Budget',
-        JSON.stringify({ totalBudget: previousBudget }),
-        JSON.stringify({ totalBudget: budget.totalBudget }),
-        session || undefined,
-        'FUNDS',
-        { productionId },
-      );
-
-      if (session) {
-        await session.commitTransaction();
-      }
-      return budget;
-    } catch (err) {
-      if (session) {
-        await session.abortTransaction();
-      }
-      throw err;
-    } finally {
-      if (session) {
-        session.endSession();
-      }
-    }
+    return this.budgetService.updateBudget(productionId, updateDto, userId);
   }
 
   /**
@@ -396,162 +279,24 @@ export class FundsService implements OnModuleInit {
     return request;
   }
 
-  /**
-   * Approves a request with transaction/session protection.
-   */
   async approve(
     productionId: string,
     id: string,
     approveDto: ApproveFundRequestDto,
     userId: string,
   ): Promise<FundRequestDocument> {
-    const session = await this.getSession();
-    try {
-      const requestQuery = this.fundRequestModel.findOne({
-        _id: new Types.ObjectId(id),
-        productionId: new Types.ObjectId(productionId),
-      });
-      const request = session
-        ? await requestQuery.session(session).exec()
-        : await requestQuery.exec();
-
-      if (!request) {
-        throw new NotFoundException('Fund request not found.');
-      }
-
-      if (request.status !== 'Pending') {
-        throw new BadRequestException('Only Pending requests can be approved.');
-      }
-
-      if (request.requestedBy.toString() === userId.toString()) {
-        throw new BadRequestException(
-          'Approvers cannot approve their own fund requests.',
-        );
-      }
-
-      if (approveDto.approvedAmount <= 0) {
-        throw new BadRequestException('Approved amount must be greater than zero.');
-      }
-
-      if (approveDto.approvedAmount > request.requestedAmount) {
-        throw new BadRequestException(
-          'Approved amount cannot exceed the requested amount.',
-        );
-      }
-
-      // Load budget
-      const budget = await this.getOrCreateBudget(productionId, userId, session);
-
-      // Concurrency check: check if we have enough budget remaining
-      if (approveDto.approvedAmount > budget.remainingAmount) {
-        throw new ConflictException('Insufficient remaining project budget.');
-      }
-
-      // Update budget allocation
-      budget.allocatedAmount = budget.allocatedAmount + approveDto.approvedAmount;
-      budget.remainingAmount = budget.totalBudget - budget.allocatedAmount;
-      budget.updatedBy = new Types.ObjectId(userId);
-
-      if (session) {
-        await budget.save({ session });
-      } else {
-        await budget.save();
-      }
-
-      // Update request status
-      const previousStatus = request.status;
-      request.status = 'Approved';
-      request.approvedAmount = approveDto.approvedAmount;
-      request.reviewedBy = new Types.ObjectId(userId);
-      request.reviewedAt = new Date();
-
-      if (session) {
-        await request.save({ session });
-      } else {
-        await request.save();
-      }
-
-      // Log audit
-      await this.auditLogsService.log(
-        userId,
-        'FUND_REQUEST_APPROVED',
-        request._id.toString(),
-        'FundRequest',
-        previousStatus,
-        'Approved',
-        session || undefined,
-        'FUNDS',
-        {
-          productionId,
-          requestedAmount: request.requestedAmount,
-          approvedAmount: request.approvedAmount,
-        },
-      );
-
-      if (session) {
-        await session.commitTransaction();
-      }
-      return this.findOne(productionId, id);
-    } catch (err) {
-      if (session) {
-        await session.abortTransaction();
-      }
-      throw err;
-    } finally {
-      if (session) {
-        session.endSession();
-      }
-    }
+    return this.fundApprovalService.approve(productionId, id, approveDto, userId);
   }
 
-  /**
-   * Rejects a request with reason.
-   */
   async reject(
     productionId: string,
     id: string,
     rejectDto: RejectFundRequestDto,
     userId: string,
   ): Promise<FundRequestDocument> {
-    const request = await this.findOne(productionId, id);
-
-    if (request.status !== 'Pending') {
-      throw new BadRequestException('Only Pending requests can be rejected.');
-    }
-
-    if (!rejectDto.rejectionReason || rejectDto.rejectionReason.trim().length === 0) {
-      throw new BadRequestException('Rejection reason is required.');
-    }
-
-    const previousStatus = request.status;
-    request.status = 'Rejected';
-    request.rejectionReason = rejectDto.rejectionReason;
-    request.reviewedBy = new Types.ObjectId(userId);
-    request.reviewedAt = new Date();
-
-    await request.save();
-
-    await this.auditLogsService.log(
-      userId,
-      'FUND_REQUEST_REJECTED',
-      request._id.toString(),
-      'FundRequest',
-      previousStatus,
-      'Rejected',
-      undefined,
-      'FUNDS',
-      {
-        productionId,
-        rejectionReason: request.rejectionReason,
-      },
-    );
-
-    return request;
+    return this.fundApprovalService.reject(productionId, id, rejectDto, userId);
   }
 
-  /**
-   * Cancels a request.
-   */
   async cancel(
     productionId: string,
     id: string,
@@ -559,42 +304,6 @@ export class FundsService implements OnModuleInit {
     userPermissions: string[],
     isSuperAdmin: boolean,
   ): Promise<FundRequestDocument> {
-    const request = await this.findOne(productionId, id);
-
-    if (request.status !== 'Pending') {
-      throw new BadRequestException('Only Pending requests can be cancelled.');
-    }
-
-    // Check cancellation permission: must be requester OR admin/manager with funds.update
-    const isRequester = request.requestedBy._id.toString() === userId.toString();
-    const canCancel =
-      isRequester || isSuperAdmin || userPermissions.includes('funds.update');
-
-    if (!canCancel) {
-      throw new ForbiddenException(
-        'You do not have permission to cancel this request.',
-      );
-    }
-
-    const previousStatus = request.status;
-    request.status = 'Cancelled';
-    request.reviewedBy = new Types.ObjectId(userId);
-    request.reviewedAt = new Date();
-
-    await request.save();
-
-    await this.auditLogsService.log(
-      userId,
-      'FUND_REQUEST_CANCELLED',
-      request._id.toString(),
-      'FundRequest',
-      previousStatus,
-      'Cancelled',
-      undefined,
-      'FUNDS',
-      { productionId },
-    );
-
-    return request;
+    return this.fundApprovalService.cancel(productionId, id, userId, userPermissions, isSuperAdmin);
   }
 }

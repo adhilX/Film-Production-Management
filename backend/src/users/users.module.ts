@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { UsersService } from './users.service';
 import { UsersController } from './users.controller';
@@ -8,10 +8,9 @@ import {
   DocumentRecord,
   DocumentRecordSchema,
 } from './schemas/document-record.schema';
-import { Role, RoleSchema } from '../auth/schemas/role.schema';
 import { CloudinaryModule } from '../common/cloudinary/cloudinary.module';
-import { CastCrew, CastCrewSchema } from '../productions/schemas/cast-crew.schema';
-import { AuditLog, AuditLogSchema } from '../audit-logs/schemas/audit-log.schema';
+import { ProductionsModule } from '../productions/productions.module';
+import { UserOnboardingService } from './services/user-onboarding.service';
 
 @Module({
   imports: [
@@ -19,15 +18,12 @@ import { AuditLog, AuditLogSchema } from '../audit-logs/schemas/audit-log.schema
       { name: User.name, schema: UserSchema },
       { name: UserProfile.name, schema: UserProfileSchema },
       { name: DocumentRecord.name, schema: DocumentRecordSchema },
-      { name: Role.name, schema: RoleSchema },
-      { name: CastCrew.name, schema: CastCrewSchema },
-      { name: AuditLog.name, schema: AuditLogSchema },
     ]),
     CloudinaryModule,
+    forwardRef(() => ProductionsModule),
   ],
   controllers: [UsersController],
-  providers: [UsersService],
-  exports: [UsersService],
+  providers: [UsersService, UserOnboardingService],
+  exports: [MongooseModule, UsersService, UserOnboardingService],
 })
 export class UsersModule {}
-

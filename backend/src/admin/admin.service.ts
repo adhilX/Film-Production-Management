@@ -19,6 +19,11 @@ import {
 } from '../auth/schemas/permission.schema';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import * as bcrypt from 'bcryptjs';
+import { getTransactionSession } from '../common/utils/transaction.util';
+import { AdminRbacService } from './services/admin-rbac.service';
+import { getPaginationParams, calculateTotalPages } from '../common/utils/pagination.util';
+
+import { AdminOnboardingService } from './services/admin-onboarding.service';
 
 @Injectable()
 export class AdminService {
@@ -31,6 +36,8 @@ export class AdminService {
     private permissionModel: Model<PermissionDocument>,
     @InjectConnection() private connection: Connection,
     private auditLogsService: AuditLogsService,
+    private readonly adminRbacService: AdminRbacService,
+    private readonly adminOnboardingService: AdminOnboardingService,
   ) {}
 
   async getApplications(query: {
@@ -44,109 +51,11 @@ export class AdminService {
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
   }): Promise<any> {
-    const page = query.page || 1;
-    const limit = query.limit || 10;
-    const skip = (page - 1) * limit;
-
-    const filter: any = {};
-
-    // Default status filter to 'pending-review' if not specified or not 'all'
-    const onboardingStatus = query.onboardingStatus || 'pending-review';
-    if (onboardingStatus !== 'all') {
-      filter.onboardingStatus = onboardingStatus;
-    }
-
-    if (query.contractorType && query.contractorType !== 'all') {
-      filter.contractorType = query.contractorType;
-    }
-
-    if (query.search) {
-      const escapedSearch = query.search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      filter.$or = [
-        { name: { $regex: escapedSearch, $options: 'i' } },
-        { email: { $regex: escapedSearch, $options: 'i' } },
-      ];
-    }
-
-    if (query.stale) {
-      const threeDaysAgo = new Date();
-      threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
-      filter.updatedAt = { $lt: threeDaysAgo };
-      filter.onboardingStatus = 'pending-review'; // Stale only applies to pending-review
-    }
-
-    if (query.department && query.department !== 'all') {
-      const escapedDept = query.department.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const profiles = await this.userProfileModel
-        .find({ department: { $regex: escapedDept, $options: 'i' } })
-        .select('userId')
-        .exec();
-      const userIds = profiles.map(p => p.userId);
-      filter._id = { $in: userIds };
-    }
-
-    // Determine sort order
-    let sort: any = { updatedAt: -1 };
-    if (query.sortBy) {
-      const order = query.sortOrder === 'asc' ? 1 : -1;
-      if (query.sortBy === 'name') {
-        sort = { name: order };
-      } else if (query.sortBy === 'contractorType') {
-        sort = { contractorType: order };
-      } else if (query.sortBy === 'status') {
-        sort = { status: order };
-      } else if (query.sortBy === 'submittedDate' || query.sortBy === 'updatedAt') {
-        sort = { updatedAt: order };
-      }
-    }
-
-    // Execute query
-    const total = await this.userModel.countDocuments(filter).exec();
-    const pages = Math.ceil(total / limit);
-
-    const applications = await this.userModel
-      .find(filter)
-      .populate('profile')
-      .select('-passwordHash')
-      .sort(sort)
-      .skip(skip)
-      .limit(limit)
-      .exec();
-
-    // Calculate database counts for metrics
-    const pendingMetrics = await this.userModel.countDocuments({ onboardingStatus: 'pending-review' }).exec();
-    const approvedMetrics = await this.userModel.countDocuments({ onboardingStatus: 'approved' }).exec();
-    const changesRequestedMetrics = await this.userModel.countDocuments({ onboardingStatus: 'changes-requested' }).exec();
-    const rejectedMetrics = await this.userModel.countDocuments({ status: 'Rejected' }).exec();
-    const totalMetrics = await this.userModel.countDocuments().exec();
-
-    return {
-      applications,
-      total,
-      page,
-      pages,
-      limit,
-      metrics: {
-        pending: pendingMetrics,
-        approved: approvedMetrics,
-        rejected: rejectedMetrics,
-        changesRequested: changesRequestedMetrics,
-        total: totalMetrics,
-      },
-    };
+    return this.adminOnboardingService.getApplications(query);
   }
 
   async getApplicationDetails(id: string): Promise<User> {
-    const user = await this.userModel
-      .findById(id)
-      .populate('profile')
-      .select('-passwordHash')
-      .exec();
-
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-    return user;
+    return this.adminOnboardingService.getApplicationDetails(id);
   }
 
   async evaluateApplication(
@@ -154,114 +63,7 @@ export class AdminService {
     adminId: string,
     payload: { status: string; systemRoleId?: string; adminFeedback?: string },
   ): Promise<User> {
-    let session: any = null;
-    const client = this.connection.getClient() as any;
-    const isStandalone = client?.topology?.description?.type === 'Single';
-    
-    if (!isStandalone) {
-      try {
-        session = await this.connection.startSession();
-        session.startTransaction();
-      } catch (e) {
-        session = null;
-      }
-    }
-    
-    try {
-      const user = session 
-        ? await this.userModel.findById(id).session(session).exec()
-        : await this.userModel.findById(id).exec();
-
-      if (!user) {
-        throw new NotFoundException('User not found');
-      }
-
-      const { status, systemRoleId, adminFeedback } = payload;
-      const oldStatus = user.onboardingStatus;
-
-      if (oldStatus !== 'pending-review') {
-        throw new BadRequestException(`Cannot evaluate user with onboarding status: ${oldStatus}`);
-      }
-
-      if (status === 'approved') {
-        user.isActive = true;
-        user.onboardingStatus = 'approved';
-        user.status = 'Approved';
-        user.adminFeedback = '';
-
-        if (!systemRoleId) {
-          throw new BadRequestException('systemRoleId is required for Approval');
-        }
-
-        // Verify that the Role actually exists
-        const roleExists = session
-          ? await this.roleModel.findById(systemRoleId).session(session).exec()
-          : await this.roleModel.findById(systemRoleId).exec();
-
-        if (!roleExists) {
-          throw new BadRequestException('Invalid systemRoleId: Role does not exist in the database');
-        }
-
-        user.systemRoleId = new Types.ObjectId(systemRoleId);
-      } else if (status === 'changes-requested') {
-        if (!adminFeedback || !adminFeedback.trim()) {
-          throw new BadRequestException('adminFeedback is required when status is changes-requested');
-        }
-        user.isActive = false;
-        user.onboardingStatus = 'changes-requested';
-        user.status = 'Changes Requested';
-        user.adminFeedback = adminFeedback;
-      } else {
-        throw new BadRequestException('Invalid evaluation status');
-      }
-
-      if (session) {
-        await user.save({ session });
-        await this.auditLogsService.create(
-          adminId,
-          user._id.toString(),
-          status === 'approved'
-            ? 'USER_ONBOARDING_APPROVED'
-            : 'USER_ONBOARDING_CHANGES_REQUESTED',
-          {
-            oldStatus,
-            newStatus: user.onboardingStatus,
-            assignedRole: systemRoleId || null,
-          },
-          undefined,
-          undefined,
-          session,
-        );
-        await session.commitTransaction();
-      } else {
-        await user.save();
-        await this.auditLogsService.create(
-          adminId,
-          user._id.toString(),
-          status === 'approved'
-            ? 'USER_ONBOARDING_APPROVED'
-            : 'USER_ONBOARDING_CHANGES_REQUESTED',
-          {
-            oldStatus,
-            newStatus: user.onboardingStatus,
-            assignedRole: systemRoleId || null,
-          },
-          undefined,
-          undefined,
-          undefined,
-        );
-      }
-      return user;
-    } catch (error) {
-      if (session) {
-        await session.abortTransaction();
-      }
-      throw error;
-    } finally {
-      if (session) {
-        session.endSession();
-      }
-    }
+    return this.adminOnboardingService.evaluateApplication(id, adminId, payload);
   }
 
   // --- Granular User Operations (CRUD) ---
@@ -479,75 +281,20 @@ export class AdminService {
 
   // --- System Settings (RBAC Management) ---
 
-  async getRoles(): Promise<Role[]> {
-    return this.roleModel.find().populate('permissions').exec();
+  getRoles(): Promise<Role[]> {
+    return this.adminRbacService.getRoles();
   }
 
-  async createRole(
+  createRole(
     adminId: string,
     payload: { name: string; permissions: string[] },
     requesterPermissions: string[] = [],
     requesterRoleName = '',
   ): Promise<Role> {
-    const trimmedName = payload.name.trim();
-    if (!trimmedName) {
-      throw new BadRequestException('Role name cannot be empty');
-    }
-
-    // Enforce case-insensitive uniqueness
-    const existingRole = await this.roleModel.findOne({
-      name: { $regex: new RegExp(`^${trimmedName}$`, 'i') }
-    }).exec();
-    if (existingRole) {
-      throw new ConflictException('Role with this name already exists');
-    }
-
-    // Protect core system roles name
-    const CORE_ROLES = ['Super Admin', 'Production Admin', 'Production Manager', 'Cast', 'Crew'];
-    const isCoreRoleName = CORE_ROLES.some(
-      (roleName) => roleName.toLowerCase() === trimmedName.toLowerCase()
-    );
-    if (isCoreRoleName) {
-      throw new ConflictException('Cannot create a custom role with a core system role name');
-    }
-
-    const uniquePermIds = Array.from(new Set(payload.permissions));
-    const matchedPermissions = await this.permissionModel.find({
-      _id: { $in: uniquePermIds.map((id) => new Types.ObjectId(id)) }
-    }).exec();
-
-    if (matchedPermissions.length !== uniquePermIds.length) {
-      throw new BadRequestException('One or more permissions do not exist in the system');
-    }
-
-    // Privilege escalation check
-    if (requesterRoleName !== 'Super Admin') {
-      const matchedPermNames = matchedPermissions.map(p => p.name);
-      const hasUnauthorizedPerms = matchedPermNames.some(
-        (permName) => !requesterPermissions.includes(permName)
-      );
-      if (hasUnauthorizedPerms) {
-        throw new ForbiddenException('You cannot assign permissions you do not possess');
-      }
-    }
-
-    const role = new this.roleModel({
-      name: trimmedName,
-      permissions: uniquePermIds.map((id) => new Types.ObjectId(id)),
-    });
-    await role.save();
-
-    await this.auditLogsService.create(
-      adminId,
-      role._id.toString(),
-      'ROLE_CREATED',
-      { newStatus: `Created Role: ${role.name}` },
-    );
-
-    return role.populate('permissions');
+    return this.adminRbacService.createRole(adminId, payload, requesterPermissions, requesterRoleName);
   }
 
-  async updateRole(
+  updateRole(
     adminId: string,
     roleId: string,
     payload: { permissions: string[] },
@@ -555,113 +302,26 @@ export class AdminService {
     requesterRoleName = '',
     requesterRoleId = '',
   ): Promise<Role> {
-    const role = await this.roleModel.findById(roleId).populate('permissions').exec();
-    if (!role) {
-      throw new NotFoundException('Role not found');
-    }
-
-    // Super Admin protection: lockout prevention
-    if (role.name === 'Super Admin') {
-      throw new ForbiddenException('The Super Admin role is protected and cannot be modified');
-    }
-
-    // Core role protection
-    const CORE_ROLES = ['Super Admin', 'Production Admin', 'Production Manager', 'Cast', 'Crew'];
-    const isTargetCoreRole = CORE_ROLES.includes(role.name);
-    if (isTargetCoreRole && requesterRoleName !== 'Super Admin') {
-      throw new ForbiddenException(`You do not have permission to modify the core system role: ${role.name}`);
-    }
-
-    const uniquePermIds = Array.from(new Set(payload.permissions));
-    const matchedPermissions = await this.permissionModel.find({
-      _id: { $in: uniquePermIds.map((id) => new Types.ObjectId(id)) }
-    }).exec();
-
-    if (matchedPermissions.length !== uniquePermIds.length) {
-      throw new BadRequestException('One or more permissions do not exist in the system');
-    }
-
-    const matchedPermNames = matchedPermissions.map(p => p.name);
-
-    // Self-privilege escalation check & privilege escalation check
-    if (requesterRoleName !== 'Super Admin') {
-      if (roleId === requesterRoleId) {
-        const currentPermNames = (role.permissions as any[]).map((p: any) => p.name || p.toString());
-        const hasNewPerms = matchedPermNames.some(name => !currentPermNames.includes(name));
-        if (hasNewPerms) {
-          throw new ForbiddenException('You cannot escalate your own role permissions');
-        }
-      }
-
-      const hasUnauthorizedPerms = matchedPermNames.some(
-        (permName) => !requesterPermissions.includes(permName)
-      );
-      if (hasUnauthorizedPerms) {
-        throw new ForbiddenException('You cannot assign permissions you do not possess');
-      }
-    }
-
-    // Preserve previous permissions for auditing
-    const previousPerms = (role.permissions as any[]).map(p => p._id.toString());
-    const previousPermNames = (role.permissions as any[]).map(p => p.name);
-
-    role.permissions = uniquePermIds.map((id) => new Types.ObjectId(id));
-    await role.save();
-
-    await this.auditLogsService.create(
+    return this.adminRbacService.updateRole(
       adminId,
-      role._id.toString(),
-      'ROLE_UPDATED',
-      {
-        roleId: role._id.toString(),
-        roleName: role.name,
-        previousPermissions: previousPerms,
-        newPermissions: uniquePermIds,
-        previousPermissionNames: previousPermNames,
-        newPermissionNames: matchedPermNames,
-        newStatus: `Updated permissions for Role: ${role.name}`,
-      },
+      roleId,
+      payload,
+      requesterPermissions,
+      requesterRoleName,
+      requesterRoleId,
     );
-
-    return role.populate('permissions');
   }
 
   // --- Global Permissions Management ---
 
-  async getPermissions(): Promise<Permission[]> {
-    return this.permissionModel.find().exec();
+  getPermissions(): Promise<Permission[]> {
+    return this.adminRbacService.getPermissions();
   }
 
-  async createPermission(
+  createPermission(
     adminId: string,
     payload: { name: string; description?: string; group?: string },
   ): Promise<Permission> {
-    const trimmedName = payload.name.trim();
-    if (!trimmedName) {
-      throw new BadRequestException('Permission name cannot be empty');
-    }
-
-    const existing = await this.permissionModel
-      .findOne({ name: { $regex: new RegExp(`^${trimmedName}$`, 'i') } })
-      .exec();
-    if (existing) {
-      throw new ConflictException('Permission already exists');
-    }
-
-    const permission = new this.permissionModel({
-      name: trimmedName,
-      description: payload.description,
-      group: payload.group || 'Custom Perms',
-    });
-    await permission.save();
-
-    await this.auditLogsService.create(
-      adminId,
-      permission._id.toString(),
-      'PERMISSION_CREATED',
-      { newStatus: `Created Global Permission: ${permission.name}` },
-    );
-
-    return permission;
+    return this.adminRbacService.createPermission(adminId, payload);
   }
 }

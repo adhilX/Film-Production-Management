@@ -1,6 +1,5 @@
 import { Controller, Get, Query, Req, UseGuards, ForbiddenException } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Types } from 'mongoose';
 import {
   ApiTags,
   ApiBearerAuth,
@@ -12,7 +11,6 @@ import { AuthGuard } from '../auth/guards/auth.guard';
 import { PermissionsGuard } from '../auth/guards/permissions.guard';
 import { Permissions } from '../auth/decorators/permissions.decorator';
 import { GetAuditLogsQueryDto } from './dto/get-audit-logs-query.dto';
-import { CastCrew, CastCrewDocument } from '../productions/schemas/cast-crew.schema';
 
 @ApiTags('Audit Logs')
 @ApiBearerAuth('JWT-auth')
@@ -21,7 +19,6 @@ import { CastCrew, CastCrewDocument } from '../productions/schemas/cast-crew.sch
 export class AuditLogsController {
   constructor(
     private readonly auditLogsService: AuditLogsService,
-    @InjectModel(CastCrew.name) private readonly castCrewModel: Model<CastCrewDocument>,
   ) {}
 
   @Get()
@@ -49,8 +46,7 @@ export class AuditLogsController {
     }
 
     // Production Admin / Scoped role
-    const assignments = await this.castCrewModel.find({ userId: user._id }).exec();
-    const assignedProductionIds = assignments.map(a => a.productionId);
+    const assignedProductionIds = await this.auditLogsService.getProductionIdsForUser(user._id);
 
     if (query.productionId) {
       let requestedProdId: Types.ObjectId;

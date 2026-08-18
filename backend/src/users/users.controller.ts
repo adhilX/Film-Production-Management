@@ -13,7 +13,6 @@ import {
   Query,
   ForbiddenException,
 } from '@nestjs/common';
-import { Types } from 'mongoose';
 import {
   ApiTags,
   ApiBearerAuth,
@@ -29,7 +28,7 @@ import { PermissionsGuard } from '../auth/guards/permissions.guard';
 import { Permissions } from '../auth/decorators/permissions.decorator';
 import { CloudinaryService } from '../common/cloudinary/cloudinary.service';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
-
+import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
 
 @ApiTags('Users & Onboarding')
 @ApiBearerAuth('JWT-auth')
@@ -51,7 +50,7 @@ export class UsersController {
     @Query('limit') limit?: string,
     @Query('search') search?: string,
     @Query('contractorType') contractorType?: string,
-    @Query('systemRoleId') systemRoleId?: string,
+    @Query('systemRoleId', new ParseObjectIdPipe('Invalid systemRoleId format')) systemRoleId?: string,
     @Query('status') status?: string,
     @Query('onboardingStatus') onboardingStatus?: string,
     @Query('isActive') isActive?: string,
@@ -59,9 +58,6 @@ export class UsersController {
     @Query('sortBy') sortBy?: string,
     @Query('sortOrder') sortOrder?: 'asc' | 'desc',
   ) {
-    if (systemRoleId && !Types.ObjectId.isValid(systemRoleId)) {
-      throw new BadRequestException('Invalid systemRoleId format');
-    }
     const pageNum = parseInt(page || '1', 10);
     const limitNum = parseInt(limit || '10', 10);
     const isActiveBool = isActive !== undefined ? isActive === 'true' : undefined;
@@ -93,7 +89,6 @@ export class UsersController {
     }
     return result;
   }
-
 
   @Get('me')
   @ApiOperation({ summary: 'Get current user detail profile' })
@@ -190,17 +185,13 @@ export class UsersController {
     };
   }
 
-  private validateObjectId(id: string, name: string) {
-    if (!Types.ObjectId.isValid(id)) {
-      throw new BadRequestException(`Invalid ${name} format`);
-    }
-  }
-
   @Get(':id')
   @ApiOperation({ summary: 'Fetch user profile details by ID' })
   @ApiResponse({ status: 200, description: 'User document details.' })
-  async findOne(@Param('id') id: string, @Req() req: any) {
-    this.validateObjectId(id, 'userId');
+  async findOne(
+    @Param('id', new ParseObjectIdPipe('Invalid userId format')) id: string,
+    @Req() req: any,
+  ) {
     const isSelf = req.user._id.toString() === id;
     const hasViewPerm = req.user.permissions && req.user.permissions.includes('users.view');
     if (!isSelf && !hasViewPerm) {

@@ -44,4 +44,5 @@ export class FundRequest {
 }
 
 export const FundRequestSchema = SchemaFactory.createForClass(FundRequest);
+FundRequestSchema.index({ productionId: 1, status: 1 });
 

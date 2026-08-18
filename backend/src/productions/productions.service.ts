@@ -9,6 +9,8 @@ import { Production, ProductionDocument } from './schemas/production.schema';
 import { CastCrew, CastCrewDocument } from './schemas/cast-crew.schema';
 import { Character, CharacterDocument } from './schemas/character.schema';
 import { User, UserDocument } from '../users/schemas/user.schema';
+import { Role, RoleDocument } from '../auth/schemas/role.schema';
+import { Permission, PermissionDocument } from '../auth/schemas/permission.schema';
 import { CreateProductionDto } from './dto/create-production.dto';
 import { AssignCastCrewDto } from './dto/assign-cast-crew.dto';
 import { UpdateCastCrewDto } from './dto/update-cast-crew.dto';
@@ -17,6 +19,9 @@ import { UpdateCharacterDto } from './dto/update-character.dto';
 import { UpdateProductionDto } from './dto/update-production.dto';
 import { GetProductionsQueryDto } from './dto/get-productions-query.dto';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
+import { CastCrewService } from './services/cast-crew.service';
+import { CharactersService } from './services/characters.service';
+import { getPaginationParams, calculateTotalPages } from '../common/utils/pagination.util';
 
 @Injectable()
 export class ProductionsService {
@@ -27,7 +32,11 @@ export class ProductionsService {
     @InjectModel(Character.name)
     private characterModel: Model<CharacterDocument>,
     @InjectModel(User.name) private userModel: Model<UserDocument>,
+    @InjectModel(Role.name) private roleModel: Model<RoleDocument>,
+    @InjectModel(Permission.name) private permissionModel: Model<PermissionDocument>,
     private readonly auditLogsService: AuditLogsService,
+    private readonly castCrewService: CastCrewService,
+    private readonly charactersService: CharactersService,
   ) {}
 
   async create(
@@ -55,62 +64,35 @@ export class ProductionsService {
       throw new BadRequestException('Selected user is not eligible to act as a Production Manager');
     }
 
-    // Validate budget
-    if (createDto.budget < 0) {
-      throw new BadRequestException('Budget cannot be negative');
-    }
-
-    // Validate dates
-    if (new Date(createDto.startDate) > new Date(createDto.endDate)) {
+    const { startDate, endDate } = createDto;
+    if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
       throw new BadRequestException('Start date must be before end date');
     }
 
     const prod = new this.productionModel({
       ...createDto,
-      productionManager: new Types.ObjectId(createDto.productionManager),
+      status: 'Draft',
+      startDate: startDate ? new Date(startDate) : undefined,
+      endDate: endDate ? new Date(endDate) : undefined,
     });
+
     await prod.save();
 
-    // Map the creator to the production in CastCrew so they have resource scope access
-    const creatorMapping = await this.castCrewModel.findOne({
-      userId: new Types.ObjectId(creatorId),
+    // Auto-assign the Production Manager to CastCrew
+    const castCrew = new this.castCrewModel({
+      userId: managerUser._id,
       productionId: prod._id,
-    }).exec();
-    
-    if (!creatorMapping) {
-      const castCrewCreator = new this.castCrewModel({
-        userId: new Types.ObjectId(creatorId),
-        productionId: prod._id,
-        roleInProduction: isAdmin ? 'Super Admin' : 'Production Manager',
-      });
-      await castCrewCreator.save();
-    }
+      roleInProduction: 'Production Manager',
+    });
+    await castCrew.save();
 
-    // Automatically map the assigned productionManager if different from creator
-    if (creatorId !== createDto.productionManager) {
-      const managerMapping = await this.castCrewModel.findOne({
-        userId: managerUser._id,
-        productionId: prod._id,
-      }).exec();
-      
-      if (!managerMapping) {
-        const castCrewManager = new this.castCrewModel({
-          userId: managerUser._id,
-          productionId: prod._id,
-          roleInProduction: 'Production Manager',
-        });
-        await castCrewManager.save();
-      }
-    }
-
-    // Audit Logging
     await this.auditLogsService.log(
       creatorId,
       'PROJECT_CREATED',
       prod._id.toString(),
       'Production',
       '',
-      JSON.stringify(createDto),
+      JSON.stringify(prod),
       undefined,
       'Productions',
       { productionId: prod._id.toString() }
@@ -170,9 +152,7 @@ export class ProductionsService {
     }
 
     // Return paginated response
-    const pageNum = page || 1;
-    const limitNum = limit || 10;
-    const skipNum = (pageNum - 1) * limitNum;
+    const { page: pageNum, limit: limitNum, skip: skipNum } = getPaginationParams(page, limit);
 
     const [productions, total] = await Promise.all([
       this.productionModel
@@ -185,7 +165,7 @@ export class ProductionsService {
       this.productionModel.countDocuments(projectFilter).exec()
     ]);
 
-    const pages = Math.ceil(total / limitNum) || 1;
+    const pages = calculateTotalPages(total, limitNum) || 1;
 
     return {
       productions,
@@ -331,490 +311,66 @@ export class ProductionsService {
     return this.findOne(prod._id.toString());
   }
 
-
-  async assignCastCrew(
-    productionId: string,
-    assignDto: AssignCastCrewDto,
-    requesterId: string,
-  ): Promise<CastCrew> {
-    const { userId, roleInProduction, characterId } = assignDto;
-
-    // Verify user exists and is active/approved
-    const user = await this.userModel.findById(userId).exec();
-    if (!user) {
-      throw new BadRequestException('User not found');
-    }
-    if (!user.isActive) {
-      throw new BadRequestException('Cannot assign an inactive/pending user');
-    }
-    if (user.onboardingStatus !== 'approved') {
-      throw new BadRequestException('Cannot assign user whose onboarding is not approved');
-    }
-
-    // Verify production exists
-    const prod = await this.productionModel.findById(productionId).exec();
-    if (!prod) {
-      throw new NotFoundException('Production not found');
-    }
-
-    // Check if the user is already assigned to this project
-    const existingCastCrew = await this.castCrewModel.findOne({
-      userId: new Types.ObjectId(userId),
-      productionId: new Types.ObjectId(productionId),
-    }).exec();
-    if (existingCastCrew) {
-      throw new BadRequestException('User is already assigned to this project.');
-    }
-
-    let charObjId: Types.ObjectId | null = null;
-    if (characterId) {
-      const char = await this.characterModel.findById(characterId).exec();
-      if (!char) {
-        throw new BadRequestException('Character not found');
-      }
-      if (char.productionId.toString() !== productionId) {
-        throw new BadRequestException('Character does not belong to this project');
-      }
-      if (char.assignments && char.assignments.length > 0) {
-        throw new BadRequestException('Character is already assigned to another cast member');
-      }
-
-      // Check actor exclusivity
-      const userAssignedChar = await this.castCrewModel.findOne({
-        productionId: new Types.ObjectId(productionId),
-        userId: new Types.ObjectId(userId),
-        characterId: { $ne: null }
-      }).exec();
-      if (userAssignedChar) {
-        throw new BadRequestException('Cast member is already assigned to another character in this project.');
-      }
-
-      charObjId = char._id;
-
-      // Update Character Assignments
-      if (!char.assignments.some((id) => id.toString() === userId)) {
-        char.assignments.push(new Types.ObjectId(userId));
-        await char.save();
-      }
-    }
-
-    const castCrew = new this.castCrewModel({
-      userId: new Types.ObjectId(userId),
-      productionId: new Types.ObjectId(productionId),
-      roleInProduction,
-      characterId: charObjId,
-    });
-
-    await castCrew.save();
-
-    const action = characterId ? 'CAST_ASSIGNED' : 'CREW_ASSIGNED';
-    await this.auditLogsService.log(
-      requesterId,
-      action,
-      castCrew._id.toString(),
-      'CastCrew',
-      '',
-      JSON.stringify({ userId, roleInProduction, characterId }),
-      undefined,
-      'Productions',
-      { productionId }
-    );
-
-    return castCrew;
+  // Delegated Cast & Crew actions
+  assignCastCrew(productionId: string, assignDto: AssignCastCrewDto, requesterId: string) {
+    return this.castCrewService.assignCastCrew(productionId, assignDto, requesterId);
   }
 
-  async getCastCrew(productionId: string): Promise<any[]> {
-    return this.castCrewModel
-      .find({ productionId: new Types.ObjectId(productionId) })
-      .populate({
-        path: 'userId',
-        select: '-passwordHash',
-        populate: { path: 'profile' }
-      })
-      .populate('characterId')
-      .exec();
+  getCastCrew(productionId: string) {
+    return this.castCrewService.getCastCrew(productionId);
   }
 
-  async updateCastCrew(
-    productionId: string,
-    castCrewId: string,
-    updateDto: UpdateCastCrewDto,
-    requesterId: string,
-  ): Promise<CastCrew> {
-    const prod = await this.productionModel.findById(productionId).exec();
-    if (!prod) {
-      throw new NotFoundException('Production not found');
-    }
-
-    const castCrew = await this.castCrewModel.findById(castCrewId).exec();
-    if (!castCrew) {
-      throw new NotFoundException('Assignment not found');
-    }
-
-    if (castCrew.productionId.toString() !== productionId) {
-      throw new NotFoundException('Assignment not found');
-    }
-
-    const oldState = JSON.stringify({
-      roleInProduction: castCrew.roleInProduction,
-      characterId: castCrew.characterId ? castCrew.characterId.toString() : null
-    });
-
-    const oldCharId = castCrew.characterId;
-
-    if (updateDto.characterId !== undefined) {
-      const newCharId = updateDto.characterId;
-
-      if (oldCharId?.toString() !== newCharId) {
-        // 1. Remove user from old character assignments
-        if (oldCharId) {
-          const oldChar = await this.characterModel.findById(oldCharId).exec();
-          if (oldChar) {
-            oldChar.assignments = oldChar.assignments.filter(
-              id => id.toString() !== castCrew.userId.toString()
-            );
-            await oldChar.save();
-          }
-        }
-
-        // 2. Add user to new character assignments
-        if (newCharId) {
-          const char = await this.characterModel.findById(newCharId).exec();
-          if (!char) {
-            throw new NotFoundException('Character not found');
-          }
-          if (char.productionId.toString() !== productionId) {
-            throw new BadRequestException('Character does not belong to this project');
-          }
-
-          // Exclusivity: character assigned to another actor?
-          if (char.assignments && char.assignments.length > 0) {
-            throw new BadRequestException('Character is already assigned to another cast member');
-          }
-
-          // Exclusivity: actor assigned to another character?
-          const otherAssigned = await this.castCrewModel.findOne({
-            productionId: new Types.ObjectId(productionId),
-            userId: castCrew.userId,
-            _id: { $ne: castCrew._id },
-            characterId: { $ne: null }
-          }).exec();
-          if (otherAssigned) {
-            throw new BadRequestException('Cast member is already assigned to another character in this project.');
-          }
-
-          if (!char.assignments.some(id => id.toString() === castCrew.userId.toString())) {
-            char.assignments.push(new Types.ObjectId(castCrew.userId));
-            await char.save();
-          }
-
-          castCrew.characterId = new Types.ObjectId(newCharId);
-        } else {
-          castCrew.characterId = null;
-        }
-      }
-    }
-
-    if (updateDto.roleInProduction !== undefined) {
-      castCrew.roleInProduction = updateDto.roleInProduction;
-    }
-
-    await castCrew.save();
-
-    const newState = JSON.stringify({
-      roleInProduction: castCrew.roleInProduction,
-      characterId: castCrew.characterId ? castCrew.characterId.toString() : null
-    });
-
-    let finalAction = 'CAST_UPDATED';
-    if (oldCharId && !castCrew.characterId) {
-      finalAction = 'CAST_REMOVED';
-    } else if (!oldCharId && castCrew.characterId) {
-      finalAction = 'CAST_ASSIGNED';
-    } else if (!castCrew.characterId) {
-      finalAction = 'CREW_UPDATED';
-    }
-
-    await this.auditLogsService.log(
-      requesterId,
-      finalAction,
-      castCrew._id.toString(),
-      'CastCrew',
-      oldState,
-      newState,
-      undefined,
-      'Productions',
-      { productionId }
-    );
-
-    return castCrew;
+  updateCastCrew(productionId: string, castCrewId: string, updateDto: UpdateCastCrewDto, requesterId: string) {
+    return this.castCrewService.updateCastCrew(productionId, castCrewId, updateDto, requesterId);
   }
 
-  async removeCastCrew(
-    productionId: string,
-    castCrewId: string,
-    requesterId: string,
-  ): Promise<void> {
-    const prod = await this.productionModel.findById(productionId).exec();
-    if (!prod) {
-      throw new NotFoundException('Production not found');
-    }
-
-    const castCrew = await this.castCrewModel.findById(castCrewId).exec();
-    if (!castCrew) {
-      throw new NotFoundException('Assignment not found');
-    }
-
-    if (castCrew.productionId.toString() !== productionId) {
-      throw new NotFoundException('Assignment not found');
-    }
-
-    const oldState = JSON.stringify({
-      userId: castCrew.userId.toString(),
-      roleInProduction: castCrew.roleInProduction,
-      characterId: castCrew.characterId ? castCrew.characterId.toString() : null
-    });
-
-    if (castCrew.characterId) {
-      const char = await this.characterModel.findById(castCrew.characterId).exec();
-      if (char) {
-        char.assignments = char.assignments.filter(
-          id => id.toString() !== castCrew.userId.toString()
-        );
-        await char.save();
-      }
-    }
-
-    await this.castCrewModel.findByIdAndDelete(castCrewId).exec();
-
-    const action = castCrew.characterId ? 'CAST_REMOVED' : 'CREW_REMOVED';
-    await this.auditLogsService.log(
-      requesterId,
-      action,
-      castCrewId,
-      'CastCrew',
-      oldState,
-      '',
-      undefined,
-      'Productions',
-      { productionId }
-    );
+  removeCastCrew(productionId: string, castCrewId: string, requesterId: string) {
+    return this.castCrewService.removeCastCrew(productionId, castCrewId, requesterId);
   }
 
-  async createCharacter(
-    productionId: string,
-    createDto: CreateCharacterDto,
-    requesterId: string,
-  ): Promise<Character> {
-    const prod = await this.productionModel.findById(productionId).exec();
-    if (!prod) {
-      throw new NotFoundException('Production not found');
-    }
-
-    const existing = await this.characterModel.findOne({
-      productionId: new Types.ObjectId(productionId),
-      name: createDto.name.trim(),
-    }).exec();
-    if (existing) {
-      throw new BadRequestException('A character with this name already exists in this project');
-    }
-
-    const character = new this.characterModel({
-      ...createDto,
-      name: createDto.name.trim(),
-      productionId: new Types.ObjectId(productionId),
-      assignments: [],
-    });
-
-    await character.save();
-
-    await this.auditLogsService.log(
-      requesterId,
-      'CHARACTER_CREATED',
-      character._id.toString(),
-      'Character',
-      '',
-      JSON.stringify({ name: character.name, description: character.description }),
-      undefined,
-      'Productions',
-      { productionId }
-    );
-
-    return character;
+  getEligibleCast(productionId: string) {
+    return this.castCrewService.getEligibleCast(productionId);
   }
 
-  async getCharacters(productionId: string): Promise<Character[]> {
-    return this.characterModel
-      .find({ productionId: new Types.ObjectId(productionId) })
-      .populate({
-        path: 'assignments',
-        select: '-passwordHash',
-        populate: { path: 'profile' }
-      })
-      .exec();
+  getEligibleCrew(productionId: string) {
+    return this.castCrewService.getEligibleCrew(productionId);
   }
 
-  async updateCharacter(
-    productionId: string,
-    characterId: string,
-    updateDto: UpdateCharacterDto,
-    requesterId: string,
-  ): Promise<Character> {
-    const prod = await this.productionModel.findById(productionId).exec();
-    if (!prod) {
-      throw new NotFoundException('Production not found');
-    }
-
-    const character = await this.characterModel.findById(characterId).exec();
-    if (!character) {
-      throw new NotFoundException('Character not found');
-    }
-
-    if (character.productionId.toString() !== productionId) {
-      throw new NotFoundException('Character not found');
-    }
-
-    const oldState = JSON.stringify({ name: character.name, description: character.description });
-
-    if (updateDto.name !== undefined) {
-      const trimmedName = updateDto.name.trim();
-      if (trimmedName !== character.name) {
-        const existing = await this.characterModel.findOne({
-          productionId: new Types.ObjectId(productionId),
-          name: trimmedName,
-          _id: { $ne: new Types.ObjectId(characterId) },
-        }).exec();
-        if (existing) {
-          throw new BadRequestException('A character with this name already exists in this project');
-        }
-        character.name = trimmedName;
-      }
-    }
-    if (updateDto.description !== undefined) {
-      character.description = updateDto.description;
-    }
-
-    await character.save();
-
-    const newState = JSON.stringify({ name: character.name, description: character.description });
-
-    await this.auditLogsService.log(
-      requesterId,
-      'CHARACTER_UPDATED',
-      character._id.toString(),
-      'Character',
-      oldState,
-      newState,
-      undefined,
-      'Productions',
-      { productionId }
-    );
-
-    return character;
+  // Delegated Characters actions
+  createCharacter(productionId: string, createDto: CreateCharacterDto, requesterId: string) {
+    return this.charactersService.createCharacter(productionId, createDto, requesterId);
   }
 
-  async deleteCharacter(
-    productionId: string,
-    characterId: string,
-    requesterId: string,
-  ): Promise<void> {
-    const prod = await this.productionModel.findById(productionId).exec();
-    if (!prod) {
-      throw new NotFoundException('Production not found');
-    }
-
-    const character = await this.characterModel.findById(characterId).exec();
-    if (!character) {
-      throw new NotFoundException('Character not found');
-    }
-
-    if (character.productionId.toString() !== productionId) {
-      throw new NotFoundException('Character not found');
-    }
-
-    const oldState = JSON.stringify({ name: character.name, description: character.description });
-
-    // Nullify references in CastCrew
-    await this.castCrewModel.updateMany(
-      { productionId: new Types.ObjectId(productionId), characterId: new Types.ObjectId(characterId) },
-      { $set: { characterId: null } }
-    ).exec();
-
-    await this.characterModel.findByIdAndDelete(characterId).exec();
-
-    await this.auditLogsService.log(
-      requesterId,
-      'CHARACTER_DELETED',
-      characterId,
-      'Character',
-      oldState,
-      '',
-      undefined,
-      'Productions',
-      { productionId }
-    );
+  getCharacters(productionId: string) {
+    return this.charactersService.getCharacters(productionId);
   }
 
-  async getEligibleCast(productionId: string): Promise<any[]> {
-    const users = await this.userModel.find({
-      isActive: true,
-      onboardingStatus: 'approved',
-      contractorType: { $in: ['Cast', 'Freelancer', 'None'] }
-    }).populate('profile').exec();
-
-    const assignedCastCrew = await this.castCrewModel.find({
-      productionId: new Types.ObjectId(productionId),
-      characterId: { $ne: null }
-    }).exec();
-    const assignedUserIds = new Set(assignedCastCrew.map(c => c.userId.toString()));
-
-    const eligible = users.filter(u => !assignedUserIds.has(u._id.toString()));
-
-    return eligible.map(u => ({
-      _id: u._id,
-      name: u.name,
-      avatar: u.profile?.photoUrl || null
-    }));
+  updateCharacter(productionId: string, characterId: string, updateDto: UpdateCharacterDto, requesterId: string) {
+    return this.charactersService.updateCharacter(productionId, characterId, updateDto, requesterId);
   }
 
-  async getEligibleCrew(productionId: string): Promise<any[]> {
-    const users = await this.userModel.find({
-      isActive: true,
-      onboardingStatus: 'approved',
-      contractorType: { $ne: 'Cast' }
-    }).populate('profile').exec();
-
-    const assignedCastCrew = await this.castCrewModel.find({
-      productionId: new Types.ObjectId(productionId)
-    }).exec();
-    const assignedUserIds = new Set(assignedCastCrew.map(c => c.userId.toString()));
-
-    const eligible = users.filter(u => !assignedUserIds.has(u._id.toString()));
-
-    return eligible.map(u => ({
-      _id: u._id,
-      name: u.name,
-      avatar: u.profile?.photoUrl || null
-    }));
+  deleteCharacter(productionId: string, characterId: string, requesterId: string) {
+    return this.charactersService.deleteCharacter(productionId, characterId, requesterId);
   }
 
   async findEligibleManagers(): Promise<any[]> {
-    const users = await this.userModel
+    const permission = await this.permissionModel.findOne({ name: 'productions.update' }).lean().exec();
+    if (!permission) {
+      return [];
+    }
+
+    const roles = await this.roleModel.find({ permissions: permission._id }).lean().exec();
+    const roleIds = roles.map(r => r._id);
+
+    const eligible = await this.userModel
       .find({
         isActive: true,
         onboardingStatus: 'approved',
+        systemRoleId: { $in: roleIds },
       })
-      .populate({
-        path: 'systemRoleId',
-        populate: { path: 'permissions' },
-      })
+      .select('_id name')
+      .lean()
       .exec();
-
-    const eligible = users.filter((user) => {
-      const roleObj: any = user.systemRoleId;
-      const permissionsList: any[] = roleObj?.permissions || [];
-      return permissionsList.some((p) => p.name === 'productions.update');
-    });
 
     return eligible.map((user) => ({
       _id: user._id,

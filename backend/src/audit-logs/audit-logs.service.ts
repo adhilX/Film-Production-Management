@@ -1,15 +1,23 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject, forwardRef } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types, ClientSession } from 'mongoose';
 import { AuditLog, AuditLogDocument } from './schemas/audit-log.schema';
 import { User, UserDocument } from '../users/schemas/user.schema';
+import { getPaginationParams, calculateTotalPages } from '../common/utils/pagination.util';
+import { CastCrewService } from '../productions/services/cast-crew.service';
 
 @Injectable()
 export class AuditLogsService {
   constructor(
     @InjectModel(AuditLog.name) private auditLogModel: Model<AuditLogDocument>,
     @InjectModel(User.name) private userModel: Model<UserDocument>,
+    @Inject(forwardRef(() => CastCrewService))
+    private readonly castCrewService: CastCrewService,
   ) {}
+
+  async getProductionIdsForUser(userId: string): Promise<Types.ObjectId[]> {
+    return this.castCrewService.getProductionIdsForUser(userId);
+  }
 
   async log(
     userId: string,
@@ -107,9 +115,7 @@ export class AuditLogsService {
       configChanges: number;
     };
   }> {
-    const page = Math.max(1, Number(query.page) || 1);
-    const limit = Math.min(100, Math.max(1, Number(query.limit) || 10));
-    const skip = (page - 1) * limit;
+    const { page, limit, skip } = getPaginationParams(query.page, query.limit);
 
     const filter: any = {};
 
@@ -198,29 +204,33 @@ export class AuditLogsService {
       sortObj.timestamp = -1;
     }
 
-    const total = await this.auditLogModel.countDocuments(filter).exec();
-    const pages = Math.ceil(total / limit) || 1;
-
     // Calculate dynamic KPI metrics on the same filtered scope
     const securityFilter = {
       ...filter,
       action: { $regex: /SECURITY|DENIAL|REJECT|FAIL/i },
     };
-    const securityEvents = await this.auditLogModel.countDocuments(securityFilter).exec();
 
     const configFilter = {
       ...filter,
       action: { $regex: /CREATE|UPDATE|DELETE|CHANGE/i },
     };
-    const configChanges = await this.auditLogModel.countDocuments(configFilter).exec();
 
-    const logs = await this.auditLogModel
-      .find(filter)
-      .populate('userId', 'email name')
-      .sort(sortObj)
-      .skip(skip)
-      .limit(limit)
-      .exec();
+    // Execute queries in parallel
+    const [total, securityEvents, configChanges, logs] = await Promise.all([
+      this.auditLogModel.countDocuments(filter).exec(),
+      this.auditLogModel.countDocuments(securityFilter).exec(),
+      this.auditLogModel.countDocuments(configFilter).exec(),
+      this.auditLogModel
+        .find(filter)
+        .populate('userId', 'email name')
+        .sort(sortObj)
+        .skip(skip)
+        .limit(limit)
+        .lean()
+        .exec(),
+    ]);
+
+    const pages = calculateTotalPages(total, limit) || 1;
 
     return {
       logs,
