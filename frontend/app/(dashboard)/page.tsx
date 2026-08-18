@@ -610,7 +610,19 @@ export default function DashboardPage() {
                     {displayProjects.map((proj) => (
                       <tr key={proj.id || proj._id} className="hover:bg-slate-50/30 transition duration-150">
                         <td className="py-3 font-bold text-slate-900 flex items-center gap-2">
-                          <span className="text-slate-400">🎬</span> {proj.title}
+                          {proj.imageUrl ? (
+                            <img
+                              src={proj.imageUrl}
+                              alt={proj.title}
+                              className="w-10 h-[52px] object-cover rounded-lg shrink-0 border border-slate-200/60"
+                            />
+                          ) : (
+                            <div className="w-10 h-[52px] bg-slate-50 border border-slate-200 rounded-lg flex flex-col items-center justify-center shrink-0 text-slate-400 text-xs">
+                              <span>🎬</span>
+                              <span className="text-[7px] text-slate-350 tracking-tighter mt-0.5">—</span>
+                            </div>
+                          )}
+                          <span>{proj.title}</span>
                         </td>
                         <td className="py-3 text-slate-650 font-semibold">
                           <div className="flex items-center gap-2">

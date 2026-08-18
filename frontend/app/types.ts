@@ -29,6 +29,7 @@ export interface Production {
   budget: number;
   productionManager: string | User;
   status: 'Draft' | 'Active' | 'On Hold' | 'Completed' | 'Cancelled';
+  imageUrl?: string | null;
   createdAt?: string;
   updatedAt?: string;
 }

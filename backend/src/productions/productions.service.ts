@@ -198,6 +198,7 @@ export class ProductionsService {
     if (updateDto.format) prod.format = updateDto.format;
     if (updateDto.logline !== undefined) prod.logline = updateDto.logline;
     if (updateDto.synopsis !== undefined) prod.synopsis = updateDto.synopsis;
+    if (updateDto.imageUrl !== undefined) prod.imageUrl = updateDto.imageUrl;
 
     if (updateDto.budget !== undefined) {
       if (updateDto.budget < 0) {

@@ -38,6 +38,9 @@ export class Production {
   @Prop({ type: Types.ObjectId, ref: 'User', default: null })
   productionManager: Types.ObjectId;
 
+  @Prop({ type: String, default: null })
+  imageUrl?: string;
+
   @Prop({ required: true, default: 'Draft' })
   status: string;
 }

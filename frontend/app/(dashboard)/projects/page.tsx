@@ -1,10 +1,32 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { Film, Plus, Edit2, Calendar, DollarSign, Globe, Folder, BookOpen, User, Check, AlertCircle } from 'lucide-react';
+import React, { useEffect, useState, useRef } from 'react';
+import {
+  Film,
+  Plus,
+  Edit2,
+  Calendar,
+  DollarSign,
+  Globe,
+  Folder,
+  User,
+  Check,
+  AlertCircle,
+  ChevronLeft,
+  ChevronRight,
+  MoreVertical,
+  SlidersHorizontal,
+  Loader2,
+  Trash2,
+  Image as ImageIcon,
+  Clock,
+  Sparkles,
+  BookOpen
+} from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useProductionStore } from '@/store/useProductionStore';
 import productionsService from '@/services/productionsService';
+import { authService } from '@/services/authService';
 import type { Production } from '@/app/types';
 
 export default function ProductionsPage() {
@@ -14,13 +36,32 @@ export default function ProductionsPage() {
   const setProductions = useProductionStore(state => state.setProductions);
   const setSelectedProduction = useProductionStore(state => state.setSelectedProduction);
 
+  // States
   const [loading, setLoading] = useState(true);
   const [systemUsers, setSystemUsers] = useState<any[]>([]);
-  
-  // Modals state
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editingProd, setEditingProd] = useState<Production | null>(null);
+
+  // Filters & Search
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('All');
+  const [managerFilter, setManagerFilter] = useState('All');
+  const [genreFilter, setGenreFilter] = useState('All');
+
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  // Upload States
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
+
+  // Active Action Dropdown Row ID
+  const [activeRowActions, setActiveRowActions] = useState<string | null>(null);
+  const actionsRef = useRef<HTMLDivElement>(null);
 
   // Form states
   const [formData, setFormData] = useState<{
@@ -35,6 +76,7 @@ export default function ProductionsPage() {
     endDate: string;
     budget: number;
     productionManager: string;
+    imageUrl?: string | null;
     status: 'Draft' | 'Active' | 'On Hold' | 'Completed' | 'Cancelled';
   }>({
     title: '',
@@ -48,10 +90,12 @@ export default function ProductionsPage() {
     endDate: '',
     budget: 0,
     productionManager: '',
+    imageUrl: null,
     status: 'Draft',
   });
 
   const [formError, setFormError] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const hasPermission = (perm: string): boolean => {
     return user?.permissions?.includes(perm) || false;
@@ -61,12 +105,23 @@ export default function ProductionsPage() {
     fetchData();
   }, []);
 
+  // Handle click outside row actions dropdown
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (actionsRef.current && !actionsRef.current.contains(event.target as Node)) {
+        setActiveRowActions(null);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const fetchData = async () => {
     setLoading(true);
     try {
       const prods = await productionsService.getProductions();
       setProductions(prods);
-      
+
       if (hasPermission('productions.create') || hasPermission('productions.update')) {
         const managers = await productionsService.getEligibleManagers();
         setSystemUsers(managers || []);
@@ -78,7 +133,96 @@ export default function ProductionsPage() {
     }
   };
 
+  // Helper: Relative time
+  const getRelativeTime = (dateStr?: string) => {
+    if (!dateStr) return 'N/A';
+    const now = new Date();
+    const updated = new Date(dateStr);
+    const diffMs = now.getTime() - updated.getTime();
+    const diffMins = Math.floor(diffMs / (60 * 1000));
+    const diffHours = Math.floor(diffMs / (60 * 60 * 1000));
+    const diffDays = Math.floor(diffMs / (24 * 60 * 60 * 1000));
+
+    if (diffMins < 60) return `${diffMins || 1}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return updated.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
+  // Validations & Image Drag/Drop
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      await processImageFile(e.dataTransfer.files[0]);
+    }
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      await processImageFile(e.target.files[0]);
+    }
+  };
+
+  const processImageFile = async (file: File) => {
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
+    if (!allowedTypes.includes(file.type)) {
+      setFormError('Invalid file type. Only JPG, JPEG, PNG, and WEBP are supported.');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setFormError('File is too large. Maximum size allowed is 5 MB.');
+      return;
+    }
+
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+    setFormError('');
+
+    // Trigger Cloudinary Upload immediately
+    setIsUploadingImage(true);
+    try {
+      const response = await authService.uploadOnboardingFile(file, 'projectCover');
+      setFormData(prev => ({
+        ...prev,
+        imageUrl: response.fileUrl
+      }));
+    } catch (err: any) {
+      console.error(err);
+      setFormError(err.response?.data?.message || 'Failed to upload project image.');
+      setImageFile(null);
+      setImagePreview(null);
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
+  const removeImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
+    setFormData(prev => ({
+      ...prev,
+      imageUrl: null
+    }));
+  };
+
   const openCreateModal = () => {
+    setImageFile(null);
+    setImagePreview(null);
     setFormData({
       title: '',
       description: '',
@@ -91,6 +235,7 @@ export default function ProductionsPage() {
       endDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       budget: 100000,
       productionManager: '',
+      imageUrl: null,
       status: 'Draft',
     });
     setFormError('');
@@ -103,6 +248,8 @@ export default function ProductionsPage() {
       ? (prod.productionManager as any)._id
       : String(prod.productionManager || '');
 
+    setImageFile(null);
+    setImagePreview(prod.imageUrl || null);
     setFormData({
       title: prod.title,
       description: prod.description || '',
@@ -115,6 +262,7 @@ export default function ProductionsPage() {
       endDate: prod.endDate ? new Date(prod.endDate).toISOString().split('T')[0] : '',
       budget: prod.budget,
       productionManager: mgrId,
+      imageUrl: prod.imageUrl || null,
       status: prod.status,
     });
     setFormError('');
@@ -139,7 +287,7 @@ export default function ProductionsPage() {
       return false;
     }
     if (!formData.productionManager) {
-      setFormError('Production Manager is required.');
+      setFormError('Project Manager is required.');
       return false;
     }
     return true;
@@ -149,7 +297,8 @@ export default function ProductionsPage() {
     e.preventDefault();
     if (!validateForm()) return;
     try {
-      const newProd = await productionsService.createProduction(formData);
+      const payload = { ...formData };
+      const newProd = await productionsService.createProduction(payload);
       setIsCreateOpen(false);
       fetchData();
       if (!selectedProduction) {
@@ -165,7 +314,8 @@ export default function ProductionsPage() {
     if (!editingProd) return;
     if (!validateForm()) return;
     try {
-      const updated = await productionsService.updateProduction(editingProd._id, formData);
+      const payload = { ...formData };
+      const updated = await productionsService.updateProduction(editingProd._id, payload);
       setIsEditOpen(false);
       fetchData();
       if (selectedProduction?._id === editingProd._id) {
@@ -178,16 +328,14 @@ export default function ProductionsPage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'Active': return 'bg-emerald-50 text-emerald-700 border-emerald-150';
-      case 'Draft': return 'bg-amber-50 text-amber-700 border-amber-150';
-      case 'On Hold': return 'bg-orange-50 text-orange-700 border-orange-150';
-      case 'Completed': return 'bg-blue-50 text-blue-700 border-blue-150';
-      case 'Cancelled': return 'bg-rose-50 text-rose-700 border-rose-150';
-      default: return 'bg-slate-50 text-slate-600 border-slate-150';
+      case 'Active': return 'bg-emerald-50 text-emerald-700 border-emerald-100';
+      case 'Draft': return 'bg-blue-50 text-blue-750 border-blue-100';
+      case 'On Hold': return 'bg-amber-50 text-amber-700 border-amber-100';
+      case 'Completed': return 'bg-purple-50 text-purple-700 border-purple-100';
+      case 'Cancelled': return 'bg-rose-50 text-rose-700 border-rose-100';
+      default: return 'bg-slate-50 text-slate-600 border-slate-100';
     }
   };
-
-  const eligibleManagers = systemUsers;
 
   const getValidTransitions = (status: string) => {
     switch (status) {
@@ -198,136 +346,426 @@ export default function ProductionsPage() {
     }
   };
 
+  // Dynamic filter arrays
+  const uniqueGenres = Array.from(new Set(productions.map(p => p.genre).filter(Boolean)));
+  const uniqueManagers = Array.from(
+    new Set(
+      productions.map(p => {
+        if (typeof p.productionManager === 'object' && p.productionManager !== null) {
+          return JSON.stringify({ _id: (p.productionManager as any)._id, name: (p.productionManager as any).name });
+        }
+        return '';
+      }).filter(Boolean)
+    )
+  ).map(str => JSON.parse(str));
+
+  // Determine which managers to show in filter dropdown
+  const filterManagers = (user?.permissions?.includes('users.approve') || user?.permissions?.includes('roles.manage'))
+    ? systemUsers
+    : uniqueManagers;
+
+  // Filter logic
+  const filteredProductions = productions.filter(p => {
+    const mgrName = typeof p.productionManager === 'object' && p.productionManager !== null
+      ? (p.productionManager as any).name || ''
+      : '';
+    const mgrId = typeof p.productionManager === 'object' && p.productionManager !== null
+      ? (p.productionManager as any)._id || ''
+      : String(p.productionManager || '');
+
+    const matchesSearch = p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      mgrName.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const matchesStatus = statusFilter === 'All' || p.status === statusFilter;
+    const matchesManager = managerFilter === 'All' || mgrId === managerFilter;
+    const matchesGenre = genreFilter === 'All' || p.genre === genreFilter;
+
+    return matchesSearch && matchesStatus && matchesManager && matchesGenre;
+  });
+
+  // Client-side pagination
+  const totalItems = filteredProductions.length;
+  const totalPages = Math.ceil(totalItems / pageSize) || 1;
+  const currentProjects = filteredProductions.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+  // Metrics
+  const metricTotal = productions.length;
+  const metricActive = productions.filter(p => p.status === 'Active').length;
+  const metricOnHold = productions.filter(p => p.status === 'On Hold').length;
+  const metricCompleted = productions.filter(p => p.status === 'Completed').length;
+
   return (
-    <div className="max-w-[1400px] mx-auto px-6 md:px-8 lg:px-10 py-8 space-y-6 animate-in fade-in duration-300">
-      {hasPermission('productions.create') && (
-        <div className="flex justify-end">
-          <button
-            onClick={openCreateModal}
-            className="flex items-center gap-2 px-4 py-2.5 bg-indigo-650 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-xs transition cursor-pointer text-xs"
-          >
-            <Plus className="w-4 h-4" />
-            Create Project
-          </button>
+    <div className="flex-1 bg-slate-50 px-6 md:px-8 py-8 space-y-6 overflow-y-auto min-h-screen">
+      {/* Upper Metrics Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Metric 1 */}
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-5 flex flex-col justify-between shadow-2xs hover:shadow-xs transition duration-200">
+          <div className="flex justify-between items-start">
+            <div className="space-y-1">
+              <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Total Projects</span>
+              <span className="text-3xl font-black text-slate-900 leading-none">{loading ? '...' : metricTotal}</span>
+            </div>
+            <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center text-purple-600">
+              <Film className="w-5.5 h-5.5" />
+            </div>
+          </div>
+          <div className="text-[10px] text-slate-450 font-semibold mt-4">
+            Total configured workflows
+          </div>
         </div>
-      )}
 
-      {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {[1, 2].map((i) => (
-            <div key={i} className="bg-white border border-slate-200/80 rounded-2xl h-64 animate-pulse shadow-xs" />
-          ))}
+        {/* Metric 2 */}
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-5 flex flex-col justify-between shadow-2xs hover:shadow-xs transition duration-200">
+          <div className="flex justify-between items-start">
+            <div className="space-y-1">
+              <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Active</span>
+              <span className="text-3xl font-black text-slate-900 leading-none">{loading ? '...' : metricActive}</span>
+            </div>
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
+              <Clock className="w-5.5 h-5.5" />
+            </div>
+          </div>
+          <div className="text-[10px] text-slate-450 font-semibold mt-4">
+            Currently in production
+          </div>
         </div>
-      ) : productions.length > 0 ? (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {productions.map((prod) => {
-            const isCurrentActive = selectedProduction?._id === prod._id;
-            const mgrName = typeof prod.productionManager === 'object' && prod.productionManager !== null
-              ? (prod.productionManager as any).name
-              : 'Unassigned';
 
-            return (
-              <div
-                key={prod._id}
-                className={`bg-white border rounded-2xl p-6 transition flex flex-col justify-between relative overflow-hidden group shadow-xs ${
-                  isCurrentActive ? 'border-indigo-500 shadow-md shadow-indigo-500/5' : 'border-slate-200/80 hover:border-slate-350 hover:shadow-xs'
-                }`}
+        {/* Metric 3 */}
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-5 flex flex-col justify-between shadow-2xs hover:shadow-xs transition duration-200">
+          <div className="flex justify-between items-start">
+            <div className="space-y-1">
+              <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">On Hold</span>
+              <span className="text-3xl font-black text-slate-900 leading-none">{loading ? '...' : metricOnHold}</span>
+            </div>
+            <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600">
+              <AlertCircle className="w-5.5 h-5.5" />
+            </div>
+          </div>
+          <div className="text-[10px] text-slate-450 font-semibold mt-4">
+            Awaiting review or funds
+          </div>
+        </div>
+
+        {/* Metric 4 */}
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-5 flex flex-col justify-between shadow-2xs hover:shadow-xs transition duration-200">
+          <div className="flex justify-between items-start">
+            <div className="space-y-1">
+              <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Completed</span>
+              <span className="text-3xl font-black text-slate-900 leading-none">{loading ? '...' : metricCompleted}</span>
+            </div>
+            <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
+              <Check className="w-5.5 h-5.5" />
+            </div>
+          </div>
+          <div className="text-[10px] text-slate-450 font-semibold mt-4">
+            Finished/archived projects
+          </div>
+        </div>
+      </div>
+
+      {/* Main Table Card */}
+      <div className="bg-white border border-slate-200/80 rounded-2xl shadow-2xs overflow-hidden flex flex-col">
+        {/* Toolbar header */}
+        <div className="p-5 border-b border-slate-100 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between bg-white">
+          <div className="flex items-center gap-3">
+            <SlidersHorizontal className="w-4 h-4 text-slate-400 shrink-0" />
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Filters</span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:items-center gap-3 w-full lg:w-auto">
+            {/* Search Input */}
+            <div className="relative w-full lg:w-64">
+              <input
+                type="text"
+                placeholder="Search projects..."
+                value={searchQuery}
+                onChange={e => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 pl-8 pr-3 text-xs focus:outline-none focus:border-purple-500 text-slate-700"
+              />
+              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs select-none">🔍</span>
+            </div>
+
+            {/* Status Dropdown */}
+            <select
+              value={statusFilter}
+              onChange={e => { setStatusFilter(e.target.value); setCurrentPage(1); }}
+              className="bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-xs text-slate-650 font-bold focus:outline-none focus:border-purple-500 cursor-pointer"
+            >
+              <option value="All">All Statuses</option>
+              <option value="Draft">Draft</option>
+              <option value="Active">Active</option>
+              <option value="On Hold">On Hold</option>
+              <option value="Completed">Completed</option>
+              <option value="Cancelled">Cancelled</option>
+            </select>
+
+            {/* Manager Dropdown */}
+            <select
+              value={managerFilter}
+              onChange={e => { setManagerFilter(e.target.value); setCurrentPage(1); }}
+              className="bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-xs text-slate-650 font-bold focus:outline-none focus:border-purple-500 cursor-pointer max-w-xs"
+            >
+              <option value="All">All Managers</option>
+              {filterManagers.map((mgr) => (
+                <option key={mgr._id} value={mgr._id}>{mgr.name}</option>
+              ))}
+            </select>
+
+            {/* Genre Dropdown */}
+            <select
+              value={genreFilter}
+              onChange={e => { setGenreFilter(e.target.value); setCurrentPage(1); }}
+              className="bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-xs text-slate-650 font-bold focus:outline-none focus:border-purple-500 cursor-pointer"
+            >
+              <option value="All">All Genres</option>
+              {uniqueGenres.map((genre) => (
+                <option key={genre} value={genre}>{genre}</option>
+              ))}
+            </select>
+
+            {/* Create Project Button */}
+            {hasPermission('productions.create') && (
+              <button
+                onClick={openCreateModal}
+                className="flex items-center justify-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-755 text-white font-bold rounded-xl shadow-xs transition cursor-pointer text-xs shrink-0 w-full lg:w-auto"
               >
-                {/* Active Indicator Badge */}
-                {isCurrentActive && (
-                  <div className="absolute top-0 right-0 bg-indigo-650 text-white text-[9px] font-extrabold uppercase px-3.5 py-1 rounded-bl-xl shadow flex items-center gap-1">
-                    <Check size={10} strokeWidth={3} /> Active Project
-                  </div>
-                )}
+                <Plus className="w-4 h-4 stroke-[2.5]" />
+                Create Project
+              </button>
+            )}
+          </div>
+        </div>
 
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-base font-bold text-slate-800 group-hover:text-indigo-650 transition pr-24 leading-snug">{prod.title}</h3>
-                    <span className={`inline-block border text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 mt-2 rounded-lg ${getStatusColor(prod.status)}`}>
-                      {prod.status}
-                    </span>
-                  </div>
+        {/* Responsive Table Body */}
+        {loading ? (
+          <div className="py-20 flex flex-col items-center justify-center text-slate-400 gap-3">
+            <Loader2 className="w-8 h-8 animate-spin text-purple-650" />
+            <span className="text-xs font-semibold">Loading projects directory...</span>
+          </div>
+        ) : currentProjects.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs text-left border-collapse">
+              <thead>
+                <tr className="text-slate-400 font-extrabold uppercase tracking-wider border-b border-slate-100 bg-slate-50/40">
+                  <th className="py-3.5 px-5 select-none">Project</th>
+                  <th className="py-3.5 px-5 select-none">Project Manager</th>
+                  <th className="py-3.5 px-5 select-none">Status</th>
+                  <th className="py-3.5 px-5 select-none">Budget</th>
+                  <th className="py-3.5 px-5 select-none">Timeline</th>
+                  <th className="py-3.5 px-5 select-none">Updated</th>
+                  <th className="py-3.5 px-5 select-none text-right"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {currentProjects.map((proj) => {
+                  const isCurrentActive = selectedProduction?._id === proj._id;
+                  const mgrName = typeof proj.productionManager === 'object' && proj.productionManager !== null
+                    ? (proj.productionManager as any).name
+                    : 'Unassigned';
+                  const mgrInitial = mgrName.charAt(0).toUpperCase();
 
-                  <p className="text-xs text-slate-500 leading-relaxed line-clamp-2">
-                    {prod.logline || prod.description || 'No logline provided.'}
-                  </p>
-
-                  <div className="grid grid-cols-2 gap-4 border-y border-slate-100 py-3 text-xs text-slate-655 font-medium">
-                    <div className="flex items-center gap-2">
-                      <Folder className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
-                      <span className="truncate">{prod.format} • {prod.genre}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Globe className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
-                      <span className="truncate">{prod.language}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Calendar className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
-                      <span className="truncate">
-                        {prod.startDate ? new Date(prod.startDate).toLocaleDateString() : 'N/A'} - {prod.endDate ? new Date(prod.endDate).toLocaleDateString() : 'N/A'}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <DollarSign className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
-                      <span className="font-bold text-slate-700 truncate">
-                        Budget: ${prod.budget?.toLocaleString() || '0'}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2 text-xs text-slate-500 bg-slate-50 p-2.5 rounded-xl border border-slate-150">
-                    <User className="w-3.5 h-3.5 text-indigo-600" />
-                    <span>Manager: <strong className="text-slate-705 font-bold">{mgrName}</strong></span>
-                  </div>
-                </div>
-
-                <div className="flex gap-2.5 mt-6">
-                  <button
-                    onClick={() => setSelectedProduction(prod)}
-                    disabled={isCurrentActive}
-                    className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
-                      isCurrentActive
-                        ? 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed'
-                        : 'bg-indigo-650 hover:bg-indigo-750 text-white'
-                    }`}
-                  >
-                    Select Project
-                  </button>
-
-                  {hasPermission('productions.update') && (
-                    <button
-                      onClick={() => openEditModal(prod)}
-                      className="py-2 px-3.5 border border-slate-200 hover:bg-slate-50 rounded-xl text-slate-700 transition cursor-pointer flex items-center gap-1 text-xs font-bold"
+                  return (
+                    <tr
+                      key={proj._id}
+                      onClick={() => setSelectedProduction(proj)}
+                      className={`hover:bg-slate-50/50 transition cursor-pointer duration-150 ${isCurrentActive ? 'bg-purple-50/100' : ''
+                        }`}
                     >
-                      <Edit2 size={13} /> Edit
-                    </button>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      ) : (
-        <div className="bg-white border border-slate-200/80 rounded-2xl p-16 text-center text-slate-450 space-y-4 max-w-2xl mx-auto shadow-xs">
-          <Film size={44} className="mx-auto text-indigo-500/40" />
-          <h3 className="text-sm font-bold text-slate-800">No Projects Found</h3>
-          <p className="text-xs text-slate-450">You are not mapped to any active projects yet.</p>
-        </div>
-      )}
+                      {/* Project Cover & Title */}
+                      <td className="py-4 px-5 font-bold text-slate-900">
+                        <div className="flex items-center gap-3">
+                          {/* Image Poster */}
+                          {proj.imageUrl ? (
+                            <img
+                              src={proj.imageUrl}
+                              alt={proj.title}
+                              className="w-12 h-16 object-cover rounded-lg shrink-0 border border-slate-200/60 shadow-3xs"
+                            />
+                          ) : (
+                            <div className="w-12 h-16 bg-slate-50 border border-slate-200 rounded-lg flex flex-col items-center justify-center shrink-0 text-slate-400 text-xs">
+                              <span>🎬</span>
+                              <span className="text-[7px] text-slate-350 tracking-tighter mt-0.5 font-mono">—</span>
+                            </div>
+                          )}
+                          <div className="leading-tight">
+                            <div className="flex items-center gap-1.5">
+                              <span className="block text-slate-800 text-xs font-black">{proj.title}</span>
+                              {isCurrentActive && (
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-extrabold bg-indigo-50 text-indigo-700 border border-indigo-100 uppercase tracking-wider shrink-0">
+                                  Active
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-[10px] text-slate-450 font-semibold block mt-1">
+                              {proj.format} · {proj.genre}
+                            </span>
+                          </div>
+                        </div>
+                      </td>
 
-      {/* --- CREATE PRODUCTION MODAL --- */}
+                      {/* Project Manager */}
+                      <td className="py-4 px-5 text-slate-655 font-bold">
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 rounded-full bg-indigo-50 border border-indigo-100 flex items-center justify-center text-[10px] font-bold text-indigo-700 shrink-0">
+                            {mgrInitial}
+                          </div>
+                          <span className="truncate max-w-[130px]">{mgrName}</span>
+                        </div>
+                      </td>
+
+                      {/* Status */}
+                      <td className="py-4 px-5">
+                        <span className={`inline-block py-0.5 px-2.5 border rounded-full text-[9px] font-extrabold uppercase tracking-wider ${getStatusColor(proj.status)}`}>
+                          {proj.status}
+                        </span>
+                      </td>
+
+                      {/* Budget */}
+                      <td className="py-4 px-5 font-extrabold text-slate-700">
+                        ${proj.budget?.toLocaleString() || '0'}
+                      </td>
+
+                      {/* Timeline */}
+                      <td className="py-4 px-5 text-slate-450 font-semibold leading-normal">
+                        <div className="flex flex-col">
+                          <span>Start: {proj.startDate ? new Date(proj.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}</span>
+                          <span className="text-[10px] mt-0.5">End: {proj.endDate ? new Date(proj.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}</span>
+                        </div>
+                      </td>
+
+                      {/* Updated Relative */}
+                      <td className="py-4 px-5 text-slate-450 font-bold">
+                        {getRelativeTime(proj.updatedAt || proj.createdAt)}
+                      </td>
+
+                      {/* Actions */}
+                      <td className="py-4 px-5 text-right" onClick={e => e.stopPropagation()}>
+                        <div className="relative inline-block text-left">
+                          <button
+                            onClick={() => setActiveRowActions(activeRowActions === proj._id ? null : proj._id)}
+                            className="p-1.5 text-slate-450 hover:text-slate-800 rounded-lg hover:bg-slate-100 transition cursor-pointer"
+                          >
+                            <MoreVertical className="w-4 h-4" />
+                          </button>
+
+                          {activeRowActions === proj._id && (
+                            <div
+                              ref={actionsRef}
+                              className="absolute right-0 mt-1 w-40 bg-white border border-slate-200 rounded-xl shadow-lg py-1 z-30 animate-in fade-in slide-in-from-top-1 duration-100"
+                            >
+                              <button
+                                onClick={() => {
+                                  setSelectedProduction(proj);
+                                  setActiveRowActions(null);
+                                }}
+                                disabled={isCurrentActive}
+                                className={`w-full text-left px-3.5 py-2 text-xs font-semibold flex items-center gap-2 transition ${isCurrentActive
+                                    ? 'text-slate-350 cursor-not-allowed bg-slate-50/30'
+                                    : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900'
+                                  }`}
+                              >
+                                <Check className="w-3.5 h-3.5 text-slate-400" /> Set as Active
+                              </button>
+
+                              {hasPermission('productions.update') && (
+                                <button
+                                  onClick={() => {
+                                    openEditModal(proj);
+                                    setActiveRowActions(null);
+                                  }}
+                                  className="w-full text-left px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 flex items-center gap-2 transition border-t border-slate-50"
+                                >
+                                  <Edit2 className="w-3.5 h-3.5 text-slate-450" /> Edit Project
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="py-20 text-center text-slate-400 space-y-3">
+            <Film className="w-12 h-12 mx-auto text-slate-300" />
+            <h3 className="text-sm font-bold text-slate-700">No Projects Found</h3>
+            <p className="text-xs text-slate-450">Try adjusting your filters or search terms.</p>
+          </div>
+        )}
+
+        {/* Pagination Toolbar */}
+        {!loading && totalItems > 0 && (
+          <div className="p-4 border-t border-slate-100 flex items-center justify-between bg-slate-50/50 flex-col sm:flex-row gap-3">
+            <div className="flex items-center gap-4 text-slate-450 font-semibold text-xs">
+              <span>
+                Showing {Math.min(totalItems, (currentPage - 1) * pageSize + 1)} to{' '}
+                {Math.min(totalItems, currentPage * pageSize)} of {totalItems} projects
+              </span>
+              <div className="flex items-center gap-2">
+                <span>Show:</span>
+                <select
+                  value={pageSize}
+                  onChange={e => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
+                  className="bg-white border border-slate-200 rounded-lg py-1 px-2 focus:outline-none focus:border-purple-500 cursor-pointer text-slate-650"
+                >
+                  <option value={5}>5</option>
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={50}>50</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+                className="p-1.5 border border-slate-200 rounded-xl bg-white hover:bg-slate-50 transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+              >
+                <ChevronLeft className="w-4 h-4 text-slate-500" />
+              </button>
+
+              {Array.from({ length: totalPages }).map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCurrentPage(i + 1)}
+                  className={`w-7 h-7 rounded-xl text-xs font-bold transition cursor-pointer flex items-center justify-center ${currentPage === i + 1
+                      ? 'bg-purple-650 text-white shadow-sm'
+                      : 'border border-slate-200 bg-white hover:bg-slate-50 text-slate-655'
+                    }`}
+                >
+                  {i + 1}
+                </button>
+              ))}
+
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages}
+                className="p-1.5 border border-slate-200 rounded-xl bg-white hover:bg-slate-50 transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+              >
+                <ChevronRight className="w-4 h-4 text-slate-500" />
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* --- CREATE PROJECT MODAL --- */}
       {isCreateOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-xs" onClick={() => setIsCreateOpen(false)} />
           <div className="relative bg-white border border-slate-200 w-full max-w-2xl rounded-2xl overflow-hidden shadow-xl animate-in zoom-in-95 duration-200 flex flex-col">
             <div className="p-6 border-b border-slate-100 flex justify-between items-center">
               <h2 className="text-base font-bold text-slate-800 flex items-center gap-2">
-                <Film className="w-5 h-5 text-indigo-600" /> Create Film Project
+                <Film className="w-5 h-5 text-indigo-650" /> Create Project
               </h2>
               <button onClick={() => setIsCreateOpen(false)} className="text-slate-400 hover:text-slate-655 cursor-pointer font-bold text-xs">Close</button>
             </div>
 
-            <form onSubmit={handleCreateSubmit} className="p-6 space-y-4 overflow-y-auto max-h-[70vh]">
+            <form onSubmit={handleCreateSubmit} className="p-6 space-y-5 overflow-y-auto max-h-[70vh]">
               {formError && (
                 <div className="bg-red-50 border border-red-200 text-red-750 rounded-xl p-3 text-xs flex items-center gap-2">
                   <AlertCircle className="w-4 h-4 shrink-0" />
@@ -335,9 +773,73 @@ export default function ProductionsPage() {
                 </div>
               )}
 
+              {/* PROJECT COVER IMAGE SECTION */}
+              <div className="space-y-2">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-450 block">Project Cover Image</span>
+
+                {/* Drag and Drop Container */}
+                <div
+                  onDragEnter={handleDrag}
+                  onDragOver={handleDrag}
+                  onDragLeave={handleDrag}
+                  onDrop={handleDrop}
+                  className={`w-full min-h-[140px] border-2 border-dashed rounded-2xl p-4 flex flex-col items-center justify-center gap-2 transition duration-200 relative ${dragActive ? 'border-indigo-500 bg-indigo-50/10' : 'border-slate-200 bg-slate-50/40 hover:bg-slate-50'
+                    }`}
+                >
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    className="hidden"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    disabled={isUploadingImage}
+                  />
+
+                  {isUploadingImage ? (
+                    <div className="flex flex-col items-center gap-2 py-4">
+                      <Loader2 className="w-8 h-8 animate-spin text-indigo-655" />
+                      <span className="text-xs font-semibold text-slate-500">Uploading cover image to Cloudinary...</span>
+                    </div>
+                  ) : imagePreview ? (
+                    <div className="flex items-center gap-4 w-full px-4">
+                      <img src={imagePreview} alt="Preview" className="w-16 h-20 object-cover rounded-lg border border-slate-200 shadow-3xs" />
+                      <div className="flex-1 leading-tight min-w-0">
+                        <span className="block text-xs font-bold text-slate-800 truncate">{imageFile?.name || 'Uploaded Cover'}</span>
+                        <span className="text-[10px] text-emerald-650 font-bold block mt-1">Ready to save</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={removeImage}
+                        className="p-2 text-rose-650 hover:bg-rose-50 rounded-xl transition cursor-pointer"
+                      >
+                        <Trash2 className="w-4.5 h-4.5" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center text-center p-3">
+                      <div className="w-9 h-9 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 mb-2">
+                        <ImageIcon className="w-5 h-5" />
+                      </div>
+                      <p className="text-xs font-bold text-slate-700">
+                        Drag and drop your poster, or{' '}
+                        <button
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          className="text-indigo-650 hover:text-indigo-800 transition font-black underline cursor-pointer"
+                        >
+                          browse files
+                        </button>
+                      </p>
+                      <p className="text-[9px] text-slate-400 mt-1 font-medium">Supports: JPG, JPEG, PNG, WEBP (Max 5MB)</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Form Input fields */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-450">Title</label>
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-455">Title</label>
                   <input
                     type="text"
                     name="title"
@@ -348,7 +850,7 @@ export default function ProductionsPage() {
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-450">Budget ($)</label>
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-455">Budget ($)</label>
                   <input
                     type="number"
                     name="budget"
@@ -359,7 +861,7 @@ export default function ProductionsPage() {
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-450">Genre</label>
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-455">Genre</label>
                   <input
                     type="text"
                     name="genre"
@@ -370,7 +872,7 @@ export default function ProductionsPage() {
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-450">Format</label>
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-455">Format</label>
                   <input
                     type="text"
                     name="format"
@@ -381,7 +883,7 @@ export default function ProductionsPage() {
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-450">Language</label>
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-455">Language</label>
                   <input
                     type="text"
                     name="language"
@@ -392,7 +894,7 @@ export default function ProductionsPage() {
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-450">Production Manager</label>
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-455">Project Manager</label>
                   <select
                     name="productionManager"
                     required
@@ -400,14 +902,14 @@ export default function ProductionsPage() {
                     onChange={handleInputChange}
                     className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-700 appearance-none cursor-pointer"
                   >
-                    <option value="">Select Eligible Manager...</option>
-                    {eligibleManagers.map((u) => (
+                    <option value="">Select Manager...</option>
+                    {systemUsers.map((u) => (
                       <option key={u._id} value={u._id}>{u.name}</option>
                     ))}
                   </select>
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-450">Start Date</label>
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-455">Start Date</label>
                   <input
                     type="date"
                     name="startDate"
@@ -418,7 +920,7 @@ export default function ProductionsPage() {
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-450">End Date</label>
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-455">End Date</label>
                   <input
                     type="date"
                     name="endDate"
@@ -431,7 +933,7 @@ export default function ProductionsPage() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-450">Logline</label>
+                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-455">Logline</label>
                 <input
                   type="text"
                   name="logline"
@@ -442,7 +944,7 @@ export default function ProductionsPage() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-450">Synopsis</label>
+                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-455">Synopsis</label>
                 <textarea
                   name="synopsis"
                   value={formData.synopsis}
@@ -457,14 +959,15 @@ export default function ProductionsPage() {
               <button
                 type="button"
                 onClick={() => setIsCreateOpen(false)}
-                className="px-4 py-2 border border-slate-200 rounded-xl text-slate-650 hover:bg-slate-100 text-xs font-bold cursor-pointer"
+                className="px-4 py-2 border border-slate-200 rounded-xl text-slate-655 hover:bg-slate-100 text-xs font-bold cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 onClick={handleCreateSubmit}
-                className="px-5 py-2 bg-indigo-650 hover:bg-indigo-755 text-white rounded-xl text-xs font-bold cursor-pointer"
+                disabled={isUploadingImage}
+                className="px-5 py-2 bg-indigo-600 hover:bg-indigo-755 text-white rounded-xl text-xs font-bold cursor-pointer disabled:opacity-55 disabled:cursor-not-allowed"
               >
                 Create
               </button>
@@ -473,19 +976,19 @@ export default function ProductionsPage() {
         </div>
       )}
 
-      {/* --- EDIT PRODUCTION MODAL --- */}
+      {/* --- EDIT PROJECT MODAL --- */}
       {isEditOpen && editingProd && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-xs" onClick={() => setIsEditOpen(false)} />
           <div className="relative bg-white border border-slate-200 w-full max-w-2xl rounded-2xl overflow-hidden shadow-xl animate-in zoom-in-95 duration-200 flex flex-col">
             <div className="p-6 border-b border-slate-100 flex justify-between items-center">
               <h2 className="text-base font-bold text-slate-800 flex items-center gap-2">
-                <Film className="w-5 h-5 text-indigo-600" /> Edit Project: {editingProd.title}
+                <Film className="w-5 h-5 text-indigo-650" /> Edit Project: {editingProd.title}
               </h2>
               <button onClick={() => setIsEditOpen(false)} className="text-slate-400 hover:text-slate-655 cursor-pointer font-bold text-xs">Close</button>
             </div>
 
-            <form onSubmit={handleEditSubmit} className="p-6 space-y-4 overflow-y-auto max-h-[70vh]">
+            <form onSubmit={handleEditSubmit} className="p-6 space-y-5 overflow-y-auto max-h-[70vh]">
               {formError && (
                 <div className="bg-red-50 border border-red-200 text-red-750 rounded-xl p-3 text-xs flex items-center gap-2">
                   <AlertCircle className="w-4 h-4 shrink-0" />
@@ -493,9 +996,73 @@ export default function ProductionsPage() {
                 </div>
               )}
 
+              {/* PROJECT COVER IMAGE SECTION */}
+              <div className="space-y-2">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-455 block">Project Cover Image</span>
+
+                {/* Drag and Drop Container */}
+                <div
+                  onDragEnter={handleDrag}
+                  onDragOver={handleDrag}
+                  onDragLeave={handleDrag}
+                  onDrop={handleDrop}
+                  className={`w-full min-h-[140px] border-2 border-dashed rounded-2xl p-4 flex flex-col items-center justify-center gap-2 transition duration-200 relative ${dragActive ? 'border-indigo-500 bg-indigo-50/10' : 'border-slate-200 bg-slate-50/40 hover:bg-slate-50'
+                    }`}
+                >
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    className="hidden"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    disabled={isUploadingImage}
+                  />
+
+                  {isUploadingImage ? (
+                    <div className="flex flex-col items-center gap-2 py-4">
+                      <Loader2 className="w-8 h-8 animate-spin text-indigo-655" />
+                      <span className="text-xs font-semibold text-slate-500">Uploading cover image to Cloudinary...</span>
+                    </div>
+                  ) : imagePreview ? (
+                    <div className="flex items-center gap-4 w-full px-4">
+                      <img src={imagePreview} alt="Preview" className="w-16 h-20 object-cover rounded-lg border border-slate-200 shadow-3xs" />
+                      <div className="flex-1 leading-tight min-w-0">
+                        <span className="block text-xs font-bold text-slate-800 truncate">{imageFile?.name || 'Current Poster'}</span>
+                        <span className="text-[10px] text-emerald-650 font-bold block mt-1">Ready to save</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={removeImage}
+                        className="p-2 text-rose-650 hover:bg-rose-50 rounded-xl transition cursor-pointer"
+                      >
+                        <Trash2 className="w-4.5 h-4.5" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center text-center p-3">
+                      <div className="w-9 h-9 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 mb-2">
+                        <ImageIcon className="w-5 h-5" />
+                      </div>
+                      <p className="text-xs font-bold text-slate-700">
+                        Drag and drop your poster, or{' '}
+                        <button
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          className="text-indigo-650 hover:text-indigo-800 transition font-black underline cursor-pointer"
+                        >
+                          browse files
+                        </button>
+                      </p>
+                      <p className="text-[9px] text-slate-450 mt-1 font-semibold">Supports: JPG, JPEG, PNG, WEBP (Max 5MB)</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Form Input fields */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-450">Title</label>
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-455">Title</label>
                   <input
                     type="text"
                     name="title"
@@ -506,7 +1073,7 @@ export default function ProductionsPage() {
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-450">Status & Transitions</label>
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-455">Status & Transitions</label>
                   <select
                     name="status"
                     required
@@ -521,7 +1088,7 @@ export default function ProductionsPage() {
                   </select>
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-450">Budget ($)</label>
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-455">Budget ($)</label>
                   <input
                     type="number"
                     name="budget"
@@ -532,7 +1099,7 @@ export default function ProductionsPage() {
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-450">Genre</label>
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-455">Genre</label>
                   <input
                     type="text"
                     name="genre"
@@ -543,7 +1110,7 @@ export default function ProductionsPage() {
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-450">Format</label>
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-455">Format</label>
                   <input
                     type="text"
                     name="format"
@@ -554,7 +1121,7 @@ export default function ProductionsPage() {
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-450">Language</label>
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-455">Language</label>
                   <input
                     type="text"
                     name="language"
@@ -565,7 +1132,7 @@ export default function ProductionsPage() {
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-450">Production Manager</label>
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-455">Project Manager</label>
                   <select
                     name="productionManager"
                     required
@@ -573,13 +1140,13 @@ export default function ProductionsPage() {
                     onChange={handleInputChange}
                     className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-705 cursor-pointer"
                   >
-                    {eligibleManagers.map((u) => (
+                    {systemUsers.map((u) => (
                       <option key={u._id} value={u._id}>{u.name}</option>
                     ))}
                   </select>
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-455 font-bold">Start Date</label>
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-455">Start Date</label>
                   <input
                     type="date"
                     name="startDate"
@@ -589,8 +1156,8 @@ export default function ProductionsPage() {
                     className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-700 cursor-pointer"
                   />
                 </div>
-                <div className="space-y-1 col-span-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-450">End Date</label>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-455">End Date</label>
                   <input
                     type="date"
                     name="endDate"
@@ -603,7 +1170,7 @@ export default function ProductionsPage() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-450">Logline</label>
+                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-455">Logline</label>
                 <input
                   type="text"
                   name="logline"
@@ -614,7 +1181,7 @@ export default function ProductionsPage() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-450">Synopsis</label>
+                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-455">Synopsis</label>
                 <textarea
                   name="synopsis"
                   value={formData.synopsis}
@@ -636,7 +1203,8 @@ export default function ProductionsPage() {
               <button
                 type="submit"
                 onClick={handleEditSubmit}
-                className="px-5 py-2 bg-indigo-650 hover:bg-indigo-755 text-white rounded-xl text-xs font-bold cursor-pointer"
+                disabled={isUploadingImage}
+                className="px-5 py-2 bg-indigo-600 hover:bg-indigo-755 text-white rounded-xl text-xs font-bold cursor-pointer disabled:opacity-55 disabled:cursor-not-allowed"
               >
                 Save Changes
               </button>

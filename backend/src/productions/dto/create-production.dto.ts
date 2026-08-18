@@ -64,6 +64,11 @@ export class CreateProductionDto {
   @IsNotEmpty()
   productionManager: string;
 
+  @ApiProperty({ example: 'https://res.cloudinary.com/demo/image/upload/sample.jpg', required: false })
+  @IsString()
+  @IsOptional()
+  imageUrl?: string;
+
   @ApiProperty({ example: 'Draft', required: false })
   @IsString()
   @IsOptional()

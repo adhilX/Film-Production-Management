@@ -50,7 +50,7 @@ export default function NavBar({ title: propTitle, subtitle: propSubtitle }: Nav
     if (pathname.startsWith('/costumes')) {
       return { title: 'Costumes & Wardrobe', subtitle: 'Manage costume inventories and wardrobe assignments.' };
     }
-    if (pathname.startsWith('/crew')) {
+    if (pathname.startsWith('/cast-crew')) {
       return { title: 'Cast & Crew Assignments', subtitle: 'Manage personnel schedules and assignments.' };
     }
     if (pathname.startsWith('/locations')) {
@@ -59,7 +59,7 @@ export default function NavBar({ title: propTitle, subtitle: propSubtitle }: Nav
     if (pathname.startsWith('/funds')) {
       return { title: 'Budget & Funds', subtitle: 'Monitor transaction histories and fund requests.' };
     }
-    if (pathname.startsWith('/productions')) {
+    if (pathname.startsWith('/projects')) {
       return { title: 'Project Overview', subtitle: 'Manage and overview film projects.' };
     }
     if (pathname.startsWith('/onboarding')) {

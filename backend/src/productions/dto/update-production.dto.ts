@@ -57,6 +57,11 @@ export class UpdateProductionDto {
   @IsOptional()
   productionManager?: string;
 
+  @ApiProperty({ example: 'https://res.cloudinary.com/demo/image/upload/sample.jpg', required: false, nullable: true })
+  @IsString()
+  @IsOptional()
+  imageUrl?: string;
+
   @ApiProperty({ example: 'Active', required: false })
   @IsString()
   @IsOptional()
