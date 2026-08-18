@@ -15,6 +15,7 @@ import { UpdateCastCrewDto } from './dto/update-cast-crew.dto';
 import { CreateCharacterDto } from './dto/create-character.dto';
 import { UpdateCharacterDto } from './dto/update-character.dto';
 import { UpdateProductionDto } from './dto/update-production.dto';
+import { GetProductionsQueryDto } from './dto/get-productions-query.dto';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 
 @Injectable()
@@ -102,20 +103,97 @@ export class ProductionsService {
       }
     }
 
+    // Audit Logging
+    await this.auditLogsService.log(
+      creatorId,
+      'PROJECT_CREATED',
+      prod._id.toString(),
+      'Production',
+      '',
+      JSON.stringify(createDto),
+      undefined,
+      'Productions',
+      { productionId: prod._id.toString() }
+    );
+
     return prod;
   }
 
-  async findAll(userId: string, isAdmin: boolean): Promise<Production[]> {
-    if (isAdmin) {
-      return this.productionModel.find().populate('productionManager', '-passwordHash').exec();
+  async findAll(userId: string, isAdmin: boolean, queryDto?: GetProductionsQueryDto): Promise<any> {
+    const page = queryDto?.page ? Number(queryDto.page) : undefined;
+    const limit = queryDto?.limit ? Number(queryDto.limit) : undefined;
+    const search = queryDto?.search || '';
+    const status = queryDto?.status || 'All';
+    const genre = queryDto?.genre || 'All';
+    const productionManager = queryDto?.productionManager || 'All';
+    const sortBy = queryDto?.sortBy || 'createdAt';
+    const sortOrder = queryDto?.sortOrder || 'desc';
+
+    // 1. Build project query/filter matching assignments or Admin access
+    const projectFilter: any = {};
+    if (!isAdmin) {
+      const mappings = await this.castCrewModel
+        .find({ userId: new Types.ObjectId(userId) })
+        .exec();
+      const productionIds = mappings.map((m) => m.productionId);
+      projectFilter._id = { $in: productionIds };
     }
 
-    // Filter productions by user assignments
-    const mappings = await this.castCrewModel
-      .find({ userId: new Types.ObjectId(userId) })
-      .exec();
-    const productionIds = mappings.map((m) => m.productionId);
-    return this.productionModel.find({ _id: { $in: productionIds } }).populate('productionManager', '-passwordHash').exec();
+    // Apply Search (case-insensitive regex matching title)
+    if (search) {
+      projectFilter.title = { $regex: search, $options: 'i' };
+    }
+
+    // Apply Status Filter
+    if (status && status !== 'All') {
+      projectFilter.status = status;
+    }
+
+    // Apply Genre Filter
+    if (genre && genre !== 'All') {
+      projectFilter.genre = genre;
+    }
+
+    // Apply Manager Filter
+    if (productionManager && productionManager !== 'All') {
+      projectFilter.productionManager = new Types.ObjectId(productionManager);
+    }
+
+    // 2. Decide if returning paginated or raw array
+    if (page === undefined && limit === undefined) {
+      // Return raw Production[] array
+      return this.productionModel
+        .find(projectFilter)
+        .populate('productionManager', '-passwordHash')
+        .sort({ [sortBy]: sortOrder === 'desc' ? -1 : 1 })
+        .exec();
+    }
+
+    // Return paginated response
+    const pageNum = page || 1;
+    const limitNum = limit || 10;
+    const skipNum = (pageNum - 1) * limitNum;
+
+    const [productions, total] = await Promise.all([
+      this.productionModel
+        .find(projectFilter)
+        .populate('productionManager', '-passwordHash')
+        .sort({ [sortBy]: sortOrder === 'desc' ? -1 : 1 })
+        .skip(skipNum)
+        .limit(limitNum)
+        .exec(),
+      this.productionModel.countDocuments(projectFilter).exec()
+    ]);
+
+    const pages = Math.ceil(total / limitNum) || 1;
+
+    return {
+      productions,
+      total,
+      page: pageNum,
+      pages,
+      limit: limitNum,
+    };
   }
 
   async findOne(id: string): Promise<Production> {
@@ -129,11 +207,19 @@ export class ProductionsService {
   async update(
     id: string,
     updateDto: UpdateProductionDto,
+    updaterId?: string,
   ): Promise<Production> {
     const prod = await this.productionModel.findById(id).exec();
     if (!prod) {
       throw new NotFoundException('Production not found');
     }
+
+    const previousState = {
+      title: prod.title,
+      description: prod.description,
+      status: prod.status,
+      productionManager: prod.productionManager?.toString(),
+    };
 
     // Status Validation State Machine
     if (updateDto.status && updateDto.status !== prod.status) {
@@ -220,6 +306,28 @@ export class ProductionsService {
     if (updateDto.endDate) prod.endDate = new Date(updateDto.endDate);
 
     await prod.save();
+
+    const newState = {
+      title: prod.title,
+      description: prod.description,
+      status: prod.status,
+      productionManager: prod.productionManager?.toString(),
+    };
+
+    if (updaterId) {
+      await this.auditLogsService.log(
+        updaterId,
+        'PROJECT_UPDATED',
+        prod._id.toString(),
+        'Production',
+        JSON.stringify(previousState),
+        JSON.stringify(newState),
+        undefined,
+        'Productions',
+        { productionId: prod._id.toString() }
+      );
+    }
+
     return this.findOne(prod._id.toString());
   }
 
@@ -234,7 +342,7 @@ export class ProductionsService {
     // Verify user exists and is active/approved
     const user = await this.userModel.findById(userId).exec();
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new BadRequestException('User not found');
     }
     if (!user.isActive) {
       throw new BadRequestException('Cannot assign an inactive/pending user');
@@ -262,7 +370,7 @@ export class ProductionsService {
     if (characterId) {
       const char = await this.characterModel.findById(characterId).exec();
       if (!char) {
-        throw new NotFoundException('Character not found');
+        throw new BadRequestException('Character not found');
       }
       if (char.productionId.toString() !== productionId) {
         throw new BadRequestException('Character does not belong to this project');
@@ -344,7 +452,7 @@ export class ProductionsService {
     }
 
     if (castCrew.productionId.toString() !== productionId) {
-      throw new BadRequestException('Assignment does not belong to this project');
+      throw new NotFoundException('Assignment not found');
     }
 
     const oldState = JSON.stringify({
@@ -458,7 +566,7 @@ export class ProductionsService {
     }
 
     if (castCrew.productionId.toString() !== productionId) {
-      throw new BadRequestException('Assignment does not belong to this project');
+      throw new NotFoundException('Assignment not found');
     }
 
     const oldState = JSON.stringify({
@@ -503,8 +611,17 @@ export class ProductionsService {
       throw new NotFoundException('Production not found');
     }
 
+    const existing = await this.characterModel.findOne({
+      productionId: new Types.ObjectId(productionId),
+      name: createDto.name.trim(),
+    }).exec();
+    if (existing) {
+      throw new BadRequestException('A character with this name already exists in this project');
+    }
+
     const character = new this.characterModel({
       ...createDto,
+      name: createDto.name.trim(),
       productionId: new Types.ObjectId(productionId),
       assignments: [],
     });
@@ -554,13 +671,24 @@ export class ProductionsService {
     }
 
     if (character.productionId.toString() !== productionId) {
-      throw new BadRequestException('Character does not belong to this project');
+      throw new NotFoundException('Character not found');
     }
 
     const oldState = JSON.stringify({ name: character.name, description: character.description });
 
     if (updateDto.name !== undefined) {
-      character.name = updateDto.name;
+      const trimmedName = updateDto.name.trim();
+      if (trimmedName !== character.name) {
+        const existing = await this.characterModel.findOne({
+          productionId: new Types.ObjectId(productionId),
+          name: trimmedName,
+          _id: { $ne: new Types.ObjectId(characterId) },
+        }).exec();
+        if (existing) {
+          throw new BadRequestException('A character with this name already exists in this project');
+        }
+        character.name = trimmedName;
+      }
     }
     if (updateDto.description !== undefined) {
       character.description = updateDto.description;
@@ -601,7 +729,7 @@ export class ProductionsService {
     }
 
     if (character.productionId.toString() !== productionId) {
-      throw new BadRequestException('Character does not belong to this project');
+      throw new NotFoundException('Character not found');
     }
 
     const oldState = JSON.stringify({ name: character.name, description: character.description });

@@ -57,8 +57,20 @@ function ApprovalDetailsContent() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const setHeader = useHeaderStore(state => state.setHeader);
+
+  const formatError = (err: any, defaultMsg: string): string => {
+    if (err.response?.status === 403) {
+      return "You don't have permission to perform this action.";
+    }
+    const message = err.response?.data?.message;
+    if (Array.isArray(message)) {
+      return message.join(', ');
+    }
+    return message || err.message || defaultMsg;
+  };
 
   useEffect(() => {
     if (user?.name) {
@@ -88,7 +100,7 @@ function ApprovalDetailsContent() {
       setRoles(rolesData || []);
     } catch (err: any) {
       console.error('Failed to load application details', err);
-      setErrorMsg(err?.response?.data?.message || 'Failed to load application details. Please try again.');
+      setErrorMsg(formatError(err, 'Failed to load application details. Please try again.'));
     } finally {
       setLoading(false);
     }
@@ -100,6 +112,7 @@ function ApprovalDetailsContent() {
 
   const handleDecision = async (status: 'approved' | 'changes-requested') => {
     setSubmitting(true);
+    setSubmitError(null);
     try {
       await adminService.evaluateApplication(id as string, {
         status,
@@ -109,7 +122,7 @@ function ApprovalDetailsContent() {
       router.push('/approvals');
     } catch (err: any) {
       console.error('Failed to submit decision', err);
-      alert(err?.response?.data?.message || 'Failed to submit decision. Please check validation rules.');
+      setSubmitError(formatError(err, 'Failed to submit decision. Please check validation rules.'));
       setSubmitting(false);
     }
   };
@@ -176,6 +189,20 @@ function ApprovalDetailsContent() {
           <ArrowLeft className="w-4 h-4" /> Back to Queue
         </button>
       </div>
+
+      {submitError && (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3">
+          <div className="text-red-750 text-xs font-bold w-full flex items-center justify-between">
+            <span>{submitError}</span>
+            <button 
+              onClick={() => setSubmitError(null)} 
+              className="text-[10px] text-red-500 hover:text-red-700 underline font-bold cursor-pointer"
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Main Container Card (Submission summary box) */}
       <div className="bg-white border border-slate-200/80 rounded-3xl shadow-sm p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6 relative overflow-hidden">

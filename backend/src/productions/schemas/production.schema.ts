@@ -47,3 +47,8 @@ export class Production {
 
 export const ProductionSchema = SchemaFactory.createForClass(Production);
 
+ProductionSchema.index({ status: 1 });
+ProductionSchema.index({ productionManager: 1 });
+ProductionSchema.index({ createdAt: -1 });
+ProductionSchema.index({ updatedAt: -1 });
+

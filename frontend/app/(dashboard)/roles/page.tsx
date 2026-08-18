@@ -15,6 +15,18 @@ export default function AdminRolesPage() {
   const [activeTab, setActiveTab] = useState<'matrix' | 'roles' | 'permissions'>('matrix');
   const [loading, setLoading] = useState(true);
   const [permLoading, setPermLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const formatError = (err: any, defaultMsg: string): string => {
+    if (err.response?.status === 403) {
+      return "You don't have permission to perform this action.";
+    }
+    const message = err.response?.data?.message;
+    if (Array.isArray(message)) {
+      return message.join(', ');
+    }
+    return message || err.message || defaultMsg;
+  };
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -23,10 +35,12 @@ export default function AdminRolesPage() {
   const fetchRoles = async () => {
     try {
       setLoading(true);
+      setError(null);
       const data = await adminService.getRoles();
       setRoles(data);
-    } catch (error) {
-      console.error('Failed to fetch roles:', error);
+    } catch (err: any) {
+      console.error('Failed to fetch roles:', err);
+      setError(formatError(err, 'Failed to load system roles.'));
     } finally {
       setLoading(false);
     }
@@ -35,10 +49,12 @@ export default function AdminRolesPage() {
   const fetchPermissions = async () => {
     try {
       setPermLoading(true);
+      setError(null);
       const data = await adminService.getPermissions();
       setPermissions(data);
-    } catch (error) {
-      console.error('Failed to fetch permissions:', error);
+    } catch (err: any) {
+      console.error('Failed to fetch permissions:', err);
+      setError(formatError(err, 'Failed to load permissions list.'));
     } finally {
       setPermLoading(false);
     }
@@ -62,6 +78,19 @@ export default function AdminRolesPage() {
   return (
     <PermissionGuard permission="roles.view">
       <div className="max-w-[1400px] mx-auto px-6 md:px-8 lg:px-10 py-8 space-y-6 animate-in fade-in duration-300">
+        {error && (
+          <div className="p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3">
+            <div className="text-red-750 text-xs font-bold w-full flex items-center justify-between">
+              <span>{error}</span>
+              <button 
+                onClick={() => setError(null)} 
+                className="text-[10px] text-red-500 hover:text-red-700 underline font-bold cursor-pointer"
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        )}
         {activeTab === 'roles' && (
           <div className="flex justify-end">
             <button

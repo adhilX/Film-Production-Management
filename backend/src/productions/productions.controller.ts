@@ -8,7 +8,10 @@ import {
   Param,
   UseGuards,
   Req,
+  Query,
+  BadRequestException,
 } from '@nestjs/common';
+import { Types } from 'mongoose';
 import {
   ApiTags,
   ApiBearerAuth,
@@ -22,6 +25,7 @@ import { AssignCastCrewDto } from './dto/assign-cast-crew.dto';
 import { UpdateCastCrewDto } from './dto/update-cast-crew.dto';
 import { CreateCharacterDto } from './dto/create-character.dto';
 import { UpdateCharacterDto } from './dto/update-character.dto';
+import { GetProductionsQueryDto } from './dto/get-productions-query.dto';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { PermissionsGuard } from '../auth/guards/permissions.guard';
 import { Permissions } from '../auth/decorators/permissions.decorator';
@@ -52,12 +56,12 @@ export class ProductionsController {
     summary: 'List film productions accessible by the authenticated user',
   })
   @ApiResponse({ status: 200, description: 'Array of accessible productions.' })
-  findAll(@Req() req: any) {
+  findAll(@Query() query: GetProductionsQueryDto, @Req() req: any) {
     const isAdmin =
       req.user.permissions?.includes('roles.manage') ||
       req.user.permissions?.includes('users.approve') ||
       false;
-    return this.productionsService.findAll(req.user._id, isAdmin);
+    return this.productionsService.findAll(req.user._id, isAdmin, query);
   }
 
   @Get('managers')
@@ -77,6 +81,9 @@ export class ProductionsController {
   @ApiOperation({ summary: 'Fetch production details by ID (resource-scoped)' })
   @ApiResponse({ status: 200, description: 'Production document.' })
   findOne(@Param('id') id: string) {
+    if (!Types.ObjectId.isValid(id)) {
+      throw new BadRequestException('Invalid production ID format');
+    }
     return this.productionsService.findOne(id);
   }
 
@@ -88,8 +95,12 @@ export class ProductionsController {
   update(
     @Param('id') id: string,
     @Body() updateDto: UpdateProductionDto,
+    @Req() req: any,
   ) {
-    return this.productionsService.update(id, updateDto);
+    if (!Types.ObjectId.isValid(id)) {
+      throw new BadRequestException('Invalid production ID format');
+    }
+    return this.productionsService.update(id, updateDto, req.user._id);
   }
 
 
@@ -105,6 +116,9 @@ export class ProductionsController {
     @Body() assignDto: AssignCastCrewDto,
     @Req() req: any,
   ) {
+    if (!Types.ObjectId.isValid(productionId)) {
+      throw new BadRequestException('Invalid production ID format');
+    }
     return this.productionsService.assignCastCrew(productionId, assignDto, req.user._id);
   }
 
@@ -115,6 +129,9 @@ export class ProductionsController {
   })
   @ApiResponse({ status: 200, description: 'Array of cast/crew mappings.' })
   getCastCrew(@Param('productionId') productionId: string) {
+    if (!Types.ObjectId.isValid(productionId)) {
+      throw new BadRequestException('Invalid production ID format');
+    }
     return this.productionsService.getCastCrew(productionId);
   }
 
@@ -129,6 +146,12 @@ export class ProductionsController {
     @Body() updateDto: UpdateCastCrewDto,
     @Req() req: any,
   ) {
+    if (!Types.ObjectId.isValid(productionId)) {
+      throw new BadRequestException('Invalid production ID format');
+    }
+    if (!Types.ObjectId.isValid(castCrewId)) {
+      throw new BadRequestException('Invalid assignment ID format');
+    }
     return this.productionsService.updateCastCrew(productionId, castCrewId, updateDto, req.user._id);
   }
 
@@ -142,6 +165,12 @@ export class ProductionsController {
     @Param('castCrewId') castCrewId: string,
     @Req() req: any,
   ) {
+    if (!Types.ObjectId.isValid(productionId)) {
+      throw new BadRequestException('Invalid production ID format');
+    }
+    if (!Types.ObjectId.isValid(castCrewId)) {
+      throw new BadRequestException('Invalid assignment ID format');
+    }
     return this.productionsService.removeCastCrew(productionId, castCrewId, req.user._id);
   }
 
@@ -155,6 +184,9 @@ export class ProductionsController {
     @Body() createDto: CreateCharacterDto,
     @Req() req: any,
   ) {
+    if (!Types.ObjectId.isValid(productionId)) {
+      throw new BadRequestException('Invalid production ID format');
+    }
     return this.productionsService.createCharacter(productionId, createDto, req.user._id);
   }
 
@@ -163,6 +195,9 @@ export class ProductionsController {
   @ApiOperation({ summary: 'List script characters for a production' })
   @ApiResponse({ status: 200, description: 'Array of script characters.' })
   getCharacters(@Param('productionId') productionId: string) {
+    if (!Types.ObjectId.isValid(productionId)) {
+      throw new BadRequestException('Invalid production ID format');
+    }
     return this.productionsService.getCharacters(productionId);
   }
 
@@ -177,6 +212,12 @@ export class ProductionsController {
     @Body() updateDto: UpdateCharacterDto,
     @Req() req: any,
   ) {
+    if (!Types.ObjectId.isValid(productionId)) {
+      throw new BadRequestException('Invalid production ID format');
+    }
+    if (!Types.ObjectId.isValid(characterId)) {
+      throw new BadRequestException('Invalid character ID format');
+    }
     return this.productionsService.updateCharacter(productionId, characterId, updateDto, req.user._id);
   }
 
@@ -190,6 +231,12 @@ export class ProductionsController {
     @Param('characterId') characterId: string,
     @Req() req: any,
   ) {
+    if (!Types.ObjectId.isValid(productionId)) {
+      throw new BadRequestException('Invalid production ID format');
+    }
+    if (!Types.ObjectId.isValid(characterId)) {
+      throw new BadRequestException('Invalid character ID format');
+    }
     return this.productionsService.deleteCharacter(productionId, characterId, req.user._id);
   }
 
@@ -199,6 +246,9 @@ export class ProductionsController {
   @ApiOperation({ summary: 'Get active, approved users eligible for cast assignment' })
   @ApiResponse({ status: 200, description: 'Array of eligible cast users.' })
   getEligibleCast(@Param('productionId') productionId: string) {
+    if (!Types.ObjectId.isValid(productionId)) {
+      throw new BadRequestException('Invalid production ID format');
+    }
     return this.productionsService.getEligibleCast(productionId);
   }
 
@@ -208,6 +258,9 @@ export class ProductionsController {
   @ApiOperation({ summary: 'Get active, approved users eligible for crew assignment' })
   @ApiResponse({ status: 200, description: 'Array of eligible crew users.' })
   getEligibleCrew(@Param('productionId') productionId: string) {
+    if (!Types.ObjectId.isValid(productionId)) {
+      throw new BadRequestException('Invalid production ID format');
+    }
     return this.productionsService.getEligibleCrew(productionId);
   }
 }

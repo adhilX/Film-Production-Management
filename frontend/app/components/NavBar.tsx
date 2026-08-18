@@ -44,7 +44,7 @@ export default function NavBar({ title: propTitle, subtitle: propSubtitle }: Nav
     if (pathname.startsWith('/roles')) {
       return { title: 'Roles & Permissions', subtitle: 'Configure system access levels and granular permission policies.' };
     }
-    if (pathname.startsWith('/audit-logs') || pathname.startsWith('/logs')) {
+    if (pathname.startsWith('/logs')) {
       return { title: 'System Logs', subtitle: 'Track admin actions, modifications, and system events.' };
     }
     if (pathname.startsWith('/costumes')) {

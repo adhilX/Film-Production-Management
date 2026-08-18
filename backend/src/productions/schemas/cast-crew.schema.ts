@@ -19,3 +19,8 @@ export class CastCrew {
 }
 
 export const CastCrewSchema = SchemaFactory.createForClass(CastCrew);
+
+CastCrewSchema.index({ userId: 1, productionId: 1 }, { unique: true });
+CastCrewSchema.index({ productionId: 1 });
+CastCrewSchema.index({ userId: 1 });
+CastCrewSchema.index({ characterId: 1 });

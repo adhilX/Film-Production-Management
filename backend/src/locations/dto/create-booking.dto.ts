@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, IsDateString } from 'class-validator';
+import { IsNotEmpty, IsString, IsDateString, IsMongoId } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateBookingDto {
@@ -6,7 +6,7 @@ export class CreateBookingDto {
     example: '6a80a7081a9a9d61e11b6500',
     description: 'Physical Location ID',
   })
-  @IsString()
+  @IsMongoId()
   @IsNotEmpty()
   locationId: string;
 

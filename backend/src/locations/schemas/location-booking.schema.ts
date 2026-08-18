@@ -36,3 +36,6 @@ export const LocationBookingSchema = SchemaFactory.createForClass(LocationBookin
 // Add index on productionId, locationId, status, and dates for queries and collision checks
 LocationBookingSchema.index({ productionId: 1 });
 LocationBookingSchema.index({ locationId: 1, status: 1, startDate: 1, endDate: 1 });
+LocationBookingSchema.index({ requestedBy: 1 });
+LocationBookingSchema.index({ productionId: 1, startDate: 1 });
+

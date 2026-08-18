@@ -3,8 +3,17 @@ import type { Production, LocationBooking, FundRequest, Character, CastCrew } fr
 
 export const productionsService = {
   // Productions
-  async getProductions(): Promise<Production[]> {
-    const res = await axiosClient.get<Production[]>('/productions');
+  async getProductions(params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    status?: string;
+    genre?: string;
+    productionManager?: string;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
+  }): Promise<any> {
+    const res = await axiosClient.get('/productions', { params });
     return res.data;
   },
   async createProduction(payload: Partial<Production>): Promise<Production> {

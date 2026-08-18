@@ -267,10 +267,31 @@ export class AdminService {
   // --- Granular User Operations (CRUD) ---
 
   async createUser(adminId: string, payload: any): Promise<User> {
+    if (payload.email) {
+      const emailExists = await this.userModel
+        .findOne({ email: payload.email.toLowerCase().trim() })
+        .exec();
+      if (emailExists) {
+        throw new ConflictException('Email already in use');
+      }
+    }
+
+    if (payload.systemRoleId) {
+      if (!Types.ObjectId.isValid(payload.systemRoleId)) {
+        throw new BadRequestException('Invalid role ID format');
+      }
+      const roleExists = await this.roleModel.findById(payload.systemRoleId).exec();
+      if (!roleExists) {
+        throw new BadRequestException('Role does not exist');
+      }
+    }
+
     const passwordHash = await bcrypt.hash('TempPass123!', 10);
     const user = new this.userModel({
-      ...payload,
+      email: payload.email,
+      name: payload.name,
       passwordHash,
+      contractorType: payload.contractorType || 'None',
       status: payload.status || 'Approved',
       onboardingStatus: payload.onboardingStatus || 'approved',
       isActive: payload.isActive !== undefined ? payload.isActive : true,
@@ -278,6 +299,8 @@ export class AdminService {
 
     if (payload.systemRoleId) {
       user.systemRoleId = new Types.ObjectId(payload.systemRoleId);
+    } else {
+      user.systemRoleId = null;
     }
 
     await user.save();
@@ -320,6 +343,16 @@ export class AdminService {
       throw new BadRequestException('You cannot modify your own active status');
     }
 
+    // 1b. Email uniqueness check on update
+    if (payload.email && payload.email.toLowerCase().trim() !== user.email.toLowerCase().trim()) {
+      const emailExists = await this.userModel
+        .findOne({ email: payload.email.toLowerCase().trim() })
+        .exec();
+      if (emailExists) {
+        throw new ConflictException('Email already in use');
+      }
+    }
+
     // Get Super Admin role details
     const superAdminRoleObj = await this.roleModel.findOne({ name: 'Super Admin' }).exec();
 
@@ -340,6 +373,9 @@ export class AdminService {
       }
 
       if (payload.systemRoleId) {
+        if (!Types.ObjectId.isValid(payload.systemRoleId)) {
+          throw new BadRequestException('Invalid role ID format');
+        }
         const targetRoleObj = await this.roleModel.findById(payload.systemRoleId).exec();
         if (!targetRoleObj) {
           throw new BadRequestException('Target role does not exist');

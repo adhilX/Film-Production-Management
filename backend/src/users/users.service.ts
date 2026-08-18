@@ -192,6 +192,119 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
 
+    if (user.onboardingStatus === 'approved') {
+      throw new BadRequestException('Onboarding has already been approved');
+    }
+
+    if (currentStep !== undefined && (currentStep < 1 || currentStep > 6)) {
+      throw new BadRequestException('Invalid step number');
+    }
+
+    // Defense-in-depth: do not allow normal users to directly manipulate administrative fields
+    if (profileData) {
+      delete profileData.systemRoleId;
+      delete profileData.onboardingStatus;
+      delete profileData.status;
+      delete profileData.isActive;
+      delete profileData.adminFeedback;
+    }
+
+    let profile = await this.userProfileModel
+      .findOne({ userId: user._id })
+      .exec();
+    if (!profile) {
+      profile = new this.userProfileModel({ userId: user._id });
+    }
+
+    // Determine target step for verification
+    const targetStep = Math.max(1, currentStep !== undefined ? currentStep : (user.currentStep || 1));
+
+    // Resolve current values (incoming payload + database)
+    const contractorType = profileData?.contractorType !== undefined ? profileData.contractorType : user.contractorType;
+    const name = profileData?.name !== undefined ? profileData.name : user.name;
+    const photoUrl = profileData?.photoUrl !== undefined ? profileData.photoUrl : profile?.photoUrl;
+    const phoneNumber = profileData?.phoneNumber !== undefined ? profileData.phoneNumber : profile?.phoneNumber;
+    const department = profileData?.department !== undefined ? profileData.department : profile?.department;
+    const position = profileData?.position !== undefined ? profileData.position : profile?.position;
+    
+    let experienceVal = profileData?.experience;
+    if (experienceVal === undefined) {
+      experienceVal = profile?.experience;
+    }
+    const experienceStr = Array.isArray(experienceVal) ? experienceVal.join('\n') : (experienceVal || '');
+
+    const bankName = profileData?.bankDetails?.bankName !== undefined ? profileData.bankDetails.bankName : profile?.bankDetails?.bankName;
+    const accountNumber = profileData?.bankDetails?.accountNumber !== undefined ? profileData.bankDetails.accountNumber : profile?.bankDetails?.accountNumber;
+    const routingNumber = profileData?.bankDetails?.routingNumber !== undefined ? profileData.bankDetails.routingNumber : profile?.bankDetails?.routingNumber;
+    const taxFormUrl = profileData?.taxFormUrl !== undefined ? profileData.taxFormUrl : profile?.taxFormUrl;
+
+    const governmentIdType = profileData?.governmentIdType !== undefined ? profileData.governmentIdType : profile?.governmentIdType;
+    const identityDocs = profileData?.identityDocs !== undefined ? profileData.identityDocs : (profile?.identityDocs || []);
+
+    const agreeNda = profileData?.agreeNda !== undefined ? profileData.agreeNda : (profile?.signedNda || false);
+    const agreeTerms = profileData?.agreeTerms !== undefined ? profileData.agreeTerms : (profile?.signedTerms || false);
+    const signatureData = profileData?.signatureData !== undefined ? profileData.signatureData : profile?.signatureData;
+
+    // Run sequence validations
+    if (targetStep > 1) {
+      if (!contractorType || contractorType.trim() === '') {
+        throw new BadRequestException('Contractor type is required');
+      }
+    }
+    if (targetStep > 2) {
+      if (!name || name.trim().length < 2) {
+        throw new BadRequestException('Name must be at least 2 characters');
+      }
+      if (!photoUrl || photoUrl.trim() === '') {
+        throw new BadRequestException('Profile photo is required');
+      }
+      if (!phoneNumber || phoneNumber.trim().length < 5) {
+        throw new BadRequestException('Phone number must be at least 5 digits');
+      }
+      if (!department || department.trim() === '') {
+        throw new BadRequestException('Department is required');
+      }
+      if (!position || position.trim() === '') {
+        throw new BadRequestException('Position is required');
+      }
+      if (!experienceStr || experienceStr.trim().length < 10) {
+        throw new BadRequestException('Experience summary must be at least 10 characters');
+      }
+    }
+    if (targetStep > 3) {
+      if (!bankName || bankName.trim() === '') {
+        throw new BadRequestException('Bank name is required');
+      }
+      if (!accountNumber || accountNumber.trim().length < 5) {
+        throw new BadRequestException('Account number must be at least 5 digits');
+      }
+      if (!routingNumber || routingNumber.trim().length < 5) {
+        throw new BadRequestException('Routing number must be at least 5 digits');
+      }
+      if (!taxFormUrl || taxFormUrl.trim() === '') {
+        throw new BadRequestException('Tax document is required');
+      }
+    }
+    if (targetStep > 4) {
+      if (!governmentIdType || governmentIdType.trim() === '') {
+        throw new BadRequestException('Government ID type is required');
+      }
+      if (!identityDocs || identityDocs.length < 2) {
+        throw new BadRequestException('Both front and back ID documents are required');
+      }
+    }
+    if (targetStep > 5) {
+      if (agreeNda !== true) {
+        throw new BadRequestException('NDA agreement is required');
+      }
+      if (agreeTerms !== true) {
+        throw new BadRequestException('Terms agreement is required');
+      }
+      if (!signatureData || signatureData.trim() === '') {
+        throw new BadRequestException('Digital signature is required');
+      }
+    }
+
     if (currentStep !== undefined) {
       user.currentStep = currentStep;
       if (currentStep === 6) {
@@ -212,15 +325,7 @@ export class UsersService {
         }
       }
     }
-
     if (profileData) {
-      let profile = await this.userProfileModel
-        .findOne({ userId: user._id })
-        .exec();
-      if (!profile) {
-        profile = new this.userProfileModel({ userId: user._id });
-      }
-
       if (profileData.name) {
         user.name = profileData.name;
       }

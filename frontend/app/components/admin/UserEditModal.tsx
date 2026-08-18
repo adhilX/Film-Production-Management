@@ -91,7 +91,16 @@ export default function UserEditModal({ isOpen, onClose, user, onSave }: UserEdi
       onSave();
       onClose();
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to save user.');
+      if (err.response?.status === 403) {
+        setError("You don't have permission to perform this action.");
+      } else {
+        const message = err.response?.data?.message;
+        if (Array.isArray(message)) {
+          setError(message.join(', '));
+        } else {
+          setError(message || err.message || 'Failed to save user.');
+        }
+      }
     } finally {
       setLoading(false);
     }

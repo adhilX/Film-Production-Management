@@ -46,6 +46,17 @@ function ApprovalsQueueContent() {
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  const formatError = (err: any, defaultMsg: string): string => {
+    if (err.response?.status === 403) {
+      return "You don't have permission to perform this action.";
+    }
+    const message = err.response?.data?.message;
+    if (Array.isArray(message)) {
+      return message.join(', ');
+    }
+    return message || err.message || defaultMsg;
+  };
+
   // Filters State
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -118,7 +129,7 @@ function ApprovalsQueueContent() {
       }
     } catch (err: any) {
       console.error('Failed to load applications', err);
-      setErrorMsg(err?.response?.data?.message || 'Failed to load onboarding applications. Please try again.');
+      setErrorMsg(formatError(err, 'Failed to load onboarding applications. Please try again.'));
     } finally {
       setLoading(false);
     }

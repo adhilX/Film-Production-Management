@@ -8,7 +8,9 @@ import {
   Param,
   UseGuards,
   Req,
+  BadRequestException,
 } from '@nestjs/common';
+import { Types } from 'mongoose';
 import {
   ApiTags,
   ApiBearerAuth,
@@ -47,6 +49,9 @@ export class LocationsController {
     @Body() createDto: CreateBookingDto,
     @Req() req: any,
   ) {
+    if (!Types.ObjectId.isValid(productionId)) {
+      throw new BadRequestException('Invalid production ID format');
+    }
     return this.locationsService.createBooking(productionId, createDto, req.user._id);
   }
 
@@ -55,6 +60,9 @@ export class LocationsController {
   @ApiOperation({ summary: 'List all bookings for a production' })
   @ApiResponse({ status: 200, description: 'List of bookings.' })
   getBookings(@Param('productionId') productionId: string) {
+    if (!Types.ObjectId.isValid(productionId)) {
+      throw new BadRequestException('Invalid production ID format');
+    }
     return this.locationsService.getBookings(productionId);
   }
 
@@ -69,6 +77,12 @@ export class LocationsController {
     @Body() updateDto: UpdateBookingStatusDto,
     @Req() req: any,
   ) {
+    if (!Types.ObjectId.isValid(productionId)) {
+      throw new BadRequestException('Invalid production ID format');
+    }
+    if (!Types.ObjectId.isValid(id)) {
+      throw new BadRequestException('Invalid booking ID format');
+    }
     const userPermissions = req.user.permissions || [];
     const isSuperAdmin = userPermissions.includes('roles.manage');
     return this.locationsService.updateBookingStatus(
@@ -95,6 +109,9 @@ export class LocationsController {
     @Body() createDto: CreateLocationDto,
     @Req() req: any,
   ) {
+    if (!Types.ObjectId.isValid(productionId)) {
+      throw new BadRequestException('Invalid production ID format');
+    }
     return this.locationsService.create(productionId, createDto, req.user._id);
   }
 
@@ -103,6 +120,9 @@ export class LocationsController {
   @ApiOperation({ summary: 'List all physical locations for a production' })
   @ApiResponse({ status: 200, description: 'List of locations.' })
   findAll(@Param('productionId') productionId: string) {
+    if (!Types.ObjectId.isValid(productionId)) {
+      throw new BadRequestException('Invalid production ID format');
+    }
     return this.locationsService.findAll(productionId);
   }
 
@@ -115,6 +135,12 @@ export class LocationsController {
     @Param('productionId') productionId: string,
     @Param('id') id: string,
   ) {
+    if (!Types.ObjectId.isValid(productionId)) {
+      throw new BadRequestException('Invalid production ID format');
+    }
+    if (!Types.ObjectId.isValid(id)) {
+      throw new BadRequestException('Invalid location ID format');
+    }
     return this.locationsService.findOne(productionId, id);
   }
 
@@ -129,6 +155,12 @@ export class LocationsController {
     @Body() updateDto: UpdateLocationDto,
     @Req() req: any,
   ) {
+    if (!Types.ObjectId.isValid(productionId)) {
+      throw new BadRequestException('Invalid production ID format');
+    }
+    if (!Types.ObjectId.isValid(id)) {
+      throw new BadRequestException('Invalid location ID format');
+    }
     return this.locationsService.update(productionId, id, updateDto, req.user._id);
   }
 
@@ -142,6 +174,12 @@ export class LocationsController {
     @Param('id') id: string,
     @Req() req: any,
   ) {
+    if (!Types.ObjectId.isValid(productionId)) {
+      throw new BadRequestException('Invalid production ID format');
+    }
+    if (!Types.ObjectId.isValid(id)) {
+      throw new BadRequestException('Invalid location ID format');
+    }
     return this.locationsService.delete(productionId, id, req.user._id);
   }
 }

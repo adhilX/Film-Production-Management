@@ -21,7 +21,8 @@ import {
   Image as ImageIcon,
   Clock,
   Sparkles,
-  BookOpen
+  BookOpen,
+  ShieldAlert
 } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useProductionStore } from '@/store/useProductionStore';
@@ -29,8 +30,9 @@ import productionsService from '@/services/productionsService';
 import { authService } from '@/services/authService';
 import type { Production } from '@/app/types';
 import Pagination from '@/app/components/Pagination';
+import { PermissionGuard } from '@/app/components/permission-guard';
 
-export default function ProductionsPage() {
+function ProductionsPageContent() {
   const user = useAuthStore(state => state.user);
   const productions = useProductionStore(state => state.productions);
   const selectedProduction = useProductionStore(state => state.selectedProduction);
@@ -53,6 +55,11 @@ export default function ProductionsPage() {
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [productionsList, setProductionsList] = useState<Production[]>([]);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [sortBy, setSortBy] = useState('createdAt');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
   // Upload States
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -102,8 +109,14 @@ export default function ProductionsPage() {
     return user?.permissions?.includes(perm) || false;
   };
 
+  // Trigger paginated load when state changes
   useEffect(() => {
-    fetchData();
+    fetchTableData();
+  }, [currentPage, pageSize, searchQuery, statusFilter, genreFilter, managerFilter, sortBy, sortOrder]);
+
+  // Trigger initial static data load
+  useEffect(() => {
+    fetchStaticData();
   }, []);
 
   // Handle click outside row actions dropdown
@@ -117,21 +130,59 @@ export default function ProductionsPage() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const fetchData = async () => {
-    setLoading(true);
+  const fetchStaticData = async () => {
     try {
-      const prods = await productionsService.getProductions();
-      setProductions(prods);
+      const allProds = await productionsService.getProductions();
+      setProductions(allProds);
 
       if (hasPermission('productions.create') || hasPermission('productions.update')) {
         const managers = await productionsService.getEligibleManagers();
         setSystemUsers(managers || []);
       }
     } catch (e) {
-      console.error('Error fetching productions page data:', e);
+      console.error('Error fetching static data:', e);
+    }
+  };
+
+  const fetchTableData = async () => {
+    setLoading(true);
+    try {
+      const res = await productionsService.getProductions({
+        page: currentPage,
+        limit: pageSize,
+        search: searchQuery,
+        status: statusFilter,
+        genre: genreFilter,
+        productionManager: managerFilter,
+        sortBy,
+        sortOrder,
+      });
+
+      setProductionsList(res.productions || []);
+      setTotalItems(res.total || 0);
+      setTotalPages(res.pages || 1);
+    } catch (e) {
+      console.error('Error fetching paginated projects:', e);
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchData = async () => {
+    await Promise.all([
+      fetchStaticData(),
+      fetchTableData(),
+    ]);
+  };
+
+  const handleSort = (field: string) => {
+    if (sortBy === field) {
+      setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(field);
+      setSortOrder('asc');
+    }
+    setCurrentPage(1);
   };
 
   // Helper: Relative time
@@ -365,29 +416,8 @@ export default function ProductionsPage() {
     ? systemUsers
     : uniqueManagers;
 
-  // Filter logic
-  const filteredProductions = productions.filter(p => {
-    const mgrName = typeof p.productionManager === 'object' && p.productionManager !== null
-      ? (p.productionManager as any).name || ''
-      : '';
-    const mgrId = typeof p.productionManager === 'object' && p.productionManager !== null
-      ? (p.productionManager as any)._id || ''
-      : String(p.productionManager || '');
-
-    const matchesSearch = p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      mgrName.toLowerCase().includes(searchQuery.toLowerCase());
-
-    const matchesStatus = statusFilter === 'All' || p.status === statusFilter;
-    const matchesManager = managerFilter === 'All' || mgrId === managerFilter;
-    const matchesGenre = genreFilter === 'All' || p.genre === genreFilter;
-
-    return matchesSearch && matchesStatus && matchesManager && matchesGenre;
-  });
-
-  // Client-side pagination
-  const totalItems = filteredProductions.length;
-  const totalPages = Math.ceil(totalItems / pageSize) || 1;
-  const currentProjects = filteredProductions.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  // The backend already paginated this for us
+  const currentProjects = productionsList;
 
   // Metrics
   const metricTotal = productions.length;
@@ -548,12 +578,62 @@ export default function ProductionsPage() {
             <table className="w-full text-xs text-left border-collapse">
               <thead>
                 <tr className="text-slate-400 font-extrabold uppercase tracking-wider border-b border-slate-100 bg-slate-50/40">
-                  <th className="py-3.5 px-5 select-none">Project</th>
-                  <th className="py-3.5 px-5 select-none">Project Manager</th>
-                  <th className="py-3.5 px-5 select-none">Status</th>
+                  <th 
+                    onClick={() => handleSort('title')} 
+                    className="py-3.5 px-5 select-none cursor-pointer hover:bg-slate-100/50 transition duration-200 group"
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <span>Project</span>
+                      <span className={`text-[10px] transition-opacity duration-200 ${sortBy === 'title' ? 'text-indigo-650 opacity-100' : 'text-slate-350 opacity-0 group-hover:opacity-100'}`}>
+                        {sortBy === 'title' ? (sortOrder === 'asc' ? '▲' : '▼') : '↕'}
+                      </span>
+                    </div>
+                  </th>
+                  <th 
+                    onClick={() => handleSort('productionManager')} 
+                    className="py-3.5 px-5 select-none cursor-pointer hover:bg-slate-100/50 transition duration-200 group"
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <span>Project Manager</span>
+                      <span className={`text-[10px] transition-opacity duration-200 ${sortBy === 'productionManager' ? 'text-indigo-650 opacity-100' : 'text-slate-350 opacity-0 group-hover:opacity-100'}`}>
+                        {sortBy === 'productionManager' ? (sortOrder === 'asc' ? '▲' : '▼') : '↕'}
+                      </span>
+                    </div>
+                  </th>
+                  <th 
+                    onClick={() => handleSort('status')} 
+                    className="py-3.5 px-5 select-none cursor-pointer hover:bg-slate-100/50 transition duration-200 group"
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <span>Status</span>
+                      <span className={`text-[10px] transition-opacity duration-200 ${sortBy === 'status' ? 'text-indigo-650 opacity-100' : 'text-slate-350 opacity-0 group-hover:opacity-100'}`}>
+                        {sortBy === 'status' ? (sortOrder === 'asc' ? '▲' : '▼') : '↕'}
+                      </span>
+                    </div>
+                  </th>
                   <th className="py-3.5 px-5 select-none">Budget</th>
-                  <th className="py-3.5 px-5 select-none">Timeline</th>
-                  <th className="py-3.5 px-5 select-none">Updated</th>
+                  <th 
+                    onClick={() => handleSort('startDate')} 
+                    className="py-3.5 px-5 select-none cursor-pointer hover:bg-slate-100/50 transition duration-200 group"
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <span>Timeline</span>
+                      <span className={`text-[10px] transition-opacity duration-200 ${sortBy === 'startDate' ? 'text-indigo-650 opacity-100' : 'text-slate-350 opacity-0 group-hover:opacity-100'}`}>
+                        {sortBy === 'startDate' ? (sortOrder === 'asc' ? '▲' : '▼') : '↕'}
+                      </span>
+                    </div>
+                  </th>
+                  <th 
+                    onClick={() => handleSort('updatedAt')} 
+                    className="py-3.5 px-5 select-none cursor-pointer hover:bg-slate-100/50 transition duration-200 group"
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <span>Updated</span>
+                      <span className={`text-[10px] transition-opacity duration-200 ${sortBy === 'updatedAt' ? 'text-indigo-650 opacity-100' : 'text-slate-350 opacity-0 group-hover:opacity-100'}`}>
+                        {sortBy === 'updatedAt' ? (sortOrder === 'asc' ? '▲' : '▼') : '↕'}
+                      </span>
+                    </div>
+                  </th>
                   <th className="py-3.5 px-5 select-none text-right"></th>
                 </tr>
               </thead>
@@ -1174,5 +1254,25 @@ export default function ProductionsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+const UnauthorizedFallback = () => (
+  <div className="max-w-md mx-auto mt-16 bg-white border border-slate-200 rounded-2xl p-8 text-center shadow-xs flex flex-col items-center justify-center space-y-4">
+    <div className="w-12 h-12 rounded-full bg-rose-50 flex items-center justify-center text-rose-600 border border-rose-100 shrink-0">
+      <ShieldAlert className="w-6 h-6" />
+    </div>
+    <h3 className="font-bold text-slate-800 text-sm">Unauthorized Access</h3>
+    <p className="text-xs text-slate-500 max-w-xs leading-relaxed">
+      You don't have permission to view the projects directory. Please contact your system administrator.
+    </p>
+  </div>
+);
+
+export default function ProductionsPage() {
+  return (
+    <PermissionGuard permission="productions.view" fallback={<UnauthorizedFallback />}>
+      <ProductionsPageContent />
+    </PermissionGuard>
   );
 }

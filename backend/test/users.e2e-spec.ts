@@ -93,11 +93,13 @@ describe('User Management Module (e2e)', () => {
     const permView = await new permissionModel({ name: 'users.view', group: 'Admin' }).save();
     const permUpdate = await new permissionModel({ name: 'users.update', group: 'Admin' }).save();
     const permRoleManage = await new permissionModel({ name: 'roles.manage', group: 'Admin' }).save();
+    const permCreate = await new permissionModel({ name: 'users.create', group: 'Admin' }).save();
+    const permApprove = await new permissionModel({ name: 'users.approve', group: 'Admin' }).save();
 
     // Seed Roles
     superAdminRole = await new roleModel({
       name: 'Super Admin',
-      permissions: [permView._id, permUpdate._id, permRoleManage._id],
+      permissions: [permView._id, permUpdate._id, permRoleManage._id, permCreate._id, permApprove._id],
     }).save();
 
     prodAdminRole = await new roleModel({
@@ -479,4 +481,85 @@ describe('User Management Module (e2e)', () => {
       expect(actions).toContain('USER_DEACTIVATED');
     });
   });
+
+  describe('Hardening & Input Validation (Admin Operations)', () => {
+    it('should throw 409 Conflict when creating a manual user with an already registered email', async () => {
+      // superAdminUser email is: superadmin@tendagon.com
+      await request(app.getHttpServer())
+        .post('/admin/users')
+        .set('Authorization', `Bearer ${superAdminToken}`)
+        .send({
+          name: 'Manual User Duplicate',
+          email: 'superadmin@tendagon.com',
+          contractorType: 'Cast',
+        })
+        .expect(409);
+    });
+
+    it('should throw 400 Bad Request on malformed inputs for creating a manual user', async () => {
+      await request(app.getHttpServer())
+        .post('/admin/users')
+        .set('Authorization', `Bearer ${superAdminToken}`)
+        .send({
+          name: '', // Empty name (should trigger validation error)
+          email: 'invalid-email', // Malformed email
+        })
+        .expect(400);
+    });
+
+    it('should throw 400 Bad Request on malformed inputs for updating a manual user', async () => {
+      await request(app.getHttpServer())
+        .patch(`/admin/users/${targetUser1._id}`)
+        .set('Authorization', `Bearer ${superAdminToken}`)
+        .send({
+          email: 'not-an-email',
+          isActive: 'not-a-boolean', // Should trigger 400
+        })
+        .expect(400);
+    });
+
+    it('should throw 400 Bad Request when an invalid format systemRoleId is supplied during user updates', async () => {
+      await request(app.getHttpServer())
+        .patch(`/admin/users/${targetUser1._id}`)
+        .set('Authorization', `Bearer ${superAdminToken}`)
+        .send({
+          systemRoleId: 'invalid-object-id-format',
+        })
+        .expect(400);
+    });
+
+    it('should throw 400 Bad Request when a non-existent but valid systemRoleId is supplied during user updates', async () => {
+      const nonExistentRoleId = new Types.ObjectId().toString();
+      await request(app.getHttpServer())
+        .patch(`/admin/users/${targetUser1._id}`)
+        .set('Authorization', `Bearer ${superAdminToken}`)
+        .send({
+          systemRoleId: nonExistentRoleId,
+        })
+        .expect(400);
+    });
+
+    it('should throw 400 Bad Request on malformed query inputs for get-applications-query', async () => {
+      await request(app.getHttpServer())
+        .get('/admin/applications')
+        .set('Authorization', `Bearer ${superAdminToken}`)
+        .query({
+          page: -1, // Invalid page min
+          sortOrder: 'invalid', // Invalid enum
+        })
+        .expect(400);
+    });
+
+    it('should throw 400 Bad Request on malformed inputs for evaluate-application', async () => {
+      const nonExistentAppId = new Types.ObjectId().toString();
+      await request(app.getHttpServer())
+        .patch(`/admin/applications/${nonExistentAppId}/evaluate`)
+        .set('Authorization', `Bearer ${superAdminToken}`)
+        .send({
+          status: 'invalid-status-value', // Invalid status enum
+        })
+        .expect(400);
+    });
+  });
 });
+

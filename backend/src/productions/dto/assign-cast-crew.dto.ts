@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, IsMongoId } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class AssignCastCrewDto {
@@ -6,7 +6,7 @@ export class AssignCastCrewDto {
     example: '60d5ecb8b5c9c211b8b2e1f4',
     description: 'Assigned User ID',
   })
-  @IsString()
+  @IsMongoId()
   @IsNotEmpty()
   userId: string;
 
@@ -23,7 +23,7 @@ export class AssignCastCrewDto {
     required: false,
     description: 'Optional character ID assigned to cast',
   })
-  @IsString()
+  @IsMongoId()
   @IsOptional()
   characterId?: string;
 }

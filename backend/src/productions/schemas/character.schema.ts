@@ -19,3 +19,6 @@ export class Character {
 }
 
 export const CharacterSchema = SchemaFactory.createForClass(Character);
+
+CharacterSchema.index({ productionId: 1, name: 1 }, { unique: true });
+CharacterSchema.index({ productionId: 1 });

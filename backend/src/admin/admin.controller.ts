@@ -1,29 +1,17 @@
-import {
-  Controller,
-  Get,
-  Patch,
-  Post,
-  Body,
-  Param,
-  UseGuards,
-  Req,
-  BadRequestException,
-  Query,
-} from '@nestjs/common';
+import { Controller, Get, Patch, Post, Body, Param, UseGuards, Req, BadRequestException,Query, } from '@nestjs/common';
 import { Types } from 'mongoose';
 import { AdminService } from './admin.service';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { PermissionsGuard } from '../auth/guards/permissions.guard';
 import { Permissions } from '../auth/decorators/permissions.decorator';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiBearerAuth,
-} from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, } from '@nestjs/swagger';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 import { CreatePermissionDto } from './dto/create-permission.dto';
+import { GetApplicationsQueryDto } from './dto/get-applications-query.dto';
+import { EvaluateApplicationDto } from './dto/evaluate-application.dto';
+import { CreateUserManualDto } from './dto/create-user-manual.dto';
+import { UpdateUserManualDto } from './dto/update-user-manual.dto';
 
 @ApiTags('Admin')
 @ApiBearerAuth()
@@ -42,30 +30,8 @@ export class AdminController {
   @Permissions('users.approve')
   @ApiOperation({ summary: 'Get onboarding applications with pagination, filtering, search, and KPI metrics' })
   @ApiResponse({ status: 200, description: 'List of applications.' })
-  getPendingApplications(
-    @Query('page') page?: string,
-    @Query('limit') limit?: string,
-    @Query('search') search?: string,
-    @Query('contractorType') contractorType?: string,
-    @Query('department') department?: string,
-    @Query('onboardingStatus') onboardingStatus?: string,
-    @Query('stale') stale?: string,
-    @Query('sortBy') sortBy?: string,
-    @Query('sortOrder') sortOrder?: 'asc' | 'desc',
-  ) {
-    const pageNum = parseInt(page || '1', 10);
-    const limitNum = parseInt(limit || '10', 10);
-    return this.adminService.getApplications({
-      page: pageNum,
-      limit: limitNum,
-      search,
-      contractorType,
-      department,
-      onboardingStatus,
-      stale: stale === 'true',
-      sortBy,
-      sortOrder,
-    });
+  getPendingApplications(@Query() query: GetApplicationsQueryDto) {
+    return this.adminService.getApplications(query);
   }
 
   @Get('applications/:id')
@@ -87,8 +53,7 @@ export class AdminController {
   evaluateApplication(
     @Param('id') id: string,
     @Req() req: any,
-    @Body()
-    payload: { status: string; systemRoleId?: string; adminFeedback?: string },
+    @Body() payload: EvaluateApplicationDto,
   ) {
     this.validateObjectId(id, 'applicationId');
     return this.adminService.evaluateApplication(
@@ -103,14 +68,18 @@ export class AdminController {
   @Post('users')
   @Permissions('users.create')
   @ApiOperation({ summary: 'Create a new user manually' })
-  createUser(@Req() req: any, @Body() payload: any) {
+  createUser(@Req() req: any, @Body() payload: CreateUserManualDto) {
     return this.adminService.createUser(req.user._id.toString(), payload);
   }
 
   @Patch('users/:id')
   @Permissions('users.update')
   @ApiOperation({ summary: 'Update a user manually' })
-  updateUser(@Param('id') id: string, @Req() req: any, @Body() payload: any) {
+  updateUser(
+    @Param('id') id: string,
+    @Req() req: any,
+    @Body() payload: UpdateUserManualDto,
+  ) {
     this.validateObjectId(id, 'userId');
     const requesterPermissions = req.user.permissions || [];
     const requesterRoleName = req.user.systemRoleId?.name || '';

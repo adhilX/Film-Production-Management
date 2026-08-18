@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from './../src/app.module';
@@ -54,6 +54,13 @@ describe('Locations & Bookings Module (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    app.useGlobalPipes(
+      new ValidationPipe({
+        whitelist: true,
+        transform: true,
+        transformOptions: { enableImplicitConversion: true },
+      }),
+    );
     await app.init();
 
     mongoConnection = app.get(getConnectionToken());
@@ -281,6 +288,7 @@ describe('Locations & Bookings Module (e2e)', () => {
         .post(`/productions/${prod1._id}/locations`)
         .set('Authorization', `Bearer ${manager1Token}`)
         .send({
+          productionId: prod1._id.toString(),
           name: 'Stage B Studio',
           address: 'Burbank Lot 3',
           description: 'Large Soundstage',
@@ -303,6 +311,7 @@ describe('Locations & Bookings Module (e2e)', () => {
         .post(`/productions/${prod1._id}/locations`)
         .set('Authorization', `Bearer ${manager1Token}`)
         .send({
+          productionId: prod1._id.toString(),
           name: 'Stage B Studio',
           address: 'Different address',
         })
@@ -314,6 +323,7 @@ describe('Locations & Bookings Module (e2e)', () => {
         .post(`/productions/${prod2._id}/locations`)
         .set('Authorization', `Bearer ${manager2Token}`)
         .send({
+          productionId: prod2._id.toString(),
           name: 'Stage B Studio',
           address: 'Burbank Lot 3',
         })
@@ -560,11 +570,137 @@ describe('Locations & Bookings Module (e2e)', () => {
         .expect(200); // Expect list of bookings, not 400/404/500 from location ID parser
     });
 
-    it('GET /productions/:productionId/locations/invalid-id-format returns 400/404 instead of 500 BSON Error', async () => {
+    it('GET /productions/:productionId/locations/invalid-id-format returns 400 instead of 500 BSON Error', async () => {
       await request(app.getHttpServer())
         .get(`/productions/${prod1._id}/locations/invalid-id-format`)
         .set('Authorization', `Bearer ${manager1Token}`)
-        .expect(404); // Returns 404 Not Found (a clean 400/404 response instead of 500 BSON Error)
+        .expect(400); // Returns 400 Bad Request
+    });
+  });
+
+  describe('Locations & Bookings Hardening E2E Verification', () => {
+    let locProd1Id: string;
+    let locProd2Id: string;
+    let bookingProd1Id: string;
+
+    beforeAll(async () => {
+      // Create a location in production 1
+      const loc1 = await new locationModel({
+        name: 'Hardened Studio 1',
+        address: 'Burbank',
+        productionId: prod1._id,
+      }).save();
+      locProd1Id = loc1._id.toString();
+
+      // Create a location in production 2
+      const loc2 = await new locationModel({
+        name: 'Hardened Studio 2',
+        address: 'Universal',
+        productionId: prod2._id,
+      }).save();
+      locProd2Id = loc2._id.toString();
+
+      // Create a booking in production 1
+      const booking = await new bookingModel({
+        locationId: loc1._id,
+        productionId: prod1._id,
+        requestedBy: crewUser._id,
+        startDate: new Date('2026-12-01T08:00:00.000Z'),
+        endDate: new Date('2026-12-05T18:00:00.000Z'),
+        status: 'Pending',
+      }).save();
+      bookingProd1Id = booking._id.toString();
+    });
+
+    describe('Authentication Protection', () => {
+      it('GET /productions/:productionId/locations rejects unauthenticated request with 401', async () => {
+        await request(app.getHttpServer())
+          .get(`/productions/${prod1._id}/locations`)
+          .expect(401);
+      });
+
+      it('POST /productions/:productionId/locations rejects unauthenticated request with 401', async () => {
+        await request(app.getHttpServer())
+          .post(`/productions/${prod1._id}/locations`)
+          .send({ name: 'Unauth Loc', address: 'Nowhere' })
+          .expect(401);
+      });
+    });
+
+    describe('ObjectId Validation Checks (Malformed IDs)', () => {
+      it('GET /productions/invalid-prod-id/locations returns 400 Bad Request for Admin', async () => {
+        await request(app.getHttpServer())
+          .get('/productions/invalid-prod-id/locations')
+          .set('Authorization', `Bearer ${superAdminToken}`)
+          .expect(400);
+      });
+
+      it('GET /productions/invalid-prod-id/locations returns 403 Forbidden for non-Admin', async () => {
+        await request(app.getHttpServer())
+          .get('/productions/invalid-prod-id/locations')
+          .set('Authorization', `Bearer ${manager1Token}`)
+          .expect(403);
+      });
+
+      it('GET /productions/:productionId/locations/invalid-loc-id returns 400 Bad Request', async () => {
+        await request(app.getHttpServer())
+          .get(`/productions/${prod1._id}/locations/invalid-loc-id`)
+          .set('Authorization', `Bearer ${manager1Token}`)
+          .expect(400);
+      });
+
+      it('PATCH /productions/:productionId/locations/bookings/invalid-booking-id/status returns 400 Bad Request', async () => {
+        await request(app.getHttpServer())
+          .patch(`/productions/${prod1._id}/locations/bookings/invalid-booking-id/status`)
+          .set('Authorization', `Bearer ${manager1Token}`)
+          .send({ status: 'Approved' })
+          .expect(400);
+      });
+    });
+
+    describe('DTO Validation Checks (Malformed Fields)', () => {
+      it('POST /productions/:productionId/locations with invalid productionId in body returns 400 Bad Request', async () => {
+        await request(app.getHttpServer())
+          .post(`/productions/${prod1._id}/locations`)
+          .set('Authorization', `Bearer ${manager1Token}`)
+          .send({
+            name: 'DTO Test Loc',
+            address: 'Burbank Lot 4',
+            productionId: 'invalid-prod-id-dto',
+          })
+          .expect(400);
+      });
+
+      it('POST /productions/:productionId/locations/bookings with invalid locationId in body returns 400 Bad Request', async () => {
+        await request(app.getHttpServer())
+          .post(`/productions/${prod1._id}/locations/bookings`)
+          .set('Authorization', `Bearer ${crewToken}`)
+          .send({
+            locationId: 'invalid-loc-id-dto',
+            startDate: '2026-12-10T08:00:00.000Z',
+            endDate: '2026-12-15T18:00:00.000Z',
+          })
+          .expect(400);
+      });
+    });
+
+    describe('IDOR & Cross-Production Access Controls', () => {
+      it('User from Production A cannot access Production B locations (returns 404)', async () => {
+        // manager 1 belongs to Production 1, trying to access Production 2 location details via production 1 endpoint
+        await request(app.getHttpServer())
+          .get(`/productions/${prod1._id}/locations/${locProd2Id}`)
+          .set('Authorization', `Bearer ${manager1Token}`)
+          .expect(404);
+      });
+
+      it('User from Production A cannot access/update Production B bookings (returns 404)', async () => {
+        // manager 2 belongs to Production 2, trying to approve booking from Production 1 via production 2 endpoint
+        await request(app.getHttpServer())
+          .patch(`/productions/${prod2._id}/locations/bookings/${bookingProd1Id}/status`)
+          .set('Authorization', `Bearer ${manager2Token}`)
+          .send({ status: 'Approved' })
+          .expect(404);
+      });
     });
   });
 });

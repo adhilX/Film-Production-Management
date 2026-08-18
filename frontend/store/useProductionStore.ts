@@ -13,5 +13,14 @@ export const useProductionStore = create<ProductionState>((set) => ({
   productions: [],
   selectedProduction: null,
   setProductions: (productions) => set({ productions }),
-  setSelectedProduction: (production) => set({ selectedProduction: production }),
+  setSelectedProduction: (production) => {
+    set({ selectedProduction: production });
+    if (typeof window !== 'undefined') {
+      if (production) {
+        localStorage.setItem('selectedProductionId', production._id);
+      } else {
+        localStorage.removeItem('selectedProductionId');
+      }
+    }
+  },
 }));

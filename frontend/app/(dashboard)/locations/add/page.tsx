@@ -120,6 +120,17 @@ export default function AddLocationPage() {
     }
   };
 
+  const formatError = (err: any, defaultMsg: string): string => {
+    if (err.response?.status === 403) {
+      return "You don't have permission to perform this action.";
+    }
+    const message = err.response?.data?.message;
+    if (Array.isArray(message)) {
+      return message.join(', ');
+    }
+    return message || err.message || defaultMsg;
+  };
+
   // Image upload handler
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -136,7 +147,7 @@ export default function AddLocationPage() {
       const res = await authService.uploadOnboardingFile(file, 'location');
       setLocImage(res.fileUrl);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to upload location image.');
+      setError(formatError(err, 'Failed to upload location image.'));
     } finally {
       setIsUploading(false);
     }
@@ -209,11 +220,7 @@ export default function AddLocationPage() {
         router.push('/locations');
       }, 1000);
     } catch (err: any) {
-      setError(
-        err.response?.status === 403
-          ? "You don't have permission to perform this action."
-          : err.response?.data?.message || err.message || 'Failed to create physical location.'
-      );
+      setError(formatError(err, 'Failed to create physical location.'));
     } finally {
       setIsSubmitting(false);
     }

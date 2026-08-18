@@ -125,7 +125,16 @@ export default function RoleEditModal({ isOpen, onClose, role, onSave }: RoleEdi
       onSave();
       onClose();
     } catch (err: any) {
-      setError(err.response?.data?.message || err.message || 'Failed to save role.');
+      if (err.response?.status === 403) {
+        setError("You don't have permission to perform this action.");
+      } else {
+        const message = err.response?.data?.message;
+        if (Array.isArray(message)) {
+          setError(message.join(', '));
+        } else {
+          setError(message || err.message || 'Failed to save role.');
+        }
+      }
     } finally {
       setLoading(false);
     }

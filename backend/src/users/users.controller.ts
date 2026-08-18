@@ -28,6 +28,7 @@ import { AuthGuard } from '../auth/guards/auth.guard';
 import { PermissionsGuard } from '../auth/guards/permissions.guard';
 import { Permissions } from '../auth/decorators/permissions.decorator';
 import { CloudinaryService } from '../common/cloudinary/cloudinary.service';
+import { AuditLogsService } from '../audit-logs/audit-logs.service';
 
 
 @ApiTags('Users & Onboarding')
@@ -38,6 +39,7 @@ export class UsersController {
   constructor(
     private readonly usersService: UsersService,
     private readonly cloudinaryService: CloudinaryService,
+    private readonly auditLogsService: AuditLogsService,
   ) {}
 
   @Get()
@@ -57,6 +59,9 @@ export class UsersController {
     @Query('sortBy') sortBy?: string,
     @Query('sortOrder') sortOrder?: 'asc' | 'desc',
   ) {
+    if (systemRoleId && !Types.ObjectId.isValid(systemRoleId)) {
+      throw new BadRequestException('Invalid systemRoleId format');
+    }
     const pageNum = parseInt(page || '1', 10);
     const limitNum = parseInt(limit || '10', 10);
     const isActiveBool = isActive !== undefined ? isActive === 'true' : undefined;
@@ -149,12 +154,36 @@ export class UsersController {
       throw new BadRequestException('No file uploaded');
     }
 
+    // Size limit check: 5MB
+    const maxSizeBytes = 5 * 1024 * 1024;
+    if (file.size > maxSizeBytes) {
+      throw new BadRequestException('File size exceeds the limit of 5 MB');
+    }
+
+    // MIME type check
+    const allowedMimeTypes = ['application/pdf', 'image/png', 'image/jpeg'];
+    if (!allowedMimeTypes.includes(file.mimetype)) {
+      throw new BadRequestException('Unsupported file format. Only PDF, PNG, and JPEG are allowed.');
+    }
+
     // Upload the file stream to Cloudinary
     const cloudinaryResponse = await this.cloudinaryService
       .uploadFile(file, 'cine-factory/documents')
       .catch(() => {
         throw new BadRequestException('Invalid file type or upload failed.');
       });
+
+    // Create Audit Log USER_DOCUMENT_UPLOADED
+    await this.auditLogsService.create(
+      req.user._id.toString(),
+      req.user._id.toString(),
+      'USER_DOCUMENT_UPLOADED',
+      {
+        documentType: documentType || 'unknown',
+        action: 'upload',
+      },
+      'UserOnboarding',
+    );
 
     return {
       fileUrl: cloudinaryResponse.secure_url,

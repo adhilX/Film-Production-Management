@@ -170,7 +170,11 @@ export class LocationsService {
       const previousState = JSON.stringify({ name: location.name, address: location.address });
       
       // Update fields
-      Object.assign(location, updateDto);
+      for (const [key, value] of Object.entries(updateDto)) {
+        if (value !== undefined) {
+          (location as any)[key] = value;
+        }
+      }
       const saved = session ? await location.save({ session }) : await location.save();
 
       // Audit Log

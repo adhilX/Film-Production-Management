@@ -3,6 +3,7 @@ import {
   IsString,
   IsNumber,
   IsOptional,
+  IsMongoId,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -11,7 +12,7 @@ export class CreateLocationDto {
     example: '60d5ecb8b5c9c211b8b2e1f4',
     description: 'Production ID',
   })
-  @IsString()
+  @IsMongoId()
   @IsNotEmpty()
   productionId: string;
 

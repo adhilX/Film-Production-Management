@@ -48,8 +48,21 @@ export default function DynamicSidebar({ isMobile }: DynamicSidebarProps) {
     try {
       const data = await productionsService.getProductions();
       setProductions(data);
-      if (data.length > 0 && !selectedProduction) {
-        setSelectedProduction(data[0]);
+      if (data.length > 0) {
+        let restoredProd = null;
+        if (typeof window !== 'undefined') {
+          const storedId = localStorage.getItem('selectedProductionId');
+          if (storedId) {
+            restoredProd = data.find((p: any) => p._id === storedId);
+          }
+        }
+        if (restoredProd) {
+          setSelectedProduction(restoredProd);
+        } else {
+          setSelectedProduction(data[0]);
+        }
+      } else {
+        setSelectedProduction(null);
       }
     } catch (e) {
       console.error('Error fetching productions:', e);
