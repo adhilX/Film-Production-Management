@@ -19,4 +19,14 @@ describe('AppController', () => {
       expect(appController.getHello()).toBe('Hello World!');
     });
   });
+
+  describe('test', () => {
+    it('should return status ok and a message', () => {
+      const response = appController.getTest();
+      expect(response.status).toBe('ok');
+      expect(response.message).toBe('Test API is working successfully');
+      expect(response.timestamp).toBeDefined();
+    });
+  });
 });
+

@@ -30,18 +30,24 @@ describe('Productions & Projects Module (e2e)', () => {
 
   // Seeded Entities
   let superAdminUser: any;
+  let prodAdminUser: any;
   let manager1: any;
   let manager2: any;
   let crewUser: any;
+  let castUser: any;
+  let crewNoViewUser: any;
   let pendingUser: any;
 
   let prod1: any;
   let prod2: any;
 
   let superAdminToken: string;
+  let prodAdminToken: string;
   let manager1Token: string;
   let manager2Token: string;
   let crewToken: string;
+  let castToken: string;
+  let crewNoViewToken: string;
   let pendingToken: string;
 
   beforeAll(async () => {
@@ -110,6 +116,28 @@ describe('Productions & Projects Module (e2e)', () => {
       ],
     }).save();
 
+    const prodAdminRole = await new roleModel({
+      name: 'Production Admin',
+      permissions: [
+        permProdView._id,
+        permProdCreate._id,
+        permProdUpdate._id,
+        permUsersApprove._id,
+      ],
+    }).save();
+
+    const castRole = await new roleModel({
+      name: 'Cast',
+      permissions: [
+        permProdView._id,
+      ],
+    }).save();
+
+    const crewNoViewRole = await new roleModel({
+      name: 'Crew No View',
+      permissions: [],
+    }).save();
+
     // Create Users
     superAdminUser = await new userModel({
       email: 'admin-prod@tendagon.com',
@@ -156,11 +184,41 @@ describe('Productions & Projects Module (e2e)', () => {
       systemRoleId: crewRole._id,
     }).save();
 
+    prodAdminUser = await new userModel({
+      email: 'padmin@tendagon.com',
+      passwordHash: 'hash',
+      name: 'Prod Admin',
+      isActive: true,
+      onboardingStatus: 'approved',
+      systemRoleId: prodAdminRole._id,
+    }).save();
+
+    castUser = await new userModel({
+      email: 'pcast@tendagon.com',
+      passwordHash: 'hash',
+      name: 'Cast User',
+      isActive: true,
+      onboardingStatus: 'approved',
+      systemRoleId: castRole._id,
+    }).save();
+
+    crewNoViewUser = await new userModel({
+      email: 'pcrewnoview@tendagon.com',
+      passwordHash: 'hash',
+      name: 'Crew No View User',
+      isActive: true,
+      onboardingStatus: 'approved',
+      systemRoleId: crewNoViewRole._id,
+    }).save();
+
     // Generate JWT Tokens
     superAdminToken = await jwtService.generateAccessToken({ userId: superAdminUser._id.toString(), email: superAdminUser.email });
+    prodAdminToken = await jwtService.generateAccessToken({ userId: prodAdminUser._id.toString(), email: prodAdminUser.email });
     manager1Token = await jwtService.generateAccessToken({ userId: manager1._id.toString(), email: manager1.email });
     manager2Token = await jwtService.generateAccessToken({ userId: manager2._id.toString(), email: manager2.email });
     crewToken = await jwtService.generateAccessToken({ userId: crewUser._id.toString(), email: crewUser.email });
+    castToken = await jwtService.generateAccessToken({ userId: castUser._id.toString(), email: castUser.email });
+    crewNoViewToken = await jwtService.generateAccessToken({ userId: crewNoViewUser._id.toString(), email: crewNoViewUser.email });
     pendingToken = await jwtService.generateAccessToken({ userId: pendingUser._id.toString(), email: pendingUser.email });
 
     // Create Productions
@@ -197,6 +255,20 @@ describe('Productions & Projects Module (e2e)', () => {
     // Assign crewUser to prod1
     await new castCrewModel({
       userId: crewUser._id,
+      productionId: prod1._id,
+      roleInProduction: 'Crew',
+    }).save();
+
+    // Assign castUser to prod1
+    await new castCrewModel({
+      userId: castUser._id,
+      productionId: prod1._id,
+      roleInProduction: 'Cast',
+    }).save();
+
+    // Assign crewNoViewUser to prod1
+    await new castCrewModel({
+      userId: crewNoViewUser._id,
       productionId: prod1._id,
       roleInProduction: 'Crew',
     }).save();
@@ -405,6 +477,146 @@ describe('Productions & Projects Module (e2e)', () => {
         .delete(`/productions/${prod1._id}/cast-crew/${prod2AssignId}`)
         .set('Authorization', `Bearer ${manager1Token}`)
         .expect(404);
+    });
+  });
+
+  describe('RBAC & Scoping for General Routes (Crew, Cast, PM, Admin, Super Admin)', () => {
+    it('Crew with productions.view can access assigned production and list assigned ones', async () => {
+      // 1. Can list assigned productions
+      const listRes = await request(app.getHttpServer())
+        .get('/productions')
+        .set('Authorization', `Bearer ${crewToken}`)
+        .expect(200);
+      expect(Array.isArray(listRes.body)).toBe(true);
+      expect(listRes.body.length).toBe(1);
+      expect(listRes.body[0]._id).toBe(prod1._id.toString());
+
+      // 2. Can access assigned production details
+      await request(app.getHttpServer())
+        .get(`/productions/${prod1._id}`)
+        .set('Authorization', `Bearer ${crewToken}`)
+        .expect(200);
+    });
+
+    it('Crew without productions.view receives 403', async () => {
+      await request(app.getHttpServer())
+        .get('/productions')
+        .set('Authorization', `Bearer ${crewNoViewToken}`)
+        .expect(403);
+
+      await request(app.getHttpServer())
+        .get(`/productions/${prod1._id}`)
+        .set('Authorization', `Bearer ${crewNoViewToken}`)
+        .expect(403);
+    });
+
+    it('Crew cannot access a production they are not assigned to', async () => {
+      await request(app.getHttpServer())
+        .get(`/productions/${prod2._id}`)
+        .set('Authorization', `Bearer ${crewToken}`)
+        .expect(403);
+    });
+
+    it('Crew cannot update production unless they have productions.update', async () => {
+      await request(app.getHttpServer())
+        .patch(`/productions/${prod1._id}`)
+        .set('Authorization', `Bearer ${crewToken}`)
+        .send({ status: 'Cancelled' })
+        .expect(403);
+    });
+
+    it('Production Manager can access assigned production and gets scoped list', async () => {
+      const listRes = await request(app.getHttpServer())
+        .get('/productions')
+        .set('Authorization', `Bearer ${manager1Token}`)
+        .expect(200);
+      expect(Array.isArray(listRes.body)).toBe(true);
+      expect(listRes.body.length).toBe(2);
+      const returnedIds = listRes.body.map((p: any) => p._id);
+      expect(returnedIds).toContain(prod1._id.toString());
+      expect(returnedIds).not.toContain(prod2._id.toString());
+
+      await request(app.getHttpServer())
+        .get(`/productions/${prod1._id}`)
+        .set('Authorization', `Bearer ${manager1Token}`)
+        .expect(200);
+
+      await request(app.getHttpServer())
+        .get(`/productions/${prod2._id}`)
+        .set('Authorization', `Bearer ${manager1Token}`)
+        .expect(403);
+    });
+
+    it('Cast can access assigned production and gets scoped list', async () => {
+      const listRes = await request(app.getHttpServer())
+        .get('/productions')
+        .set('Authorization', `Bearer ${castToken}`)
+        .expect(200);
+      expect(Array.isArray(listRes.body)).toBe(true);
+      expect(listRes.body.length).toBe(1);
+      expect(listRes.body[0]._id).toBe(prod1._id.toString());
+
+      await request(app.getHttpServer())
+        .get(`/productions/${prod1._id}`)
+        .set('Authorization', `Bearer ${castToken}`)
+        .expect(200);
+
+      await request(app.getHttpServer())
+        .get(`/productions/${prod2._id}`)
+        .set('Authorization', `Bearer ${castToken}`)
+        .expect(403);
+    });
+
+    it('Production Admin behavior remains unchanged (can list/view all productions)', async () => {
+      const listRes = await request(app.getHttpServer())
+        .get('/productions')
+        .set('Authorization', `Bearer ${prodAdminToken}`)
+        .expect(200);
+      expect(Array.isArray(listRes.body)).toBe(true);
+      expect(listRes.body.length).toBeGreaterThanOrEqual(2);
+
+      await request(app.getHttpServer())
+        .get(`/productions/${prod1._id}`)
+        .set('Authorization', `Bearer ${prodAdminToken}`)
+        .expect(200);
+
+      await request(app.getHttpServer())
+        .get(`/productions/${prod2._id}`)
+        .set('Authorization', `Bearer ${prodAdminToken}`)
+        .expect(200);
+    });
+
+    it('Super Admin can access all productions', async () => {
+      const listRes = await request(app.getHttpServer())
+        .get('/productions')
+        .set('Authorization', `Bearer ${superAdminToken}`)
+        .expect(200);
+      expect(Array.isArray(listRes.body)).toBe(true);
+      expect(listRes.body.length).toBeGreaterThanOrEqual(2);
+
+      await request(app.getHttpServer())
+        .get(`/productions/${prod1._id}`)
+        .set('Authorization', `Bearer ${superAdminToken}`)
+        .expect(200);
+
+      await request(app.getHttpServer())
+        .get(`/productions/${prod2._id}`)
+        .set('Authorization', `Bearer ${superAdminToken}`)
+        .expect(200);
+    });
+
+    it('Invalid production IDs still return the expected validation error (403 for non-Admin, 400 for Admin)', async () => {
+      // Non-Admin gets 403 from AuthGuard checks
+      await request(app.getHttpServer())
+        .get('/productions/invalid-id-format')
+        .set('Authorization', `Bearer ${crewToken}`)
+        .expect(403);
+
+      // Admin gets 400 from ParseObjectIdPipe
+      await request(app.getHttpServer())
+        .get('/productions/invalid-id-format')
+        .set('Authorization', `Bearer ${superAdminToken}`)
+        .expect(400);
     });
   });
 });

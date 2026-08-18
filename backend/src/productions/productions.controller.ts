@@ -39,6 +39,7 @@ export class ProductionsController {
   constructor(private readonly productionsService: ProductionsService) {}
 
   @Post()
+  @CheckProduction(false)
   @Permissions('productions.create')
   @ApiOperation({ summary: 'Create a new film production project' })
   @ApiResponse({ status: 201, description: 'Production created successfully.' })
@@ -51,6 +52,7 @@ export class ProductionsController {
   }
 
   @Get()
+  @CheckProduction(false)
   @Permissions('productions.view')
   @ApiOperation({
     summary: 'List film productions accessible by the authenticated user',
@@ -65,6 +67,7 @@ export class ProductionsController {
   }
 
   @Get('managers')
+  @CheckProduction(false)
   @Permissions('productions.view')
   @ApiOperation({ summary: 'List eligible active Production Managers' })
   @ApiResponse({
