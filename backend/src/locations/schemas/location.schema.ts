@@ -34,3 +34,5 @@ export class Location {
 }
 
 export const LocationSchema = SchemaFactory.createForClass(Location);
+LocationSchema.index({ productionId: 1, name: 1 }, { unique: true });
+

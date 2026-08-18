@@ -30,6 +30,7 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useProductionStore } from '@/store/useProductionStore';
+import { useRouter } from 'next/navigation';
 import { PermissionGuard } from '@/app/components/permission-guard';
 import locationsService from '@/services/locationsService';
 import type { Location, LocationBooking } from '@/app/types';
@@ -46,8 +47,20 @@ const LeafletMap = dynamic(() => import('../LeafletMap'), {
 });
 
 export default function LocationsModule() {
+  const router = useRouter();
   const { user } = useAuthStore();
   const selectedProduction = useProductionStore((state) => state.selectedProduction);
+
+  const hasPermission = (perm: string): boolean => {
+    return user?.permissions?.includes(perm) || false;
+  };
+
+  const formatError = (err: any, defaultMsg: string): string => {
+    if (err.response?.status === 403) {
+      return "You don't have permission to perform this action.";
+    }
+    return err.response?.data?.message || err.message || defaultMsg;
+  };
 
   // Lists & Loading
   const [locations, setLocations] = useState<Location[]>([]);
@@ -180,31 +193,6 @@ export default function LocationsModule() {
     setSearchQuery('');
   };
 
-  // Handle Physical Location submissions
-  const handleAddLocation = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedProduction) return;
-    setError('');
-    setSuccess('');
-    try {
-      await locationsService.createLocation(selectedProduction._id, {
-        name: locName,
-        address: locAddress,
-        description: locDescription,
-        locationType: locType,
-        contactInfo: locContact,
-        imageUrl: locImage,
-        latitude: locLat,
-        longitude: locLng,
-      });
-      setSuccess(`Physical location "${locName}" created successfully.`);
-      setIsAddLocationOpen(false);
-      resetLocForm();
-      fetchData();
-    } catch (err: any) {
-      setError(err.response?.data?.message || err.message || 'Failed to create physical location.');
-    }
-  };
 
   const handleOpenEdit = (loc: Location) => {
     setEditingLocationId(loc._id);
@@ -240,7 +228,7 @@ export default function LocationsModule() {
       resetLocForm();
       fetchData();
     } catch (err: any) {
-      setError(err.response?.data?.message || err.message || 'Failed to update physical location.');
+      setError(formatError(err, 'Failed to update physical location.'));
     }
   };
 
@@ -257,7 +245,7 @@ export default function LocationsModule() {
       }
       fetchData();
     } catch (err: any) {
-      setError(err.response?.data?.message || err.message || 'Failed to delete location.');
+      setError(formatError(err, 'Failed to delete location.'));
     }
   };
 
@@ -287,7 +275,7 @@ export default function LocationsModule() {
       fetchData();
       setActiveTab('bookings');
     } catch (err: any) {
-      setError(err.response?.data?.message || err.message || 'Failed to submit booking request.');
+      setError(formatError(err, 'Failed to submit booking request.'));
     }
   };
 
@@ -303,7 +291,7 @@ export default function LocationsModule() {
       setSuccess(`Booking status successfully transitioned to "${status}".`);
       fetchData();
     } catch (err: any) {
-      setError(err.response?.data?.message || err.message || 'Failed to update booking status.');
+      setError(formatError(err, 'Failed to update booking status.'));
     }
   };
 
@@ -388,13 +376,16 @@ export default function LocationsModule() {
         }
       ];
       for (const loc of mockLocations) {
-        await locationsService.createLocation(selectedProduction._id, loc);
+        await locationsService.createLocation(selectedProduction._id, {
+          ...loc,
+          productionId: selectedProduction._id,
+        });
       }
       setSuccess('Successfully imported 6 demo locations.');
       setIsImportOpen(false);
       fetchData();
     } catch (err: any) {
-      setError(err.response?.data?.message || err.message || 'Failed to import locations.');
+      setError(formatError(err, 'Failed to import locations.'));
     }
   };
 
@@ -535,19 +526,18 @@ export default function LocationsModule() {
           <p className="text-xs text-slate-450 mt-1 font-medium">Manage all production locations and booking requests</p>
         </div>
         <div className="flex items-center gap-2.5">
-          <button
-            onClick={() => setIsImportOpen(true)}
-            className="py-1.5 px-3.5 bg-white border border-slate-250 text-slate-700 hover:bg-slate-50 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
-          >
-            <Upload size={14} className="text-slate-450" /> Import Locations
-          </button>
+          <PermissionGuard permission="locations.create">
+            <button
+              onClick={() => setIsImportOpen(true)}
+              className="py-1.5 px-3.5 bg-white border border-slate-250 text-slate-700 hover:bg-slate-50 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+            >
+              <Upload size={14} className="text-slate-450" /> Import Locations
+            </button>
+          </PermissionGuard>
 
           <PermissionGuard permission="locations.create">
             <button
-              onClick={() => {
-                resetLocForm();
-                setIsAddLocationOpen(true);
-              }}
+              onClick={() => router.push('/locations/add')}
               className="py-1.5 px-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
             >
               <Plus size={14} /> Add Location
@@ -746,41 +736,47 @@ export default function LocationsModule() {
                               <h3 className="font-bold text-slate-800 text-sm line-clamp-1">{loc.name}</h3>
                               
                               {/* Context Actions Dropdown menu */}
-                              <div className="relative">
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setActiveMenuId(activeMenuId === loc._id ? null : loc._id);
-                                  }}
-                                  className="p-1 hover:bg-slate-100 rounded-lg text-slate-450 hover:text-slate-700 transition"
-                                >
-                                  <MoreVertical size={16} />
-                                </button>
-                                {activeMenuId === loc._id && (
-                                  <div className="absolute right-0 top-7 z-20 w-32 bg-white border border-slate-200 rounded-xl shadow-lg py-1 divide-y divide-slate-50">
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setActiveMenuId(null);
-                                        handleOpenEdit(loc);
-                                      }}
-                                      className="w-full text-left px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50 transition flex items-center gap-1.5"
-                                    >
-                                      <Edit2 size={12} /> Edit
-                                    </button>
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setActiveMenuId(null);
-                                        handleDeleteLocation(loc._id, loc.name);
-                                      }}
-                                      className="w-full text-left px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 transition flex items-center gap-1.5"
-                                    >
-                                      <Trash2 size={12} /> Delete
-                                    </button>
-                                  </div>
-                                )}
-                              </div>
+                              {(hasPermission('locations.update') || hasPermission('locations.delete')) && (
+                                <div className="relative">
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setActiveMenuId(activeMenuId === loc._id ? null : loc._id);
+                                    }}
+                                    className="p-1 hover:bg-slate-100 rounded-lg text-slate-450 hover:text-slate-700 transition"
+                                  >
+                                    <MoreVertical size={16} />
+                                  </button>
+                                  {activeMenuId === loc._id && (
+                                    <div className="absolute right-0 top-7 z-20 w-32 bg-white border border-slate-200 rounded-xl shadow-lg py-1 divide-y divide-slate-50">
+                                      {hasPermission('locations.update') && (
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setActiveMenuId(null);
+                                            handleOpenEdit(loc);
+                                          }}
+                                          className="w-full text-left px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50 transition flex items-center gap-1.5"
+                                        >
+                                          <Edit2 size={12} /> Edit
+                                        </button>
+                                      )}
+                                      {hasPermission('locations.delete') && (
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setActiveMenuId(null);
+                                            handleDeleteLocation(loc._id, loc.name);
+                                          }}
+                                          className="w-full text-left px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 transition flex items-center gap-1.5"
+                                        >
+                                          <Trash2 size={12} /> Delete
+                                        </button>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
                             </div>
 
                             <div className="flex flex-wrap gap-1.5 mt-2">
@@ -841,41 +837,47 @@ export default function LocationsModule() {
                           <span className={`text-[10px] font-bold px-2 py-0.5 border rounded-lg ${statusColors[status] || 'bg-slate-50 text-slate-600'}`}>
                             {status}
                           </span>
-                          <div className="relative">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setActiveMenuId(activeMenuId === loc._id ? null : loc._id);
-                              }}
-                              className="p-1 hover:bg-slate-100 rounded-lg text-slate-450 transition"
-                            >
-                              <MoreVertical size={16} />
-                            </button>
-                            {activeMenuId === loc._id && (
-                              <div className="absolute right-0 top-7 z-20 w-32 bg-white border border-slate-200 rounded-xl shadow-lg py-1 divide-y divide-slate-50">
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setActiveMenuId(null);
-                                    handleOpenEdit(loc);
-                                  }}
-                                  className="w-full text-left px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50 transition flex items-center gap-1.5"
-                                >
-                                  <Edit2 size={12} /> Edit
-                                </button>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setActiveMenuId(null);
-                                    handleDeleteLocation(loc._id, loc.name);
-                                  }}
-                                  className="w-full text-left px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 transition flex items-center gap-1.5"
-                                >
-                                  <Trash2 size={12} /> Delete
-                                </button>
-                              </div>
-                            )}
-                          </div>
+                          {(hasPermission('locations.update') || hasPermission('locations.delete')) && (
+                            <div className="relative">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setActiveMenuId(activeMenuId === loc._id ? null : loc._id);
+                                }}
+                                className="p-1 hover:bg-slate-100 rounded-lg text-slate-450 transition"
+                              >
+                                <MoreVertical size={16} />
+                              </button>
+                              {activeMenuId === loc._id && (
+                                <div className="absolute right-0 top-7 z-20 w-32 bg-white border border-slate-200 rounded-xl shadow-lg py-1 divide-y divide-slate-50">
+                                  {hasPermission('locations.update') && (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setActiveMenuId(null);
+                                        handleOpenEdit(loc);
+                                      }}
+                                      className="w-full text-left px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50 transition flex items-center gap-1.5"
+                                    >
+                                      <Edit2 size={12} /> Edit
+                                    </button>
+                                  )}
+                                  {hasPermission('locations.delete') && (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setActiveMenuId(null);
+                                        handleDeleteLocation(loc._id, loc.name);
+                                      }}
+                                      className="w-full text-left px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 transition flex items-center gap-1.5"
+                                    >
+                                      <Trash2 size={12} /> Delete
+                                    </button>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </div>
                     );
@@ -1144,179 +1146,6 @@ export default function LocationsModule() {
         </div>
       )}
 
-      {/* Modal - Add Physical Location */}
-      {isAddLocationOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-2xl shadow-xl overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="flex justify-between items-center bg-slate-50/50 px-6 py-4 border-b border-slate-200">
-              <span className="text-sm font-extrabold text-slate-800">Add New Physical Location</span>
-              <button onClick={() => setIsAddLocationOpen(false)} className="text-slate-400 hover:text-slate-650 cursor-pointer">
-                <X size={16} />
-              </button>
-            </div>
-
-            <form onSubmit={handleAddLocation} className="p-6 space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="block text-[10px] font-bold text-slate-450 uppercase tracking-wider">Location Name *</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Sound Stage A"
-                    value={locName}
-                    onChange={(e) => setLocName(e.target.value)}
-                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="block text-[10px] font-bold text-slate-450 uppercase tracking-wider">Location Type</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Studio, Desert, Mansion"
-                    value={locType}
-                    onChange={(e) => setLocType(e.target.value)}
-                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900"
-                  />
-                </div>
-              </div>
-
-              {/* Nominatim Search Wrapper */}
-              <div className="space-y-1 relative">
-                <label className="block text-[10px] font-bold text-slate-450 uppercase tracking-wider">Address Search *</label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    required
-                    placeholder="Search address using OpenStreetMap Nominatim..."
-                    value={searchQuery}
-                    onChange={(e) => {
-                      setSearchQuery(e.target.value);
-                      setLocAddress(e.target.value);
-                    }}
-                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900 pr-8"
-                  />
-                  {isSearchingAddress && (
-                    <div className="absolute right-2.5 top-2.5">
-                      <Loader2 className="animate-spin text-slate-400" size={14} />
-                    </div>
-                  )}
-                </div>
-
-                {suggestions.length > 0 && (
-                  <div className="absolute z-50 left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-lg mt-1 divide-y divide-slate-100 max-h-48 overflow-y-auto">
-                    {suggestions.map((item, idx) => (
-                      <button
-                        key={idx}
-                        type="button"
-                        onClick={() => handleSelectSuggestion(item)}
-                        className="w-full text-left p-2.5 hover:bg-slate-50 text-[11px] text-slate-650 font-medium block truncate"
-                      >
-                        {item.display_name}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Preview Address */}
-              <div className="text-[10px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 p-2.5 rounded-xl break-words leading-relaxed">
-                Selected Address: {locAddress || 'None'}
-              </div>
-
-              {/* Pin Coordinates Visual Indicator */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="block text-[10px] font-bold text-slate-450 uppercase tracking-wider">Latitude</label>
-                  <input
-                    type="number"
-                    step="any"
-                    placeholder="Auto-filled via map or search"
-                    value={locLat ?? ''}
-                    onChange={(e) => setLocLat(e.target.value ? parseFloat(e.target.value) : undefined)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-xs focus:outline-none text-slate-500"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="block text-[10px] font-bold text-slate-450 uppercase tracking-wider">Longitude</label>
-                  <input
-                    type="number"
-                    step="any"
-                    placeholder="Auto-filled via map or search"
-                    value={locLng ?? ''}
-                    onChange={(e) => setLocLng(e.target.value ? parseFloat(e.target.value) : undefined)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-xs focus:outline-none text-slate-500"
-                  />
-                </div>
-              </div>
-
-              {/* Pin Map inside Add Modal */}
-              <div className="h-[180px] rounded-xl overflow-hidden relative border border-slate-200">
-                <LeafletMap
-                  locations={[]}
-                  isPinning={true}
-                  pinningCoords={locLat && locLng ? { lat: locLat, lng: locLng } : null}
-                  onPinCoordsChange={(coords) => {
-                    setLocLat(coords.lat);
-                    setLocLng(coords.lng);
-                  }}
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="block text-[10px] font-bold text-slate-450 uppercase tracking-wider">Contact Info</label>
-                  <input
-                    type="text"
-                    placeholder="Manager contact, phone, notes"
-                    value={locContact}
-                    onChange={(e) => setLocContact(e.target.value)}
-                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="block text-[10px] font-bold text-slate-450 uppercase tracking-wider">Image URL</label>
-                  <input
-                    type="text"
-                    placeholder="https://example.com/image.jpg"
-                    value={locImage}
-                    onChange={(e) => setLocImage(e.target.value)}
-                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <label className="block text-[10px] font-bold text-slate-450 uppercase tracking-wider">Description</label>
-                <textarea
-                  placeholder="Additional physical description..."
-                  value={locDescription}
-                  onChange={(e) => setLocDescription(e.target.value)}
-                  rows={2}
-                  className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900"
-                />
-              </div>
-
-              <div className="flex justify-end gap-2 border-t border-slate-100 pt-4">
-                <button
-                  type="button"
-                  onClick={() => setIsAddLocationOpen(false)}
-                  className="py-2 px-4 bg-slate-100 hover:bg-slate-200 border border-slate-250 text-slate-700 rounded-xl text-xs font-bold transition cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="py-2 px-5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition cursor-pointer shadow-xs"
-                >
-                  Save Location
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
 
       {/* Modal - Edit Physical Location */}
       {isEditLocationOpen && (

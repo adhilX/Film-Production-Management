@@ -56,6 +56,7 @@ export class UsersService {
 
     const users = await this.userModel
       .find(query)
+      .populate('profile')
       .populate({
         path: 'systemRoleId',
         populate: { path: 'permissions' },
@@ -77,6 +78,7 @@ export class UsersService {
   async findOne(id: string): Promise<User> {
     const user = await this.userModel
       .findById(id)
+      .populate('profile')
       .populate({
         path: 'systemRoleId',
         populate: { path: 'permissions' },

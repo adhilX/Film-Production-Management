@@ -125,7 +125,7 @@ export default function Step3Financial({ formData, errors, onChange, onFieldChan
               <span className="block text-xs font-bold text-slate-800">W-9 or W-8BEN Form Upload</span>
               <HelpCircle className="w-3.5 h-3.5 text-slate-400 cursor-pointer" />
             </div>
-            <p className="text-[11px] text-slate-550">Please sign and upload your tax documentation (PDF or Image format).</p>
+            <p className="text-[11px] text-slate-550">Please sign and upload your tax documentation Image format.</p>
           </div>
           
           <label className="cursor-pointer shrink-0 px-4.5 py-2 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 shadow-sm transition flex items-center justify-center gap-2">

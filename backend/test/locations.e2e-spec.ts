@@ -551,4 +551,21 @@ describe('Locations & Bookings Module (e2e)', () => {
       expect(log).toBeDefined();
     });
   });
+
+  describe('Route Safety & ObjectId Validation Regression Checks', () => {
+    it('GET /productions/:productionId/locations/bookings resolves to bookings and not location detail', async () => {
+      await request(app.getHttpServer())
+        .get(`/productions/${prod1._id}/locations/bookings`)
+        .set('Authorization', `Bearer ${manager1Token}`)
+        .expect(200); // Expect list of bookings, not 400/404/500 from location ID parser
+    });
+
+    it('GET /productions/:productionId/locations/invalid-id-format returns 400/404 instead of 500 BSON Error', async () => {
+      await request(app.getHttpServer())
+        .get(`/productions/${prod1._id}/locations/invalid-id-format`)
+        .set('Authorization', `Bearer ${manager1Token}`)
+        .expect(404); // Returns 404 Not Found (a clean 400/404 response instead of 500 BSON Error)
+    });
+  });
 });
+
