@@ -92,13 +92,36 @@ export interface FundRequest {
     name: string;
     email: string;
   };
-  amount: number;
-  justification: string;
-  status: 'Pending' | 'Approved' | 'Rejected';
+  title: string;
+  description: string;
+  category: string;
+  requestedAmount: number; // Stored in smallest currency units (paise/cents)
+  approvedAmount: number;  // Stored in smallest currency units (paise/cents)
+  status: 'Pending' | 'Approved' | 'Rejected' | 'Cancelled';
   rejectionReason?: string;
+  reviewedBy?: {
+    _id: string;
+    name: string;
+    email: string;
+  } | null;
+  reviewedAt?: string | null;
   createdAt?: string;
   updatedAt?: string;
 }
+
+export interface Budget {
+  _id: string;
+  productionId: string;
+  totalBudget: number;      // Stored in smallest currency units (paise/cents)
+  allocatedAmount: number;  // Stored in smallest currency units (paise/cents)
+  remainingAmount: number;  // Stored in smallest currency units (paise/cents)
+  currency: string;
+  createdBy: string;
+  updatedBy: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 
 export interface AuditLog {
   _id: string;

@@ -771,7 +771,7 @@ export default function ProductionsPage() {
                       <button
                         type="button"
                         onClick={removeImage}
-                        className="p-2 text-rose-650 hover:bg-rose-50 rounded-xl transition cursor-pointer"
+                        className="p-2 text-rose-600 hover:bg-rose-50 rounded-xl transition cursor-pointer"
                       >
                         <Trash2 className="w-4.5 h-4.5" />
                       </button>
@@ -994,7 +994,7 @@ export default function ProductionsPage() {
                       <button
                         type="button"
                         onClick={removeImage}
-                        className="p-2 text-rose-650 hover:bg-rose-50 rounded-xl transition cursor-pointer"
+                        className="p-2 text-rose-600 hover:bg-rose-50 rounded-xl transition cursor-pointer"
                       >
                         <Trash2 className="w-4.5 h-4.5" />
                       </button>

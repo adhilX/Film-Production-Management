@@ -11,21 +11,37 @@ export class FundRequest {
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   requestedBy: Types.ObjectId;
 
-  @Prop({ required: true, min: 0 })
-  amount: number;
+  @Prop({ required: true })
+  title: string;
 
   @Prop({ required: true })
-  justification: string;
+  description: string;
+
+  @Prop({ required: true })
+  category: string;
+
+  @Prop({ type: Number, required: true, min: 1 })
+  requestedAmount: number; // Stored in smallest currency units (paise/cents)
+
+  @Prop({ type: Number, required: true, default: 0, min: 0 })
+  approvedAmount: number; // Stored in smallest currency units (paise/cents)
 
   @Prop({
     required: true,
-    enum: ['Pending', 'Approved', 'Rejected'],
+    enum: ['Pending', 'Approved', 'Rejected', 'Cancelled'],
     default: 'Pending',
   })
   status: string;
 
-  @Prop({ type: Types.ObjectId, ref: 'User' })
-  approvedBy: Types.ObjectId;
+  @Prop({ type: String, default: null })
+  rejectionReason?: string;
+
+  @Prop({ type: Types.ObjectId, ref: 'User', default: null })
+  reviewedBy?: Types.ObjectId;
+
+  @Prop({ type: Date, default: null })
+  reviewedAt?: Date;
 }
 
 export const FundRequestSchema = SchemaFactory.createForClass(FundRequest);
+
