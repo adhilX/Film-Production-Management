@@ -22,7 +22,7 @@ export const Pagination: React.FC<PaginationProps> = ({
   onLimitChange,
   itemName = 'results',
 }) => {
-  if (pages <= 0) return null;
+  if (pages <= 0 || total <= 5) return null;
 
   const startRange = Math.min(total, (page - 1) * limit + 1);
   const endRange = Math.min(total, page * limit);

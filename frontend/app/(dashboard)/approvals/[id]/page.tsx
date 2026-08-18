@@ -179,7 +179,7 @@ function ApprovalDetailsContent() {
   const profile = user.profile || {};
 
   return (
-    <div className="animate-in fade-in duration-300 w-full max-w-[1400px] mx-auto px-6 md:px-8 lg:px-10 py-8 flex flex-col gap-8 font-sans text-slate-800">
+    <div className="animate-in fade-in duration-300 w-full px-6 md:px-8 lg:px-10 py-8 flex flex-col gap-8 font-sans text-slate-800">
       {/* Top Header Navigation */}
       <div className="flex items-center">
         <button

@@ -88,7 +88,14 @@ export class AuditLogsService {
   async findAll(): Promise<AuditLog[]> {
     return this.auditLogModel
       .find()
-      .populate('userId', 'email name')
+      .populate({
+        path: 'userId',
+        select: 'email name',
+        populate: {
+          path: 'profile',
+          select: 'photoUrl',
+        },
+      })
       .sort({ timestamp: -1 })
       .exec();
   }
@@ -222,7 +229,14 @@ export class AuditLogsService {
       this.auditLogModel.countDocuments(configFilter).exec(),
       this.auditLogModel
         .find(filter)
-        .populate('userId', 'email name')
+        .populate({
+          path: 'userId',
+          select: 'email name',
+          populate: {
+            path: 'profile',
+            select: 'photoUrl',
+          },
+        })
         .sort(sortObj)
         .skip(skip)
         .limit(limit)

@@ -103,6 +103,7 @@ function ProductionsPageContent() {
   });
 
   const [formError, setFormError] = useState('');
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const hasPermission = (perm: string): boolean => {
@@ -291,6 +292,7 @@ function ProductionsPageContent() {
       status: 'Draft',
     });
     setFormError('');
+    setErrors({});
     setIsCreateOpen(true);
   };
 
@@ -318,6 +320,7 @@ function ProductionsPageContent() {
       status: prod.status,
     });
     setFormError('');
+    setErrors({});
     setIsEditOpen(true);
   };
 
@@ -325,24 +328,99 @@ function ProductionsPageContent() {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: name === 'budget' ? Number(value) : value
+      [name]: name === 'budget' ? (value === '' ? '' : Number(value)) : value
     }));
+
+    if (errors[name]) {
+      setErrors(prev => {
+        const next = { ...prev };
+        delete next[name];
+        return next;
+      });
+    }
+
+    if (name === 'startDate' || name === 'endDate') {
+      setErrors(prev => {
+        const next = { ...prev };
+        delete next.startDate;
+        delete next.endDate;
+        return next;
+      });
+    }
   };
 
   const validateForm = (): boolean => {
-    if (new Date(formData.startDate) > new Date(formData.endDate)) {
-      setFormError('Start date must be before the end date.');
-      return false;
+    const newErrors: Record<string, string> = {};
+
+    if (!formData.title || !formData.title.trim()) {
+      newErrors.title = 'Project title is required.';
+    } else if (formData.title.trim().length < 2) {
+      newErrors.title = 'Title must be at least 2 characters.';
     }
-    if (formData.budget < 0) {
-      setFormError('Budget cannot be negative.');
-      return false;
+
+    if (formData.budget === undefined || formData.budget === null || (formData.budget as any) === '') {
+      newErrors.budget = 'Budget is required.';
+    } else if (typeof formData.budget === 'number' && formData.budget < 0) {
+      newErrors.budget = 'Budget cannot be negative.';
+    } else if (isNaN(Number(formData.budget))) {
+      newErrors.budget = 'Budget must be a valid number.';
     }
+
+    if (!formData.genre || !formData.genre.trim()) {
+      newErrors.genre = 'Genre is required.';
+    }
+
+    if (!formData.format || !formData.format.trim()) {
+      newErrors.format = 'Format is required.';
+    }
+
+    if (!formData.language || !formData.language.trim()) {
+      newErrors.language = 'Language is required.';
+    }
+
     if (!formData.productionManager) {
-      setFormError('Project Manager is required.');
-      return false;
+      newErrors.productionManager = 'Project Manager is required.';
     }
-    return true;
+
+    if (!formData.startDate) {
+      newErrors.startDate = 'Start date is required.';
+    }
+
+    if (!formData.endDate) {
+      newErrors.endDate = 'End date is required.';
+    }
+
+    if (formData.startDate && formData.endDate && new Date(formData.startDate) > new Date(formData.endDate)) {
+      newErrors.endDate = 'End date must be after or equal to the start date.';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const getInputClass = (field: string, isSelectOrDate = false) => {
+    const base = "w-full bg-white border rounded-xl py-2 px-3 text-xs focus:outline-none transition duration-150";
+    if (errors[field]) {
+      return `${base} border-rose-300 bg-rose-50/10 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 text-rose-950 placeholder-rose-300`;
+    }
+    const textClass = isSelectOrDate ? "text-slate-750 cursor-pointer" : "text-slate-900";
+    return `${base} border-slate-250 focus:border-indigo-600 ${textClass}`;
+  };
+
+  const getLabelClass = (field: string, baseClass = "text-[10px] font-bold uppercase tracking-wider transition-colors duration-150") => {
+    if (errors[field]) {
+      return `${baseClass} text-rose-600`;
+    }
+    return `${baseClass} text-slate-455`;
+  };
+
+  const renderFieldError = (field: string) => {
+    if (!errors[field]) return null;
+    return (
+      <span className="text-[10px] text-rose-600 font-bold block mt-1 animate-in fade-in slide-in-from-top-1 duration-150">
+        {errors[field]}
+      </span>
+    );
   };
 
   const handleCreateSubmit = async (e: React.FormEvent) => {
@@ -426,7 +504,7 @@ function ProductionsPageContent() {
   const metricCompleted = productions.filter(p => p.status === 'Completed').length;
 
   return (
-    <div className="max-w-[1400px] mx-auto px-6 md:px-8 lg:px-10 py-8 space-y-6 animate-in fade-in duration-300 w-full">
+    <div className="w-full px-6 md:px-8 lg:px-10 py-8 space-y-6 animate-in fade-in duration-300">
       {/* Upper Metrics Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Metric 1 */}
@@ -778,7 +856,7 @@ function ProductionsPageContent() {
         )}
 
         {/* Reusable Pagination Component */}
-        {!loading && totalItems > 0 && (
+        {!loading && totalItems > 5 && (
           <Pagination
             page={currentPage}
             pages={totalPages}
@@ -880,96 +958,104 @@ function ProductionsPageContent() {
               {/* Form Input fields */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-455">Title</label>
+                  <label className={getLabelClass('title')}>Title</label>
                   <input
                     type="text"
                     name="title"
                     required
                     value={formData.title}
                     onChange={handleInputChange}
-                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900"
+                    className={getInputClass('title')}
                   />
+                  {renderFieldError('title')}
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-455">Budget ($)</label>
+                  <label className={getLabelClass('budget')}>Budget ($)</label>
                   <input
                     type="number"
                     name="budget"
                     required
                     value={formData.budget}
                     onChange={handleInputChange}
-                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900"
+                    className={getInputClass('budget')}
                   />
+                  {renderFieldError('budget')}
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-455">Genre</label>
+                  <label className={getLabelClass('genre')}>Genre</label>
                   <input
                     type="text"
                     name="genre"
                     required
                     value={formData.genre}
                     onChange={handleInputChange}
-                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900"
+                    className={getInputClass('genre')}
                   />
+                  {renderFieldError('genre')}
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-455">Format</label>
+                  <label className={getLabelClass('format')}>Format</label>
                   <input
                     type="text"
                     name="format"
                     required
                     value={formData.format}
                     onChange={handleInputChange}
-                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900"
+                    className={getInputClass('format')}
                   />
+                  {renderFieldError('format')}
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-455">Language</label>
+                  <label className={getLabelClass('language')}>Language</label>
                   <input
                     type="text"
                     name="language"
                     required
                     value={formData.language}
                     onChange={handleInputChange}
-                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900"
+                    className={getInputClass('language')}
                   />
+                  {renderFieldError('language')}
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-455">Project Manager</label>
+                  <label className={getLabelClass('productionManager')}>Project Manager</label>
                   <select
                     name="productionManager"
                     required
                     value={formData.productionManager}
                     onChange={handleInputChange}
-                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-700 appearance-none cursor-pointer"
+                    className={getInputClass('productionManager', true)}
                   >
                     <option value="">Select Manager...</option>
                     {systemUsers.map((u) => (
                       <option key={u._id} value={u._id}>{u.name}</option>
                     ))}
                   </select>
+                  {renderFieldError('productionManager')}
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-455">Start Date</label>
+                  <label className={getLabelClass('startDate')}>Start Date</label>
                   <input
                     type="date"
                     name="startDate"
                     required
                     value={formData.startDate}
                     onChange={handleInputChange}
-                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-700 cursor-pointer"
+                    className={getInputClass('startDate', true)}
                   />
+                  {renderFieldError('startDate')}
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-455">End Date</label>
+                  <label className={getLabelClass('endDate')}>End Date</label>
                   <input
                     type="date"
                     name="endDate"
                     required
                     value={formData.endDate}
                     onChange={handleInputChange}
-                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-700 cursor-pointer"
+                    className={getInputClass('endDate', true)}
                   />
+                  {renderFieldError('endDate')}
                 </div>
               </div>
 
@@ -1103,15 +1189,16 @@ function ProductionsPageContent() {
               {/* Form Input fields */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-455">Title</label>
+                  <label className={getLabelClass('title')}>Title</label>
                   <input
                     type="text"
                     name="title"
                     required
                     value={formData.title}
                     onChange={handleInputChange}
-                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900"
+                    className={getInputClass('title')}
                   />
+                  {renderFieldError('title')}
                 </div>
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold uppercase tracking-wider text-slate-455">Status & Transitions</label>
@@ -1129,84 +1216,91 @@ function ProductionsPageContent() {
                   </select>
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-455">Budget ($)</label>
+                  <label className={getLabelClass('budget')}>Budget ($)</label>
                   <input
                     type="number"
                     name="budget"
                     required
                     value={formData.budget}
                     onChange={handleInputChange}
-                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900"
+                    className={getInputClass('budget')}
                   />
+                  {renderFieldError('budget')}
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-455">Genre</label>
+                  <label className={getLabelClass('genre')}>Genre</label>
                   <input
                     type="text"
                     name="genre"
                     required
                     value={formData.genre}
                     onChange={handleInputChange}
-                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900"
+                    className={getInputClass('genre')}
                   />
+                  {renderFieldError('genre')}
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-455">Format</label>
+                  <label className={getLabelClass('format')}>Format</label>
                   <input
                     type="text"
                     name="format"
                     required
                     value={formData.format}
                     onChange={handleInputChange}
-                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900"
+                    className={getInputClass('format')}
                   />
+                  {renderFieldError('format')}
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-455">Language</label>
+                  <label className={getLabelClass('language')}>Language</label>
                   <input
                     type="text"
                     name="language"
                     required
                     value={formData.language}
                     onChange={handleInputChange}
-                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900"
+                    className={getInputClass('language')}
                   />
+                  {renderFieldError('language')}
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-455">Project Manager</label>
+                  <label className={getLabelClass('productionManager')}>Project Manager</label>
                   <select
                     name="productionManager"
                     required
                     value={formData.productionManager}
                     onChange={handleInputChange}
-                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-705 cursor-pointer"
+                    className={getInputClass('productionManager', true)}
                   >
                     {systemUsers.map((u) => (
                       <option key={u._id} value={u._id}>{u.name}</option>
                     ))}
                   </select>
+                  {renderFieldError('productionManager')}
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-455">Start Date</label>
+                  <label className={getLabelClass('startDate')}>Start Date</label>
                   <input
                     type="date"
                     name="startDate"
                     required
                     value={formData.startDate}
                     onChange={handleInputChange}
-                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-700 cursor-pointer"
+                    className={getInputClass('startDate', true)}
                   />
+                  {renderFieldError('startDate')}
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-455">End Date</label>
+                  <label className={getLabelClass('endDate')}>End Date</label>
                   <input
                     type="date"
                     name="endDate"
                     required
                     value={formData.endDate}
                     onChange={handleInputChange}
-                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-700 cursor-pointer"
+                    className={getInputClass('endDate', true)}
                   />
+                  {renderFieldError('endDate')}
                 </div>
               </div>
 

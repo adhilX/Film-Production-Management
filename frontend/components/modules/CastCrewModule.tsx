@@ -1,19 +1,19 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { 
-  Users, 
-  Clapperboard, 
-  Briefcase, 
-  Search, 
-  Filter, 
-  Plus, 
-  Edit, 
-  Trash2, 
-  Info, 
-  X, 
-  UserPlus, 
-  UserCheck, 
+import {
+  Users,
+  Clapperboard,
+  Briefcase,
+  Search,
+  Filter,
+  Plus,
+  Edit,
+  Trash2,
+  Info,
+  X,
+  UserPlus,
+  UserCheck,
   CheckCircle,
   AlertCircle,
   ShieldAlert
@@ -30,7 +30,7 @@ export default function CastCrewModule() {
   // Lists
   const [characters, setCharacters] = useState<Character[]>([]);
   const [castCrewList, setCastCrewList] = useState<CastCrew[]>([]);
-  
+
   // Eligible lists for assigning
   const [eligibleCast, setEligibleCast] = useState<any[]>([]);
   const [eligibleCrew, setEligibleCrew] = useState<any[]>([]);
@@ -246,7 +246,7 @@ export default function CastCrewModule() {
 
   if (!selectedProduction) {
     return (
-      <div className="max-w-[1400px] mx-auto px-6 md:px-8 lg:px-10 py-12">
+      <div className="w-full px-6 md:px-8 lg:px-10 py-12">
         <div className="bg-white border border-slate-200/90 rounded-2xl p-12 text-center shadow-xs flex flex-col items-center justify-center space-y-4">
           <div className="w-16 h-16 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-150">
             <Clapperboard size={32} />
@@ -263,34 +263,34 @@ export default function CastCrewModule() {
   // Derived stats
   const totalCharacters = characters.length;
   const assignedCharacters = characters.filter(c => c.assignments && c.assignments.length > 0).length;
-  
+
   // Cast matches anyone whose CastCrew record has characterId mapped OR they are assigned a role like actor
   const castList = castCrewList.filter(cc => cc.characterId || cc.userId?.contractorType === 'Cast');
   const crewList = castCrewList.filter(cc => !cc.characterId && cc.userId?.contractorType !== 'Cast');
 
   // Search & filters logic
-  const filteredCharacters = characters.filter(c => 
-    c.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+  const filteredCharacters = characters.filter(c =>
+    c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     (c.description || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const filteredCast = castList.filter(cc => 
-    cc.userId?.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    cc.roleInProduction.toLowerCase().includes(searchQuery.toLowerCase()) || 
+  const filteredCast = castList.filter(cc =>
+    cc.userId?.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    cc.roleInProduction.toLowerCase().includes(searchQuery.toLowerCase()) ||
     (cc.characterId?.name || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const filteredCrew = crewList.filter(cc => {
-    const matchesSearch = cc.userId?.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          cc.roleInProduction.toLowerCase().includes(searchQuery.toLowerCase());
-    
+    const matchesSearch = cc.userId?.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      cc.roleInProduction.toLowerCase().includes(searchQuery.toLowerCase());
+
     if (roleFilter === 'All') return matchesSearch;
     return matchesSearch && cc.roleInProduction.toLowerCase().includes(roleFilter.toLowerCase());
   });
 
   return (
-    <div className="max-w-[1400px] mx-auto px-6 md:px-8 lg:px-10 py-8 space-y-6 animate-in fade-in duration-300">
-      
+    <div className="w-full px-6 md:px-8 lg:px-10 py-8 space-y-6 animate-in fade-in duration-300">
+
       {/* Alert Notices */}
       {errorMsg && (
         <div className="bg-red-50 border border-red-200 text-red-750 px-4 py-3 rounded-xl flex items-start gap-3 text-xs font-semibold animate-in slide-in-from-top duration-200">
@@ -363,25 +363,25 @@ export default function CastCrewModule() {
 
       {/* Main Grid View */}
       <div className="bg-white border border-slate-200/90 rounded-2xl shadow-xs overflow-hidden flex flex-col">
-        
+
         {/* Navigation Tab & Actions Header */}
         <div className="border-b border-slate-150 px-6 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-slate-50/50">
-          
+
           {/* Tab Selection */}
           <div className="flex items-center gap-1.5 border border-slate-200 bg-white p-1 rounded-xl w-fit">
-            <button 
+            <button
               onClick={() => { setActiveTab('characters'); setSearchQuery(''); }}
               className={`px-3 py-1.5 text-xs font-bold rounded-lg transition ${activeTab === 'characters' ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}
             >
               Characters
             </button>
-            <button 
+            <button
               onClick={() => { setActiveTab('cast'); setSearchQuery(''); }}
               className={`px-3 py-1.5 text-xs font-bold rounded-lg transition ${activeTab === 'cast' ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}
             >
               Cast
             </button>
-            <button 
+            <button
               onClick={() => { setActiveTab('crew'); setSearchQuery(''); }}
               className={`px-3 py-1.5 text-xs font-bold rounded-lg transition ${activeTab === 'crew' ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}
             >
@@ -393,7 +393,7 @@ export default function CastCrewModule() {
           {canUpdate && (
             <div className="flex items-center gap-3">
               {activeTab === 'characters' && (
-                <button 
+                <button
                   onClick={openCreateCharacter}
                   className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-3.5 py-2 rounded-xl transition cursor-pointer"
                 >
@@ -401,7 +401,7 @@ export default function CastCrewModule() {
                 </button>
               )}
               {activeTab === 'cast' && (
-                <button 
+                <button
                   onClick={openAssignCast}
                   className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-3.5 py-2 rounded-xl transition cursor-pointer"
                 >
@@ -409,7 +409,7 @@ export default function CastCrewModule() {
                 </button>
               )}
               {activeTab === 'crew' && (
-                <button 
+                <button
                   onClick={openAssignCrew}
                   className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-3.5 py-2 rounded-xl transition cursor-pointer"
                 >
@@ -424,7 +424,7 @@ export default function CastCrewModule() {
         <div className="px-6 py-4 border-b border-slate-100 flex flex-col sm:flex-row items-center gap-4">
           <div className="relative flex-1 w-full">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
-            <input 
+            <input
               type="text"
               placeholder={`Search ${activeTab}...`}
               value={searchQuery}
@@ -436,7 +436,7 @@ export default function CastCrewModule() {
           {activeTab === 'crew' && (
             <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
               <Filter className="text-slate-400 w-4 h-4" />
-              <select 
+              <select
                 value={roleFilter}
                 onChange={(e) => setRoleFilter(e.target.value)}
                 className="bg-slate-50/50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-600/20 transition cursor-pointer flex-1 sm:flex-none"
@@ -471,18 +471,18 @@ export default function CastCrewModule() {
                         <div className="space-y-2">
                           <div className="flex items-start justify-between gap-3">
                             <h4 className="font-bold text-slate-800 text-sm leading-snug">{char.name}</h4>
-                            
+
                             {/* Management Actions */}
                             {canUpdate && (
                               <div className="flex items-center gap-1">
-                                <button 
+                                <button
                                   onClick={() => openEditCharacter(char)}
                                   className="p-1.5 text-slate-450 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
                                   title="Edit Character"
                                 >
                                   <Edit size={14} />
                                 </button>
-                                <button 
+                                <button
                                   onClick={() => handleDeleteCharacter(char._id)}
                                   className="p-1.5 text-slate-450 hover:text-red-650 hover:bg-red-50 rounded-lg transition"
                                   title="Delete Character"
@@ -567,19 +567,19 @@ export default function CastCrewModule() {
                             )}
                           </td>
                           <td className="px-6 py-4 font-medium text-slate-500">{cc.roleInProduction}</td>
-                          
+
                           {/* Actions */}
                           {canUpdate && (
                             <td className="px-6 py-4 text-right">
                               <div className="flex items-center justify-end gap-1.5">
-                                <button 
+                                <button
                                   onClick={() => openEditAssignment(cc)}
                                   className="p-1.5 text-slate-450 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
                                   title="Edit Assignment"
                                 >
                                   <Edit size={14} />
                                 </button>
-                                <button 
+                                <button
                                   onClick={() => handleRemoveAssignment(cc._id)}
                                   className="p-1.5 text-slate-450 hover:text-red-650 hover:bg-red-50 rounded-lg transition"
                                   title="Remove Assignment"
@@ -638,19 +638,19 @@ export default function CastCrewModule() {
                             </span>
                           </td>
                           <td className="px-6 py-4 font-medium text-slate-500">{cc.userId?.contractorType || 'Crew'}</td>
-                          
+
                           {/* Actions */}
                           {canUpdate && (
                             <td className="px-6 py-4 text-right">
                               <div className="flex items-center justify-end gap-1.5">
-                                <button 
+                                <button
                                   onClick={() => openEditAssignment(cc)}
                                   className="p-1.5 text-slate-450 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
                                   title="Edit Position"
                                 >
                                   <Edit size={14} />
                                 </button>
-                                <button 
+                                <button
                                   onClick={() => handleRemoveAssignment(cc._id)}
                                   className="p-1.5 text-slate-450 hover:text-red-650 hover:bg-red-50 rounded-lg transition"
                                   title="Remove Assignment"
@@ -693,7 +693,7 @@ export default function CastCrewModule() {
             <form onSubmit={handleSaveCharacter} className="p-6 space-y-4">
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-slate-550 uppercase tracking-wider block font-mono">Character Name</label>
-                <input 
+                <input
                   type="text"
                   required
                   placeholder="e.g. Iron Man / Tony Stark"
@@ -705,7 +705,7 @@ export default function CastCrewModule() {
 
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-slate-550 uppercase tracking-wider block font-mono">Description / Script Notes</label>
-                <textarea 
+                <textarea
                   rows={4}
                   placeholder="Describe the script details, key attributes, or costume requirements..."
                   value={characterForm.description}
@@ -715,14 +715,14 @@ export default function CastCrewModule() {
               </div>
 
               <div className="flex items-center justify-end gap-3 pt-2">
-                <button 
+                <button
                   type="button"
                   onClick={() => setCharacterModalOpen(false)}
                   className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition cursor-pointer"
                 >
                   Cancel
                 </button>
-                <button 
+                <button
                   type="submit"
                   className="px-5 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition shadow-xs cursor-pointer"
                 >
@@ -748,7 +748,7 @@ export default function CastCrewModule() {
             <form onSubmit={handleAssignCast} className="p-6 space-y-4">
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-slate-550 uppercase tracking-wider block font-mono">Select Actor / User</label>
-                <select 
+                <select
                   required
                   value={castForm.userId}
                   onChange={(e) => setCastForm({ ...castForm, userId: e.target.value })}
@@ -766,7 +766,7 @@ export default function CastCrewModule() {
 
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-slate-550 uppercase tracking-wider block font-mono">Role in Production</label>
-                <input 
+                <input
                   type="text"
                   required
                   placeholder="e.g. Lead / Supporting / Stunt Double"
@@ -778,7 +778,7 @@ export default function CastCrewModule() {
 
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-slate-550 uppercase tracking-wider block font-mono">Map to Script Character (Optional)</label>
-                <select 
+                <select
                   value={castForm.characterId}
                   onChange={(e) => setCastForm({ ...castForm, characterId: e.target.value })}
                   className="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 transition cursor-pointer font-medium"
@@ -791,14 +791,14 @@ export default function CastCrewModule() {
               </div>
 
               <div className="flex items-center justify-end gap-3 pt-2">
-                <button 
+                <button
                   type="button"
                   onClick={() => setAssignCastModalOpen(false)}
                   className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition cursor-pointer"
                 >
                   Cancel
                 </button>
-                <button 
+                <button
                   type="submit"
                   className="px-5 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition shadow-xs cursor-pointer"
                 >
@@ -824,7 +824,7 @@ export default function CastCrewModule() {
             <form onSubmit={handleAssignCrew} className="p-6 space-y-4">
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-slate-550 uppercase tracking-wider block font-mono">Select Crew / User</label>
-                <select 
+                <select
                   required
                   value={crewForm.userId}
                   onChange={(e) => setCrewForm({ ...crewForm, userId: e.target.value })}
@@ -842,7 +842,7 @@ export default function CastCrewModule() {
 
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-slate-550 uppercase tracking-wider block font-mono">Position / Role</label>
-                <input 
+                <input
                   type="text"
                   required
                   placeholder="e.g. Director of Photography / Camera Assistant"
@@ -853,14 +853,14 @@ export default function CastCrewModule() {
               </div>
 
               <div className="flex items-center justify-end gap-3 pt-2">
-                <button 
+                <button
                   type="button"
                   onClick={() => setAssignCrewModalOpen(false)}
                   className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition cursor-pointer"
                 >
                   Cancel
                 </button>
-                <button 
+                <button
                   type="submit"
                   className="px-5 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition shadow-xs cursor-pointer"
                 >
@@ -892,7 +892,7 @@ export default function CastCrewModule() {
 
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-slate-550 uppercase tracking-wider block font-mono">Position / Role</label>
-                <input 
+                <input
                   type="text"
                   required
                   value={editForm.roleInProduction}
@@ -905,13 +905,13 @@ export default function CastCrewModule() {
               {(selectedAssignment.characterId || selectedAssignment.userId?.contractorType === 'Cast') && (
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-slate-550 uppercase tracking-wider block font-mono">Map to Script Character</label>
-                  <select 
+                  <select
                     value={editForm.characterId}
                     onChange={(e) => setEditForm({ ...editForm, characterId: e.target.value })}
                     className="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 transition cursor-pointer font-medium"
                   >
                     <option value="">-- No character mapped --</option>
-                    
+
                     {/* Preserve currently assigned character */}
                     {selectedAssignment.characterId && (
                       <option value={selectedAssignment.characterId._id}>
@@ -925,20 +925,20 @@ export default function CastCrewModule() {
                       .filter(c => c._id !== selectedAssignment.characterId?._id)
                       .map(c => (
                         <option key={c._id} value={c._id}>{c.name}</option>
-                    ))}
+                      ))}
                   </select>
                 </div>
               )}
 
               <div className="flex items-center justify-end gap-3 pt-2">
-                <button 
+                <button
                   type="button"
                   onClick={() => setEditAssignmentModalOpen(false)}
                   className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition cursor-pointer"
                 >
                   Cancel
                 </button>
-                <button 
+                <button
                   type="submit"
                   className="px-5 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition shadow-xs cursor-pointer"
                 >

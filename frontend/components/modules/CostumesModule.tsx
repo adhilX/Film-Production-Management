@@ -87,6 +87,64 @@ export default function CostumesModule() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [costumeErrors, setCostumeErrors] = useState<Record<string, string>>({});
+
+  // Costume Form Validation Logic
+  const validateCostumeForm = (): boolean => {
+    const errors: Record<string, string> = {};
+
+    if (!selectedProduction) {
+      setErrorMsg('Please select a project before saving.');
+      return false;
+    }
+
+    // Name Validation
+    if (!costumeForm.name.trim()) {
+      errors.name = 'Costume name is required.';
+    } else if (costumeForm.name.trim().length < 2) {
+      errors.name = 'Costume name must be at least 2 characters.';
+    } else if (costumeForm.name.length > 100) {
+      errors.name = 'Costume name cannot exceed 100 characters.';
+    }
+
+    // Category Validation
+    if (!costumeForm.category.trim()) {
+      errors.category = 'Category is required.';
+    } else if (costumeForm.category.trim().length < 2) {
+      errors.category = 'Category must be at least 2 characters.';
+    } else if (costumeForm.category.length > 50) {
+      errors.category = 'Category cannot exceed 50 characters.';
+    }
+
+    // Size Validation
+    if (costumeForm.size && costumeForm.size.length > 20) {
+      errors.size = 'Size cannot exceed 20 characters.';
+    }
+
+    // Description Validation
+    if (costumeForm.description && costumeForm.description.length > 500) {
+      errors.description = 'Description cannot exceed 500 characters.';
+    }
+
+    // Quantity Validation
+    if (costumeForm.quantity === undefined || costumeForm.quantity === null || isNaN(costumeForm.quantity)) {
+      errors.quantity = 'Quantity is required.';
+    } else if (costumeForm.quantity < 1) {
+      errors.quantity = 'Quantity must be at least 1.';
+    } else if (selectedCostume) {
+      const assignedCount = selectedCostume.quantity - selectedCostume.availableQuantity;
+      if (costumeForm.quantity < assignedCount) {
+        errors.quantity = `Quantity cannot be less than currently assigned items (${assignedCount}).`;
+      }
+    }
+
+    setCostumeErrors(errors);
+    if (Object.keys(errors).length > 0) {
+      setErrorMsg('Please resolve form validation errors before saving.');
+      return false;
+    }
+    return true;
+  };
 
   // Permission Checks
   const canCreate = user?.permissions?.includes('costumes.create') || false;
@@ -180,6 +238,7 @@ export default function CostumesModule() {
   // --- CRUD Handlers ---
   const openCreateModal = () => {
     setSelectedCostume(null);
+    setCostumeErrors({});
     setCostumeForm({
       name: '',
       category: '',
@@ -194,6 +253,7 @@ export default function CostumesModule() {
 
   const openEditModal = (c: Costume) => {
     setSelectedCostume(c);
+    setCostumeErrors({});
     setCostumeForm({
       name: c.name,
       category: c.category,
@@ -209,8 +269,7 @@ export default function CostumesModule() {
   const handleSaveCostume = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedProduction) return;
-    if (!costumeForm.name.trim() || !costumeForm.category.trim()) {
-      setErrorMsg('Name and Category are required.');
+    if (!validateCostumeForm()) {
       return;
     }
 
@@ -368,7 +427,7 @@ export default function CostumesModule() {
   });
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+    <div className="w-full px-4 sm:px-6 lg:px-8 py-6 space-y-6">
       
       {/* Header section */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -849,12 +908,25 @@ export default function CostumesModule() {
                 <label className="block text-[10px] font-bold text-slate-450 uppercase tracking-wider">Costume Name *</label>
                 <input
                   type="text"
-                  required
                   placeholder="e.g. Juliet Renaissance Dress"
                   value={costumeForm.name}
-                  onChange={(e) => setCostumeForm((prev) => ({ ...prev, name: e.target.value }))}
-                  className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900"
+                  onChange={(e) => {
+                    setCostumeForm((prev) => ({ ...prev, name: e.target.value }));
+                    if (costumeErrors.name) {
+                      setCostumeErrors((prev) => {
+                        const updated = { ...prev };
+                        delete updated.name;
+                        return updated;
+                      });
+                    }
+                  }}
+                  className={`w-full bg-white border rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900 ${
+                    costumeErrors.name ? 'border-red-500 focus:border-red-500' : 'border-slate-250'
+                  }`}
                 />
+                {costumeErrors.name && (
+                  <p className="text-[10px] text-red-500 font-bold">{costumeErrors.name}</p>
+                )}
               </div>
 
               {/* Category & Size */}
@@ -863,12 +935,25 @@ export default function CostumesModule() {
                   <label className="block text-[10px] font-bold text-slate-450 uppercase tracking-wider">Category *</label>
                   <input
                     type="text"
-                    required
                     placeholder="e.g. Period, Sci-Fi"
                     value={costumeForm.category}
-                    onChange={(e) => setCostumeForm((prev) => ({ ...prev, category: e.target.value }))}
-                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900"
+                    onChange={(e) => {
+                      setCostumeForm((prev) => ({ ...prev, category: e.target.value }));
+                      if (costumeErrors.category) {
+                        setCostumeErrors((prev) => {
+                          const updated = { ...prev };
+                          delete updated.category;
+                          return updated;
+                        });
+                      }
+                    }}
+                    className={`w-full bg-white border rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900 ${
+                      costumeErrors.category ? 'border-red-500 focus:border-red-500' : 'border-slate-250'
+                    }`}
                   />
+                  {costumeErrors.category && (
+                    <p className="text-[10px] text-red-500 font-bold">{costumeErrors.category}</p>
+                  )}
                 </div>
 
                 <div className="space-y-1">
@@ -877,9 +962,23 @@ export default function CostumesModule() {
                     type="text"
                     placeholder="e.g. M, L, XL"
                     value={costumeForm.size}
-                    onChange={(e) => setCostumeForm((prev) => ({ ...prev, size: e.target.value }))}
-                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900"
+                    onChange={(e) => {
+                      setCostumeForm((prev) => ({ ...prev, size: e.target.value }));
+                      if (costumeErrors.size) {
+                        setCostumeErrors((prev) => {
+                          const updated = { ...prev };
+                          delete updated.size;
+                          return updated;
+                        });
+                      }
+                    }}
+                    className={`w-full bg-white border rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900 ${
+                      costumeErrors.size ? 'border-red-500 focus:border-red-500' : 'border-slate-250'
+                    }`}
                   />
+                  {costumeErrors.size && (
+                    <p className="text-[10px] text-red-500 font-bold">{costumeErrors.size}</p>
+                  )}
                 </div>
               </div>
 
@@ -889,10 +988,24 @@ export default function CostumesModule() {
                 <textarea
                   placeholder="Wardrobe details, material type, style notes, etc..."
                   value={costumeForm.description}
-                  onChange={(e) => setCostumeForm((prev) => ({ ...prev, description: e.target.value }))}
+                  onChange={(e) => {
+                    setCostumeForm((prev) => ({ ...prev, description: e.target.value }));
+                    if (costumeErrors.description) {
+                      setCostumeErrors((prev) => {
+                        const updated = { ...prev };
+                        delete updated.description;
+                        return updated;
+                      });
+                    }
+                  }}
                   rows={2}
-                  className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900 resize-none"
+                  className={`w-full bg-white border rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900 resize-none ${
+                    costumeErrors.description ? 'border-red-500 focus:border-red-500' : 'border-slate-250'
+                  }`}
                 />
+                {costumeErrors.description && (
+                  <p className="text-[10px] text-red-500 font-bold">{costumeErrors.description}</p>
+                )}
               </div>
 
               {/* Quantity & Initial Condition */}
@@ -901,12 +1014,25 @@ export default function CostumesModule() {
                   <label className="block text-[10px] font-bold text-slate-450 uppercase tracking-wider">Stock quantity *</label>
                   <input
                     type="number"
-                    required
                     min={1}
                     value={costumeForm.quantity}
-                    onChange={(e) => setCostumeForm((prev) => ({ ...prev, quantity: Number(e.target.value) }))}
-                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900"
+                    onChange={(e) => {
+                      setCostumeForm((prev) => ({ ...prev, quantity: Number(e.target.value) }));
+                      if (costumeErrors.quantity) {
+                        setCostumeErrors((prev) => {
+                          const updated = { ...prev };
+                          delete updated.quantity;
+                          return updated;
+                        });
+                      }
+                    }}
+                    className={`w-full bg-white border rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900 ${
+                      costumeErrors.quantity ? 'border-red-500 focus:border-red-500' : 'border-slate-250'
+                    }`}
                   />
+                  {costumeErrors.quantity && (
+                    <p className="text-[10px] text-red-500 font-bold">{costumeErrors.quantity}</p>
+                  )}
                 </div>
 
                 <div className="space-y-1">

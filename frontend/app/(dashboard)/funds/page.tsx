@@ -158,14 +158,14 @@ function FundsPageContent() {
 
   if (!selectedProduction) {
     return (
-      <div className="max-w-[1400px] mx-auto px-6 md:px-8 py-16 text-center text-slate-400 font-medium">
+      <div className="w-full px-6 md:px-8 py-16 text-center text-slate-400 font-medium">
         Please select a project to view funds.
       </div>
     );
   }
 
   return (
-    <div className="max-w-[1400px] mx-auto px-6 md:px-8 py-8 space-y-8 animate-in fade-in duration-300">
+    <div className="w-full px-6 md:px-8 py-8 space-y-8 animate-in fade-in duration-300">
       
       {/* Header Section */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">

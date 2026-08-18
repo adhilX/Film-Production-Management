@@ -496,7 +496,7 @@ export default function LocationsModule() {
   });
 
   return (
-    <div className="max-w-[1400px] mx-auto px-6 md:px-8 lg:px-10 py-8 space-y-6 animate-in fade-in duration-300">
+    <div className="w-full px-6 md:px-8 lg:px-10 py-8 space-y-6 animate-in fade-in duration-300">
       
       {/* Alert Notices */}
       {error && (
@@ -519,17 +519,36 @@ export default function LocationsModule() {
         </div>
       )}
 
-      {/* Header View */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-extrabold text-slate-800 tracking-tight">Locations</h1>
-          <p className="text-xs text-slate-450 mt-1 font-medium">Manage all production locations and booking requests</p>
+      {/* Navigation Tabs & Actions Row */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-px">
+        <div className="flex gap-4">
+          <button
+            onClick={() => setActiveTab('locations')}
+            className={`pb-3 text-xs font-bold uppercase tracking-wider border-b-2 transition -mb-px ${
+              activeTab === 'locations'
+                ? 'border-indigo-600 text-indigo-600 font-extrabold'
+                : 'border-transparent text-slate-450 hover:text-slate-750'
+            }`}
+          >
+            Locations
+          </button>
+          <button
+            onClick={() => setActiveTab('bookings')}
+            className={`pb-3 text-xs font-bold uppercase tracking-wider border-b-2 transition -mb-px ${
+              activeTab === 'bookings'
+                ? 'border-indigo-600 text-indigo-600 font-extrabold'
+                : 'border-transparent text-slate-450 hover:text-slate-750'
+            }`}
+          >
+            Booking Requests
+          </button>
         </div>
-        <div className="flex items-center gap-2.5">
+
+        <div className="flex items-center gap-2.5 pb-2 sm:pb-0">
           <PermissionGuard permission="locations.create">
             <button
               onClick={() => setIsImportOpen(true)}
-              className="py-1.5 px-3.5 bg-white border border-slate-250 text-slate-700 hover:bg-slate-50 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+              className="py-1.5 px-3.5 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
             >
               <Upload size={14} className="text-slate-450" /> Import Locations
             </button>
@@ -544,30 +563,6 @@ export default function LocationsModule() {
             </button>
           </PermissionGuard>
         </div>
-      </div>
-
-      {/* Navigation Tabs */}
-      <div className="flex border-b border-slate-200 pb-px gap-4">
-        <button
-          onClick={() => setActiveTab('locations')}
-          className={`pb-3 text-xs font-bold uppercase tracking-wider border-b-2 transition ${
-            activeTab === 'locations'
-              ? 'border-indigo-600 text-indigo-600 font-extrabold'
-              : 'border-transparent text-slate-450 hover:text-slate-750'
-          }`}
-        >
-          Locations
-        </button>
-        <button
-          onClick={() => setActiveTab('bookings')}
-          className={`pb-3 text-xs font-bold uppercase tracking-wider border-b-2 transition ${
-            activeTab === 'bookings'
-              ? 'border-indigo-600 text-indigo-600 font-extrabold'
-              : 'border-transparent text-slate-450 hover:text-slate-750'
-          }`}
-        >
-          Booking Requests
-        </button>
       </div>
 
       {/* Metrics Cards */}
@@ -588,7 +583,7 @@ export default function LocationsModule() {
             <Check size={20} />
           </div>
           <div>
-            <span className="text-[10px] font-bold text-slate-450 uppercase tracking-wider block">Available</span>
+            <span className="text-[10px] font-bold text-slate-455 uppercase tracking-wider block">Available</span>
             <span className="text-2xl font-extrabold text-slate-800 block mt-0.5">{availableLocations}</span>
             <span className="text-[10px] text-slate-400 block mt-0.5">No conflicts</span>
           </div>
@@ -599,7 +594,7 @@ export default function LocationsModule() {
             <Calendar size={20} />
           </div>
           <div>
-            <span className="text-[10px] font-bold text-slate-450 uppercase tracking-wider block">Booked</span>
+            <span className="text-[10px] font-bold text-slate-455 uppercase tracking-wider block">Booked</span>
             <span className="text-2xl font-extrabold text-slate-800 block mt-0.5">{approvedBookingsCount}</span>
             <span className="text-[10px] text-slate-400 block mt-0.5">Approved bookings</span>
           </div>
@@ -610,7 +605,7 @@ export default function LocationsModule() {
             <Clock size={20} />
           </div>
           <div>
-            <span className="text-[10px] font-bold text-slate-450 uppercase tracking-wider block">Pending Requests</span>
+            <span className="text-[10px] font-bold text-slate-455 uppercase tracking-wider block">Pending Requests</span>
             <span className="text-2xl font-extrabold text-slate-800 block mt-0.5">{pendingRequests}</span>
             <span className="text-[10px] text-slate-400 block mt-0.5 font-medium">Awaiting approval</span>
           </div>
@@ -711,29 +706,29 @@ export default function LocationsModule() {
                       <div
                         key={loc._id}
                         onClick={() => setSelectedLocation(loc)}
-                        className={`bg-white border rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition duration-200 cursor-pointer flex flex-col relative group ${
+                        className={`bg-white border rounded-2xl overflow-hidden shadow-xs hover:shadow-sm transition duration-200 cursor-pointer flex flex-col relative group ${
                           selectedLocation?._id === loc._id
                             ? 'border-indigo-600 ring-2 ring-indigo-50/70'
-                            : 'border-slate-200 hover:border-slate-350'
+                            : 'border-slate-205 hover:border-slate-350'
                         }`}
                       >
                         {/* Image section with overlay status */}
-                        <div className="h-44 w-full relative overflow-hidden bg-slate-100">
+                        <div className="h-32 w-full relative overflow-hidden bg-slate-100">
                           <img
                             src={loc.imageUrl || fallbackImg}
                             alt={loc.name}
-                            className="w-full h-full object-cover group-hover:scale-102 transition duration-300"
+                            className="w-full h-full object-cover group-hover:scale-[1.03] transition duration-300"
                           />
-                          <span className={`absolute top-3 right-3 text-[10px] font-bold px-2 py-0.5 rounded-md shadow-sm uppercase tracking-wider ${statusColors[status] || 'bg-slate-500 text-white'}`}>
+                          <span className={`absolute top-2.5 right-2.5 text-[8px] font-extrabold px-1.5 py-0.5 rounded-md shadow-xs uppercase tracking-wider ${statusColors[status] || 'bg-slate-500 text-white'}`}>
                             {status}
                           </span>
                         </div>
 
                         {/* Content section */}
-                        <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
+                        <div className="p-3.5 flex-1 flex flex-col justify-between space-y-2.5">
                           <div>
                             <div className="flex justify-between items-start gap-2 relative">
-                              <h3 className="font-bold text-slate-800 text-sm line-clamp-1">{loc.name}</h3>
+                              <h3 className="font-extrabold text-slate-800 text-xs sm:text-sm line-clamp-1 group-hover:text-indigo-600 transition-colors duration-150">{loc.name}</h3>
                               
                               {/* Context Actions Dropdown menu */}
                               {(hasPermission('locations.update') || hasPermission('locations.delete')) && (
@@ -743,9 +738,9 @@ export default function LocationsModule() {
                                       e.stopPropagation();
                                       setActiveMenuId(activeMenuId === loc._id ? null : loc._id);
                                     }}
-                                    className="p-1 hover:bg-slate-100 rounded-lg text-slate-450 hover:text-slate-700 transition"
+                                    className="p-1 hover:bg-slate-105 rounded-lg text-slate-400 hover:text-slate-600 transition"
                                   >
-                                    <MoreVertical size={16} />
+                                    <MoreVertical size={14} />
                                   </button>
                                   {activeMenuId === loc._id && (
                                     <div className="absolute right-0 top-7 z-20 w-32 bg-white border border-slate-200 rounded-xl shadow-lg py-1 divide-y divide-slate-50">
@@ -756,9 +751,9 @@ export default function LocationsModule() {
                                             setActiveMenuId(null);
                                             handleOpenEdit(loc);
                                           }}
-                                          className="w-full text-left px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50 transition flex items-center gap-1.5"
+                                          className="w-full text-left px-3 py-1.5 text-xs text-slate-650 hover:bg-slate-50 transition flex items-center gap-1.5 font-semibold"
                                         >
-                                          <Edit2 size={12} /> Edit
+                                          <Edit2 size={11} /> Edit
                                         </button>
                                       )}
                                       {hasPermission('locations.delete') && (
@@ -768,9 +763,9 @@ export default function LocationsModule() {
                                             setActiveMenuId(null);
                                             handleDeleteLocation(loc._id, loc.name);
                                           }}
-                                          className="w-full text-left px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 transition flex items-center gap-1.5"
+                                          className="w-full text-left px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 transition flex items-center gap-1.5 font-semibold"
                                         >
-                                          <Trash2 size={12} /> Delete
+                                          <Trash2 size={11} /> Delete
                                         </button>
                                       )}
                                     </div>
@@ -779,21 +774,21 @@ export default function LocationsModule() {
                               )}
                             </div>
 
-                            <div className="flex flex-wrap gap-1.5 mt-2">
-                              <span className={`py-0.5 px-2 rounded text-[10px] font-semibold uppercase tracking-wider ${typeStyle}`}>
+                            <div className="flex flex-wrap gap-1.5 mt-1.5">
+                              <span className={`py-0.5 px-1.5 rounded text-[8px] font-extrabold uppercase tracking-wider ${typeStyle}`}>
                                 {loc.locationType || 'Physical'}
                               </span>
                             </div>
 
-                            <div className="flex items-center gap-1.5 text-xs text-slate-400 mt-2.5">
-                              <MapPin size={13} className="text-slate-350 shrink-0" />
+                            <div className="flex items-center gap-1.5 text-[11px] text-slate-400 mt-2">
+                              <MapPin size={11} className="text-slate-350 shrink-0" />
                               <span className="truncate leading-relaxed">{loc.address}</span>
                             </div>
                           </div>
 
-                          <div className="border-t border-slate-100 pt-3 flex items-center justify-between text-xs text-slate-450">
-                            <span className="flex items-center gap-1 font-medium">
-                              <Calendar size={12} className="text-slate-400" />
+                          <div className="border-t border-slate-100 pt-2.5 flex items-center justify-between text-[10px] text-slate-400 font-medium">
+                            <span className="flex items-center gap-1">
+                              <Calendar size={11} className="text-slate-400" />
                               {getBookingSummary(loc._id)}
                             </span>
                           </div>
@@ -894,7 +889,7 @@ export default function LocationsModule() {
           {/* Interactive Map & Details Sidebar (1/3 width) */}
           <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm flex flex-col h-max">
             {/* Leaflet Map Visualizer */}
-            <div className="h-[220px] w-full relative border-b border-slate-200">
+            <div className="h-[220px] w-full relative z-0 border-b border-slate-200">
               <LeafletMap
                 locations={locations}
                 selectedLocation={selectedLocation}

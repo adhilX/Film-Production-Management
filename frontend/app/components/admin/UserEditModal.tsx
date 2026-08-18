@@ -24,10 +24,42 @@ export default function UserEditModal({ isOpen, onClose, user, onSave }: UserEdi
   const [roles, setRoles] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  // Validation function
+  const validateForm = (): boolean => {
+    const errors: Record<string, string> = {};
+
+    // Name Validation
+    if (!formData.name.trim()) {
+      errors.name = 'Name is required.';
+    } else if (formData.name.trim().length < 2) {
+      errors.name = 'Name must be at least 2 characters.';
+    } else if (formData.name.length > 100) {
+      errors.name = 'Name cannot exceed 100 characters.';
+    }
+
+    // Email Validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!formData.email.trim()) {
+      errors.email = 'Email is required.';
+    } else if (!emailRegex.test(formData.email.trim())) {
+      errors.email = 'Please enter a valid email address.';
+    }
+
+    setFieldErrors(errors);
+    if (Object.keys(errors).length > 0) {
+      setError('Please resolve all validation errors before submitting.');
+      return false;
+    }
+    return true;
+  };
 
   useEffect(() => {
     if (isOpen) {
       fetchRoles();
+      setFieldErrors({});
+      setError(null);
       if (user) {
         setFormData({
           name: user.name || '',
@@ -67,10 +99,20 @@ export default function UserEditModal({ isOpen, onClose, user, onSave }: UserEdi
     }
     
     setFormData(prev => ({ ...prev, [name]: finalValue }));
+    if (fieldErrors[name]) {
+      setFieldErrors(prev => {
+        const updated = { ...prev };
+        delete updated[name];
+        return updated;
+      });
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validateForm()) {
+      return;
+    }
     setLoading(true);
     setError(null);
 
@@ -136,10 +178,14 @@ export default function UserEditModal({ isOpen, onClose, user, onSave }: UserEdi
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
-                required
-                className="w-full bg-white border border-slate-250 rounded-xl px-4 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-indigo-600 transition"
+                className={`w-full bg-white border rounded-xl px-4 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-indigo-600 transition ${
+                  fieldErrors.name ? 'border-red-500 focus:border-red-500' : 'border-slate-250'
+                }`}
                 placeholder="John Doe"
               />
+              {fieldErrors.name && (
+                <p className="text-[10px] text-red-500 font-bold mt-1">{fieldErrors.name}</p>
+              )}
             </div>
 
             <div>
@@ -149,23 +195,36 @@ export default function UserEditModal({ isOpen, onClose, user, onSave }: UserEdi
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                required
-                className="w-full bg-white border border-slate-250 rounded-xl px-4 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-indigo-600 transition"
+                className={`w-full bg-white border rounded-xl px-4 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-indigo-600 transition ${
+                  fieldErrors.email ? 'border-red-500 focus:border-red-500' : 'border-slate-250'
+                }`}
                 placeholder="john@example.com"
               />
+              {fieldErrors.email && (
+                <p className="text-[10px] text-red-500 font-bold mt-1">{fieldErrors.email}</p>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-[10px] font-bold text-slate-450 uppercase tracking-wider mb-2">Contractor Type</label>
-                <input
-                  type="text"
+                <select
                   name="contractorType"
                   value={formData.contractorType}
                   onChange={handleChange}
-                  className="w-full bg-white border border-slate-250 rounded-xl px-4 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-indigo-600 transition"
-                  placeholder="e.g. Cast, Crew"
-                />
+                  className="w-full bg-white border border-slate-250 rounded-xl px-4 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-indigo-600 transition appearance-none cursor-pointer"
+                >
+                  <option value="">-- Select Type --</option>
+                  <option value="Freelancer">Freelancer</option>
+                  <option value="Cast">Cast</option>
+                  <option value="Crew">Crew</option>
+                  <option value="Supplier">Supplier</option>
+                  <option value="Agent">Agent</option>
+                  <option value="Cast-Crew Agent">Cast-Crew Agent</option>
+                  <option value="TCS Team">TCS Team</option>
+                  <option value="Production Company">Production Company</option>
+                  <option value="None">None</option>
+                </select>
               </div>
               
               <div>

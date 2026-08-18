@@ -51,11 +51,70 @@ export default function AddLocationPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [copiedCoords, setCopiedCoords] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   // OSM Search Autocomplete
   const [searchQuery, setSearchQuery] = useState('');
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [isSearchingAddress, setIsSearchingAddress] = useState(false);
+
+  // Form Validation Logic
+  const validateForm = (): boolean => {
+    const errors: Record<string, string> = {};
+
+    if (!selectedProduction) {
+      setError('Please select a project before creating a location.');
+      return false;
+    }
+
+    // Name Validation
+    if (!locName.trim()) {
+      errors.name = 'Location name is required.';
+    } else if (locName.trim().length < 2) {
+      errors.name = 'Location name must be at least 2 characters.';
+    } else if (locName.length > 100) {
+      errors.name = 'Location name cannot exceed 100 characters.';
+    }
+
+    // Address Validation
+    if (!locAddress.trim()) {
+      errors.address = 'Location address is required.';
+    } else if (locAddress.trim().length < 5) {
+      errors.address = 'Address must be a valid, descriptive address (at least 5 characters).';
+    }
+
+    // Coordinates Validation
+    if (locLat !== undefined || locLng !== undefined) {
+      if (locLat === undefined || isNaN(locLat)) {
+        errors.latitude = 'Latitude is required if longitude is specified.';
+      } else if (locLat < -90 || locLat > 90) {
+        errors.latitude = 'Latitude must be between -90 and 90 degrees.';
+      }
+
+      if (locLng === undefined || isNaN(locLng)) {
+        errors.longitude = 'Longitude is required if latitude is specified.';
+      } else if (locLng < -180 || locLng > 180) {
+        errors.longitude = 'Longitude must be between -180 and 180 degrees.';
+      }
+    }
+
+    // Contact Validation
+    if (locContact && locContact.length > 150) {
+      errors.contactInfo = 'Contact info cannot exceed 150 characters.';
+    }
+
+    // Description Validation
+    if (locDescription && locDescription.length > 500) {
+      errors.description = 'Description cannot exceed 500 characters.';
+    }
+
+    setFieldErrors(errors);
+    if (Object.keys(errors).length > 0) {
+      setError('Please fix the validation errors before submitting.');
+      return false;
+    }
+    return true;
+  };
 
   // Debounced address search using OpenStreetMap Nominatim API
   useEffect(() => {
@@ -93,6 +152,13 @@ export default function AddLocationPage() {
     setLocLng(parseFloat(item.lon));
     setSuggestions([]);
     setSearchQuery('');
+    setFieldErrors((prev) => {
+      const updated = { ...prev };
+      delete updated.address;
+      delete updated.latitude;
+      delete updated.longitude;
+      return updated;
+    });
   };
 
   const triggerSearchAddress = async () => {
@@ -185,16 +251,7 @@ export default function AddLocationPage() {
   // Save/Submit Form
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!selectedProduction) {
-      setError('Please select a project before creating a location.');
-      return;
-    }
-    if (!locName.trim()) {
-      setError('Location Name is required.');
-      return;
-    }
-    if (!locAddress.trim()) {
-      setError('Location Address is required.');
+    if (!validateForm() || !selectedProduction) {
       return;
     }
 
@@ -278,12 +335,25 @@ export default function AddLocationPage() {
                   <label className="block text-[10px] font-bold text-slate-450 uppercase tracking-wider">Location Name *</label>
                   <input
                     type="text"
-                    required
                     placeholder="e.g., Studio Lot 4"
                     value={locName}
-                    onChange={(e) => setLocName(e.target.value)}
-                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900"
+                    onChange={(e) => {
+                      setLocName(e.target.value);
+                      if (fieldErrors.name) {
+                        setFieldErrors((prev) => {
+                          const updated = { ...prev };
+                          delete updated.name;
+                          return updated;
+                        });
+                      }
+                    }}
+                    className={`w-full bg-white border rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900 ${
+                      fieldErrors.name ? 'border-red-500 focus:border-red-500' : 'border-slate-250'
+                    }`}
                   />
+                  {fieldErrors.name && (
+                    <p className="text-[10px] text-red-500 font-bold">{fieldErrors.name}</p>
+                  )}
                 </div>
 
                 <div className="space-y-1">
@@ -309,14 +379,22 @@ export default function AddLocationPage() {
                   <div className="relative flex-1">
                     <input
                       type="text"
-                      required
                       placeholder="Start typing address or search on map..."
                       value={searchQuery || locAddress}
                       onChange={(e) => {
                         setSearchQuery(e.target.value);
                         setLocAddress(e.target.value);
+                        if (fieldErrors.address) {
+                          setFieldErrors((prev) => {
+                            const updated = { ...prev };
+                            delete updated.address;
+                            return updated;
+                          });
+                        }
                       }}
-                      className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900 pr-8"
+                      className={`w-full bg-white border rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900 pr-8 ${
+                        fieldErrors.address ? 'border-red-500 focus:border-red-500' : 'border-slate-250'
+                      }`}
                     />
                     {isSearchingAddress && (
                       <div className="absolute right-2.5 top-2.5">
@@ -332,6 +410,9 @@ export default function AddLocationPage() {
                     <Search size={14} /> Search
                   </button>
                 </div>
+                {fieldErrors.address && (
+                  <p className="text-[10px] text-red-500 font-bold">{fieldErrors.address}</p>
+                )}
 
                 {suggestions.length > 0 && (
                   <div className="absolute z-50 left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-lg mt-1 divide-y divide-slate-100 max-h-48 overflow-y-auto">
@@ -358,11 +439,25 @@ export default function AddLocationPage() {
                 <textarea
                   placeholder="Describe the location, facilities, access, parking, etc..."
                   value={locDescription}
-                  onChange={(e) => setLocDescription(e.target.value.slice(0, 500))}
+                  onChange={(e) => {
+                    setLocDescription(e.target.value.slice(0, 500));
+                    if (fieldErrors.description) {
+                      setFieldErrors((prev) => {
+                        const updated = { ...prev };
+                        delete updated.description;
+                        return updated;
+                      });
+                    }
+                  }}
                   rows={4}
                   maxLength={500}
-                  className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900 resize-none"
+                  className={`w-full bg-white border rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900 resize-none ${
+                    fieldErrors.description ? 'border-red-500 focus:border-red-500' : 'border-slate-250'
+                  }`}
                 />
+                {fieldErrors.description && (
+                  <p className="text-[10px] text-red-500 font-bold">{fieldErrors.description}</p>
+                )}
               </div>
 
               {/* Latitude, Longitude, Contact Info */}
@@ -374,9 +469,23 @@ export default function AddLocationPage() {
                     step="any"
                     placeholder="e.g., 34.1478"
                     value={locLat ?? ''}
-                    onChange={(e) => setLocLat(e.target.value ? parseFloat(e.target.value) : undefined)}
-                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900"
+                    onChange={(e) => {
+                      setLocLat(e.target.value ? parseFloat(e.target.value) : undefined);
+                      if (fieldErrors.latitude) {
+                        setFieldErrors((prev) => {
+                          const updated = { ...prev };
+                          delete updated.latitude;
+                          return updated;
+                        });
+                      }
+                    }}
+                    className={`w-full bg-white border rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900 ${
+                      fieldErrors.latitude ? 'border-red-500 focus:border-red-500' : 'border-slate-250'
+                    }`}
                   />
+                  {fieldErrors.latitude && (
+                    <p className="text-[10px] text-red-500 font-bold">{fieldErrors.latitude}</p>
+                  )}
                 </div>
                 
                 <div className="space-y-1">
@@ -386,9 +495,23 @@ export default function AddLocationPage() {
                     step="any"
                     placeholder="e.g., -118.3531"
                     value={locLng ?? ''}
-                    onChange={(e) => setLocLng(e.target.value ? parseFloat(e.target.value) : undefined)}
-                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900"
+                    onChange={(e) => {
+                      setLocLng(e.target.value ? parseFloat(e.target.value) : undefined);
+                      if (fieldErrors.longitude) {
+                        setFieldErrors((prev) => {
+                          const updated = { ...prev };
+                          delete updated.longitude;
+                          return updated;
+                        });
+                      }
+                    }}
+                    className={`w-full bg-white border rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900 ${
+                      fieldErrors.longitude ? 'border-red-500 focus:border-red-500' : 'border-slate-250'
+                    }`}
                   />
+                  {fieldErrors.longitude && (
+                    <p className="text-[10px] text-red-500 font-bold">{fieldErrors.longitude}</p>
+                  )}
                 </div>
 
                 <div className="space-y-1">
@@ -397,9 +520,23 @@ export default function AddLocationPage() {
                     type="text"
                     placeholder="e.g., +1 (818) 555-1234"
                     value={locContact}
-                    onChange={(e) => setLocContact(e.target.value)}
-                    className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900"
+                    onChange={(e) => {
+                      setLocContact(e.target.value);
+                      if (fieldErrors.contactInfo) {
+                        setFieldErrors((prev) => {
+                          const updated = { ...prev };
+                          delete updated.contactInfo;
+                          return updated;
+                        });
+                      }
+                    }}
+                    className={`w-full bg-white border rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900 ${
+                      fieldErrors.contactInfo ? 'border-red-500 focus:border-red-500' : 'border-slate-250'
+                    }`}
                   />
+                  {fieldErrors.contactInfo && (
+                    <p className="text-[10px] text-red-500 font-bold">{fieldErrors.contactInfo}</p>
+                  )}
                 </div>
               </div>
 
@@ -467,6 +604,12 @@ export default function AddLocationPage() {
                   onPinCoordsChange={(coords) => {
                     setLocLat(coords.lat);
                     setLocLng(coords.lng);
+                    setFieldErrors((prev) => {
+                      const updated = { ...prev };
+                      delete updated.latitude;
+                      delete updated.longitude;
+                      return updated;
+                    });
                   }}
                 />
               </div>

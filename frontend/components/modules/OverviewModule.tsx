@@ -119,7 +119,7 @@ export default function OverviewModule() {
   };
 
   return (
-    <div className="max-w-[1400px] mx-auto px-6 md:px-8 lg:px-10 py-8 space-y-6 animate-in fade-in duration-300">
+    <div className="w-full px-6 md:px-8 lg:px-10 py-8 space-y-6 animate-in fade-in duration-300">
       <PermissionGuard permission="productions.create">
         <div className="flex justify-end bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs">
           <form onSubmit={handleCreateProduction} className="flex gap-3 items-center w-full sm:w-auto">

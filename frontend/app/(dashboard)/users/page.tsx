@@ -15,6 +15,7 @@ import {
   ChevronUp, 
   ChevronDown, 
   RefreshCw,
+  Filter,
   Users as UsersIcon
 } from 'lucide-react';
 import UserEditModal from '@/app/components/admin/UserEditModal';
@@ -59,6 +60,7 @@ export default function AdminUsersPage() {
   // Pagination State
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
+  const [showFilters, setShowFilters] = useState(false);
   const [total, setTotal] = useState(0);
   const [pages, setPages] = useState(1);
 
@@ -185,33 +187,16 @@ export default function AdminUsersPage() {
 
   return (
     <PermissionGuard permission="users.view" fallback={
-      <div className="max-w-[1400px] mx-auto px-6 md:px-8 lg:px-10 py-8 space-y-6">
+      <div className="w-full px-6 md:px-8 lg:px-10 py-8 space-y-6">
         <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center gap-3">
           <span className="text-xs text-red-750 font-bold">Access Denied: You do not have permissions to view the User Management Directory.</span>
         </div>
       </div>
     }>
-      <div className="max-w-[1400px] mx-auto px-6 md:px-8 lg:px-10 py-8 space-y-6 animate-in fade-in duration-300">
+      <div className="w-full px-6 md:px-8 lg:px-10 py-8 space-y-6 animate-in fade-in duration-300">
         
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-              <UsersIcon className="w-6 h-6 text-indigo-600" />
-              Users
-            </h1>
-            <p className="text-xs text-slate-500 mt-1">Manage users, roles, access and project assignments.</p>
-          </div>
-          {hasCreatePerm && (
-            <button 
-              onClick={handleCreate}
-              className="flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-750 text-white font-bold rounded-xl shadow-xs transition cursor-pointer text-xs sm:self-center"
-            >
-              <UserPlus className="w-4 h-4" />
-              Create User
-            </button>
-          )}
-        </div>
+       
 
         {error && (
           <div className="p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3">
@@ -247,8 +232,31 @@ export default function AdminUsersPage() {
           </div>
         </div>
 
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-2.5">
+          <button 
+            onClick={() => setShowFilters(!showFilters)}
+            className={`flex items-center justify-center gap-1.5 px-3 py-2 border rounded-xl text-xs font-bold transition cursor-pointer ${
+              showFilters 
+                ? 'bg-slate-150 hover:bg-slate-200 border-slate-300 text-slate-700' 
+                : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-600'
+            }`}
+          >
+            <Filter className="w-3.5 h-3.5" />
+            {showFilters ? 'Hide Filters' : 'Show Filters'}
+          </button>
+          {hasCreatePerm && (
+            <button 
+              onClick={handleCreate}
+              className="flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-750 text-white font-bold rounded-xl shadow-xs transition cursor-pointer text-xs sm:self-center"
+            >
+              <UserPlus className="w-4 h-4" />
+              Create User
+            </button>
+          )}
+        </div>
         {/* Filters Controls Panel */}
-        <div className="bg-white p-5 border border-slate-200/80 rounded-2xl shadow-xs space-y-4">
+        {showFilters && (
+          <div className="bg-white p-5 border border-slate-200/80 rounded-2xl shadow-xs space-y-4 animate-in slide-in-from-top-2 duration-200">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             
             {/* Search Input */}
@@ -371,6 +379,7 @@ export default function AdminUsersPage() {
 
           </div>
         </div>
+      )}
 
         {/* Directory Table */}
         <div className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-xs">
@@ -513,18 +522,20 @@ export default function AdminUsersPage() {
           </div>
 
           {/* Pagination component */}
-          <Pagination
-            page={page}
-            pages={pages}
-            total={total}
-            limit={limit}
-            onPageChange={setPage}
-            onLimitChange={(size) => {
-              setLimit(size);
-              setPage(1);
-            }}
-            itemName="users"
-          />
+          {total > 5 && (
+            <Pagination
+              page={page}
+              pages={pages}
+              total={total}
+              limit={limit}
+              onPageChange={setPage}
+              onLimitChange={(size) => {
+                setLimit(size);
+                setPage(1);
+              }}
+              itemName="users"
+            />
+          )}
         </div>
 
         {/* Create/Edit Modal */}
