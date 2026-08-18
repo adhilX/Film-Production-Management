@@ -39,17 +39,31 @@ export class UsersController {
   ) {}
 
   @Get()
-  @Permissions('users.approve')
+  @Permissions('users.view')
   @ApiOperation({ summary: 'List all registered contractors and system users' })
   @ApiResponse({ status: 200, description: 'Paginated user documents.' })
-  findAll(
+  async findAll(
     @Query('page') page?: string,
     @Query('limit') limit?: string,
     @Query('search') search?: string,
   ) {
     const pageNum = parseInt(page || '1', 10);
     const limitNum = parseInt(limit || '10', 10);
-    return this.usersService.findAll(pageNum, limitNum, search || '');
+    const result = await this.usersService.findAll(pageNum, limitNum, search || '');
+    if (result.users) {
+      result.users = result.users.map((u: any) => {
+        const uObj = u.toJSON ? u.toJSON() : JSON.parse(JSON.stringify(u));
+        if (uObj.profile) {
+          delete uObj.profile.bankDetails;
+          delete uObj.profile.taxFormUrl;
+          delete uObj.profile.governmentIdType;
+          delete uObj.profile.identityDocs;
+          delete uObj.profile.signatureData;
+        }
+        return uObj;
+      });
+    }
+    return result;
   }
 
   @Get('me')
@@ -126,12 +140,24 @@ export class UsersController {
   @Get(':id')
   @ApiOperation({ summary: 'Fetch user profile details by ID' })
   @ApiResponse({ status: 200, description: 'User document details.' })
-  findOne(@Param('id') id: string, @Req() req: any) {
+  async findOne(@Param('id') id: string, @Req() req: any) {
     const isSelf = req.user._id.toString() === id;
     const hasViewPerm = req.user.permissions && req.user.permissions.includes('users.view');
     if (!isSelf && !hasViewPerm) {
       throw new ForbiddenException('Access denied: Cannot view another user\'s profile');
     }
-    return this.usersService.findOne(id);
+    const user = await this.usersService.findOne(id);
+    if (!isSelf) {
+      const uObj = (user as any).toJSON ? (user as any).toJSON() : JSON.parse(JSON.stringify(user));
+      if (uObj.profile) {
+        delete uObj.profile.bankDetails;
+        delete uObj.profile.taxFormUrl;
+        delete uObj.profile.governmentIdType;
+        delete uObj.profile.identityDocs;
+        delete uObj.profile.signatureData;
+      }
+      return uObj;
+    }
+    return user;
   }
 }

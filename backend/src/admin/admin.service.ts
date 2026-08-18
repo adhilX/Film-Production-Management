@@ -31,12 +31,107 @@ export class AdminService {
     private auditLogsService: AuditLogsService,
   ) {}
 
-  async getPendingApplications(): Promise<User[]> {
-    return this.userModel
-      .find({ onboardingStatus: 'pending-review' })
+  async getApplications(query: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    contractorType?: string;
+    department?: string;
+    onboardingStatus?: string;
+    stale?: boolean;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
+  }): Promise<any> {
+    const page = query.page || 1;
+    const limit = query.limit || 10;
+    const skip = (page - 1) * limit;
+
+    const filter: any = {};
+
+    // Default status filter to 'pending-review' if not specified or not 'all'
+    const onboardingStatus = query.onboardingStatus || 'pending-review';
+    if (onboardingStatus !== 'all') {
+      filter.onboardingStatus = onboardingStatus;
+    }
+
+    if (query.contractorType && query.contractorType !== 'all') {
+      filter.contractorType = query.contractorType;
+    }
+
+    if (query.search) {
+      const escapedSearch = query.search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      filter.$or = [
+        { name: { $regex: escapedSearch, $options: 'i' } },
+        { email: { $regex: escapedSearch, $options: 'i' } },
+      ];
+    }
+
+    if (query.stale) {
+      const threeDaysAgo = new Date();
+      threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+      filter.updatedAt = { $lt: threeDaysAgo };
+      filter.onboardingStatus = 'pending-review'; // Stale only applies to pending-review
+    }
+
+    if (query.department && query.department !== 'all') {
+      const escapedDept = query.department.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const profiles = await this.userProfileModel
+        .find({ department: { $regex: escapedDept, $options: 'i' } })
+        .select('userId')
+        .exec();
+      const userIds = profiles.map(p => p.userId);
+      filter._id = { $in: userIds };
+    }
+
+    // Determine sort order
+    let sort: any = { updatedAt: -1 };
+    if (query.sortBy) {
+      const order = query.sortOrder === 'asc' ? 1 : -1;
+      if (query.sortBy === 'name') {
+        sort = { name: order };
+      } else if (query.sortBy === 'contractorType') {
+        sort = { contractorType: order };
+      } else if (query.sortBy === 'status') {
+        sort = { status: order };
+      } else if (query.sortBy === 'submittedDate' || query.sortBy === 'updatedAt') {
+        sort = { updatedAt: order };
+      }
+    }
+
+    // Execute query
+    const total = await this.userModel.countDocuments(filter).exec();
+    const pages = Math.ceil(total / limit);
+
+    const applications = await this.userModel
+      .find(filter)
       .populate('profile')
       .select('-passwordHash')
+      .sort(sort)
+      .skip(skip)
+      .limit(limit)
       .exec();
+
+    // Calculate database counts for metrics
+    const pendingMetrics = await this.userModel.countDocuments({ onboardingStatus: 'pending-review' }).exec();
+    const approvedMetrics = await this.userModel.countDocuments({ onboardingStatus: 'approved' }).exec();
+    const changesRequestedMetrics = await this.userModel.countDocuments({ onboardingStatus: 'changes-requested' }).exec();
+    const rejectedMetrics = await this.userModel.countDocuments({ status: 'Rejected' }).exec();
+    const totalMetrics = await this.userModel.countDocuments().exec();
+
+    return {
+      applications,
+      total,
+      page,
+      pages,
+      limit,
+      metrics: {
+        pending: pendingMetrics,
+        approved: approvedMetrics,
+        rejected: rejectedMetrics,
+        changesRequested: changesRequestedMetrics,
+        total: totalMetrics,
+      },
+    };
   }
 
   async getApplicationDetails(id: string): Promise<User> {
@@ -82,6 +177,10 @@ export class AdminService {
       const { status, systemRoleId, adminFeedback } = payload;
       const oldStatus = user.onboardingStatus;
 
+      if (oldStatus !== 'pending-review') {
+        throw new BadRequestException(`Cannot evaluate user with onboarding status: ${oldStatus}`);
+      }
+
       if (status === 'approved') {
         user.isActive = true;
         user.onboardingStatus = 'approved';
@@ -103,12 +202,13 @@ export class AdminService {
 
         user.systemRoleId = new Types.ObjectId(systemRoleId);
       } else if (status === 'changes-requested') {
+        if (!adminFeedback || !adminFeedback.trim()) {
+          throw new BadRequestException('adminFeedback is required when status is changes-requested');
+        }
         user.isActive = false;
         user.onboardingStatus = 'changes-requested';
         user.status = 'Changes Requested';
-        // Note: We deliberately do NOT change systemRoleId on rejection
-        user.adminFeedback =
-          adminFeedback || 'Please review and update your onboarding details.';
+        user.adminFeedback = adminFeedback;
       } else {
         throw new BadRequestException('Invalid evaluation status');
       }

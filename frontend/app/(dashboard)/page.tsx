@@ -173,10 +173,11 @@ export default function DashboardPage() {
         const totalProjects = allProductions.length;
         const activeProjects = allProductions.filter((p: any) => p.status?.toLowerCase() === 'active').length;
         const totalUsers = usersList.total || 0;
-        const pendingApprovals = pendingApps.length;
+        const pendingAppsList = pendingApps.applications || [];
+        const pendingApprovals = pendingAppsList.length;
 
         const now = new Date().getTime();
-        const urgentApprovals = pendingApps.filter((app: any) => {
+        const urgentApprovals = pendingAppsList.filter((app: any) => {
           const updatedAt = new Date(app.updatedAt).getTime();
           return (now - updatedAt) > (3 * 24 * 60 * 60 * 1000); // 3 Days
         }).length;
@@ -190,7 +191,7 @@ export default function DashboardPage() {
         });
 
         setProjectsList(allProductions);
-        setApprovalsList(pendingApps);
+        setApprovalsList(pendingAppsList);
         setActivitiesList(auditLogs);
       } catch (error) {
         console.error('Failed to load admin metrics', error);

@@ -25,15 +25,38 @@ import {
   Award,
   Shield,
   Check,
-  Loader2
+  Loader2,
+  ShieldAlert
 } from 'lucide-react';
 import Link from 'next/link';
+import { PermissionGuard } from '@/app/components/permission-guard';
+
+const UnauthorizedFallback = () => (
+  <div className="max-w-md mx-auto mt-16 bg-white border border-slate-200 rounded-2xl p-8 text-center shadow-xs flex flex-col items-center justify-center space-y-4">
+    <div className="w-12 h-12 rounded-full bg-rose-50 flex items-center justify-center text-rose-600 border border-rose-100 shrink-0">
+      <ShieldAlert className="w-6 h-6" />
+    </div>
+    <h3 className="font-bold text-slate-800 text-sm">Unauthorized Access</h3>
+    <p className="text-xs text-slate-500 max-w-xs leading-relaxed">
+      You don't have permission to review onboarding applications. Please contact your system administrator.
+    </p>
+  </div>
+);
 
 export default function ApprovalDetails() {
+  return (
+    <PermissionGuard permission="users.approve" fallback={<UnauthorizedFallback />}>
+      <ApprovalDetailsContent />
+    </PermissionGuard>
+  );
+}
+
+function ApprovalDetailsContent() {
   const { id } = useParams();
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const setHeader = useHeaderStore(state => state.setHeader);
 
@@ -52,22 +75,27 @@ export default function ApprovalDetails() {
   const [roleOverride, setRoleOverride] = useState('');
   const [roles, setRoles] = useState<any[]>([]);
 
+  const fetchData = async () => {
+    if (!id) return;
+    try {
+      setLoading(true);
+      setErrorMsg(null);
+      const [appData, rolesData] = await Promise.all([
+        adminService.getApplication(id as string),
+        adminService.getRoles()
+      ]);
+      setUser(appData);
+      setRoles(rolesData || []);
+    } catch (err: any) {
+      console.error('Failed to load application details', err);
+      setErrorMsg(err?.response?.data?.message || 'Failed to load application details. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [appData, rolesData] = await Promise.all([
-          adminService.getApplication(id as string),
-          adminService.getRoles()
-        ]);
-        setUser(appData);
-        setRoles(rolesData || []);
-      } catch (err) {
-        console.error('Failed to load application details', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    if (id) fetchData();
+    fetchData();
   }, [id]);
 
   const handleDecision = async (status: 'approved' | 'changes-requested') => {
@@ -79,35 +107,75 @@ export default function ApprovalDetails() {
         adminFeedback: status === 'changes-requested' ? feedback : undefined,
       });
       router.push('/approvals');
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to submit decision', err);
+      alert(err?.response?.data?.message || 'Failed to submit decision. Please check validation rules.');
       setSubmitting(false);
     }
   };
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-full">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600"></div>
+      <div className="flex flex-col justify-center items-center h-[400px] gap-3">
+        <Loader2 className="animate-spin h-8 w-8 text-indigo-600" />
+        <span className="text-xs text-slate-400 font-semibold">Loading submission details...</span>
       </div>
     );
   }
 
-  if (!user) return <div className="text-red-400">Application not found.</div>;
+  if (errorMsg) {
+    return (
+      <div className="max-w-md mx-auto mt-16 bg-white border border-slate-200 rounded-2xl p-8 text-center shadow-xs flex flex-col items-center justify-center space-y-4">
+        <div className="w-12 h-12 rounded-full bg-rose-50 flex items-center justify-center text-rose-600 border border-rose-100 shrink-0">
+          <AlertTriangle className="w-6 h-6" />
+        </div>
+        <h3 className="font-bold text-slate-800 text-sm">Error Loading Details</h3>
+        <p className="text-xs text-slate-500 max-w-xs leading-relaxed">
+          {errorMsg}
+        </p>
+        <button
+          onClick={fetchData}
+          className="mt-2 inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-750 text-white text-xs font-bold rounded-lg transition cursor-pointer"
+        >
+          Retry Loading
+        </button>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="max-w-md mx-auto mt-16 bg-white border border-slate-200 rounded-2xl p-8 text-center shadow-xs flex flex-col items-center justify-center space-y-4">
+        <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center text-slate-500 border border-slate-100 shrink-0">
+          <UserCircle className="w-6 h-6" />
+        </div>
+        <h3 className="font-bold text-slate-800 text-sm">Application Not Found</h3>
+        <p className="text-xs text-slate-500 max-w-xs leading-relaxed">
+          The requested onboarding application does not exist or has been deleted.
+        </p>
+        <Link
+          href="/approvals"
+          className="mt-2 inline-flex items-center px-4 py-2 bg-slate-650 hover:bg-slate-700 text-white text-xs font-bold rounded-lg transition"
+        >
+          Back to Queue
+        </Link>
+      </div>
+    );
+  }
 
   const profile = user.profile || {};
 
   return (
     <div className="animate-in fade-in duration-300 w-full max-w-[1400px] mx-auto px-6 md:px-8 lg:px-10 py-8 flex flex-col gap-8 font-sans text-slate-800">
-        {/* Top Header Navigation */}
-        <div className="flex items-center">
-          <button
-            onClick={() => router.back()}
-            className="flex items-center gap-2 text-slate-700 hover:text-indigo-600 transition text-xs font-bold cursor-pointer bg-white px-4 py-2 rounded-lg border border-slate-200 shadow-xs"
-          >
-            <ArrowLeft className="w-4 h-4" /> Back to Queue
-          </button>
-        </div>
+      {/* Top Header Navigation */}
+      <div className="flex items-center">
+        <button
+          onClick={() => router.back()}
+          className="flex items-center gap-2 text-slate-705 hover:text-indigo-650 transition text-xs font-bold cursor-pointer bg-white px-4 py-2 rounded-lg border border-slate-200 shadow-xs"
+        >
+          <ArrowLeft className="w-4 h-4" /> Back to Queue
+        </button>
+      </div>
 
       {/* Main Container Card (Submission summary box) */}
       <div className="bg-white border border-slate-200/80 rounded-3xl shadow-sm p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6 relative overflow-hidden">
@@ -146,13 +214,13 @@ export default function ApprovalDetails() {
       {/* Details Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         
-        {/* Column 1: Classification */}
+        {/* Column 1: Classification (Personal / Safe) */}
         <div className="space-y-3">
           <span className="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400">1. Classification</span>
           <div className="space-y-2.5">
             <div className="flex items-center justify-between p-3.5 bg-white border border-slate-200/80 rounded-2xl shadow-sm">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
+                <div className="p-2 bg-indigo-50 text-indigo-650 rounded-xl">
                   <User className="w-4 h-4" />
                 </div>
                 <span className="text-[11px] font-bold text-slate-500">Contractor Type</span>
@@ -162,7 +230,7 @@ export default function ApprovalDetails() {
 
             <div className="flex items-center justify-between p-3.5 bg-white border border-slate-200/80 rounded-2xl shadow-sm">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
+                <div className="p-2 bg-indigo-50 text-indigo-655 rounded-xl">
                   <Building2 className="w-4 h-4" />
                 </div>
                 <span className="text-[11px] font-bold text-slate-500">Department</span>
@@ -172,7 +240,7 @@ export default function ApprovalDetails() {
 
             <div className="flex items-center justify-between p-3.5 bg-white border border-slate-200/80 rounded-2xl shadow-sm">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
+                <div className="p-2 bg-indigo-50 text-indigo-655 rounded-xl">
                   <Award className="w-4 h-4" />
                 </div>
                 <span className="text-[11px] font-bold text-slate-500">Position / Title</span>
@@ -182,7 +250,7 @@ export default function ApprovalDetails() {
 
             <div className="flex items-center justify-between p-3.5 bg-white border border-slate-200/80 rounded-2xl shadow-sm">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
+                <div className="p-2 bg-indigo-50 text-indigo-655 rounded-xl">
                   <Shield className="w-4 h-4" />
                 </div>
                 <span className="text-[11px] font-bold text-slate-500">Experience & Credits</span>
@@ -194,7 +262,7 @@ export default function ApprovalDetails() {
           </div>
         </div>
 
-        {/* Column 2: Profile / Contact */}
+        {/* Column 2: Profile / Contact (Personal / Safe) */}
         <div className="space-y-3">
           <span className="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400">2. Profile & Contact</span>
           <div className="space-y-2.5">
@@ -210,7 +278,7 @@ export default function ApprovalDetails() {
 
             <div className="flex items-center justify-between p-3.5 bg-white border border-slate-200/80 rounded-2xl shadow-sm">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-50 text-blue-650 rounded-xl">
+                <div className="p-2 bg-blue-50 text-blue-655 rounded-xl">
                   <Mail className="w-4 h-4" />
                 </div>
                 <span className="text-[11px] font-bold text-slate-500">Email Address</span>
@@ -220,7 +288,7 @@ export default function ApprovalDetails() {
 
             <div className="flex items-center justify-between p-3.5 bg-white border border-slate-200/80 rounded-2xl shadow-sm">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-50 text-blue-650 rounded-xl">
+                <div className="p-2 bg-blue-50 text-blue-655 rounded-xl">
                   <Phone className="w-4 h-4" />
                 </div>
                 <span className="text-[11px] font-bold text-slate-500">Phone Number</span>
@@ -230,13 +298,13 @@ export default function ApprovalDetails() {
           </div>
         </div>
 
-        {/* Column 3: Financial & Tax */}
+        {/* Column 3: Financial & Tax (Financial) */}
         <div className="space-y-3">
           <span className="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400">3. Financial & Tax</span>
           <div className="space-y-2.5">
             <div className="flex items-center justify-between p-3.5 bg-white border border-slate-200/80 rounded-2xl shadow-sm">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
+                <div className="p-2 bg-amber-50 text-amber-600 rounded-xl">
                   <Building className="w-4 h-4" />
                 </div>
                 <span className="text-[11px] font-bold text-slate-500">Bank Name</span>
@@ -246,7 +314,7 @@ export default function ApprovalDetails() {
 
             <div className="flex items-center justify-between p-3.5 bg-white border border-slate-200/80 rounded-2xl shadow-sm">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
+                <div className="p-2 bg-amber-50 text-amber-650 rounded-xl">
                   <CreditCard className="w-4 h-4" />
                 </div>
                 <span className="text-[11px] font-bold text-slate-500">Account Number</span>
@@ -256,7 +324,7 @@ export default function ApprovalDetails() {
 
             <div className="flex items-center justify-between p-3.5 bg-white border border-slate-200/80 rounded-2xl shadow-sm">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
+                <div className="p-2 bg-amber-50 text-amber-650 rounded-xl">
                   <FileText className="w-4 h-4" />
                 </div>
                 <span className="text-[11px] font-bold text-slate-500">Routing Number</span>
@@ -270,7 +338,7 @@ export default function ApprovalDetails() {
               {profile.taxFormUrl ? (
                 <div className="flex items-center justify-between p-3.5 bg-white border border-slate-200/80 rounded-2xl shadow-sm">
                   <div className="flex items-center gap-2.5">
-                    <FileText className="w-5 h-5 text-red-500 shrink-0" />
+                    <FileText className="w-5 h-5 text-rose-500 shrink-0" />
                     <div className="min-w-0">
                       <span className="block text-[10px] font-bold text-slate-800 truncate">Tax Form Document</span>
                       <span className="block text-[9px] text-slate-400 mt-0.5">Uploaded & Verified</span>
@@ -282,23 +350,23 @@ export default function ApprovalDetails() {
                     rel="noopener noreferrer" 
                     className="p-1.5 bg-slate-50 border border-slate-200 rounded-lg hover:bg-slate-100 transition shrink-0"
                   >
-                    <Download className="w-3.5 h-3.5 text-indigo-600" />
+                    <Download className="w-3.5 h-3.5 text-indigo-650" />
                   </a>
                 </div>
               ) : (
-                <div className="p-3 bg-red-50 text-red-650 rounded-2xl text-xs text-center border border-red-100 font-bold">Missing</div>
+                <div className="p-3 bg-rose-50 text-rose-600 rounded-2xl text-xs text-center border border-rose-100 font-bold">Missing</div>
               )}
             </div>
           </div>
         </div>
 
-        {/* Column 4: Identification */}
+        {/* Column 4: Identification (Compliance) */}
         <div className="space-y-3">
           <span className="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400">4. Identification</span>
           <div className="space-y-2.5">
             <div className="flex items-center justify-between p-3.5 bg-white border border-slate-200/80 rounded-2xl shadow-sm">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-50 text-blue-650 rounded-xl">
+                <div className="p-2 bg-emerald-50 text-emerald-600 rounded-xl">
                   <IdCard className="w-4 h-4" />
                 </div>
                 <span className="text-[11px] font-bold text-slate-500">Government ID Type</span>
@@ -338,7 +406,7 @@ export default function ApprovalDetails() {
                         href={profile.identityDocs[1]} 
                         target="_blank" 
                         rel="noopener noreferrer"
-                        className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white"
+                        className="absolute inset-0 bg-slate-955/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white"
                       >
                         <ExternalLink className="w-3.5 h-3.5" />
                       </a>
@@ -354,7 +422,7 @@ export default function ApprovalDetails() {
 
       </div>
 
-      {/* Agreements & Signature Grid */}
+      {/* Agreements & Signature Grid (Compliance) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
         {/* Agreements column */}
@@ -406,7 +474,7 @@ export default function ApprovalDetails() {
           <select 
             value={roleOverride}
             onChange={(e) => setRoleOverride(e.target.value)}
-            className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-700 font-bold focus:outline-none focus:border-indigo-600"
+            className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-700 font-bold focus:outline-none focus:border-indigo-600 cursor-pointer"
             required
           >
             <option value="">Select a Role...</option>
@@ -422,7 +490,7 @@ export default function ApprovalDetails() {
             disabled={submitting}
             className="flex items-center gap-1.5 py-3 px-5 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg text-slate-650 text-xs font-bold transition shadow-xs disabled:opacity-50 cursor-pointer"
           >
-            <XCircle className="w-4 h-4 text-red-500" /> Request Changes
+            <XCircle className="w-4 h-4 text-rose-600" /> Request Changes
           </button>
           
           <button 
@@ -437,10 +505,10 @@ export default function ApprovalDetails() {
 
       {/* Feedback Modal */}
       {showFeedbackModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-sm p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-955/60 backdrop-blur-sm p-4">
           <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-md p-6 shadow-2xl animate-in zoom-in-95 duration-200">
             <h3 className="text-base font-black text-slate-950 flex items-center gap-2 mb-2">
-              <AlertTriangle className="text-red-500 w-5 h-5" />
+              <AlertTriangle className="text-rose-500 w-5 h-5" />
               Request Changes
             </h3>
             <p className="text-xs text-slate-550 mb-4 leading-relaxed">
@@ -450,12 +518,12 @@ export default function ApprovalDetails() {
               value={feedback}
               onChange={(e) => setFeedback(e.target.value)}
               placeholder="e.g. The photo uploaded for the Front ID is blurry. Please re-upload a clear copy."
-              className="w-full h-32 bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-indigo-600 resize-none mb-4"
+              className="w-full h-32 bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-indigo-650 resize-none mb-4"
             />
             <div className="flex gap-3">
               <button 
                 onClick={() => setShowFeedbackModal(false)}
-                className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold rounded-lg transition"
+                className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold rounded-lg transition cursor-pointer"
               >
                 Cancel
               </button>
@@ -465,7 +533,7 @@ export default function ApprovalDetails() {
                   handleDecision('changes-requested');
                 }}
                 disabled={!feedback.trim() || submitting}
-                className="flex-1 py-2.5 bg-red-600 hover:bg-red-750 disabled:opacity-50 text-white text-xs font-bold rounded-lg transition"
+                className="flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-white text-xs font-bold rounded-lg transition cursor-pointer"
               >
                 Confirm & Send Feedback
               </button>
@@ -476,13 +544,13 @@ export default function ApprovalDetails() {
 
       {/* Approve Confirmation Modal */}
       {showApproveModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-sm p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-955/60 backdrop-blur-sm p-4">
           <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-md p-6 shadow-2xl animate-in zoom-in-95 duration-200">
-            <h3 className="text-base font-black text-slate-950 flex items-center gap-2 mb-3">
+            <h3 className="text-base font-black text-slate-955 flex items-center gap-2 mb-3">
               <CheckCircle2 className="w-5 h-5 text-emerald-600" />
               Confirm Approval
             </h3>
-            <p className="text-xs text-slate-550 mb-5 leading-relaxed">
+            <p className="text-xs text-slate-555 mb-5 leading-relaxed">
               Are you sure you want to approve this applicant? They will be granted system access with the role of:{' '}
               <span className="font-extrabold text-emerald-700 border border-emerald-500/25 bg-emerald-50 px-2 py-1 rounded-md">
                 {roles.find(r => r._id === roleOverride)?.name || 'Unknown Role'}
@@ -491,7 +559,7 @@ export default function ApprovalDetails() {
             <div className="flex gap-3">
               <button 
                 onClick={() => setShowApproveModal(false)}
-                className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold rounded-lg transition"
+                className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold rounded-lg transition cursor-pointer"
               >
                 Cancel
               </button>
@@ -501,7 +569,7 @@ export default function ApprovalDetails() {
                   handleDecision('approved');
                 }}
                 disabled={submitting || !roleOverride}
-                className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-extrabold rounded-lg transition"
+                className="flex-1 py-2.5 bg-indigo-650 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-extrabold rounded-lg transition cursor-pointer"
               >
                 Confirm & Approve
               </button>

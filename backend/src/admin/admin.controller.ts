@@ -7,7 +7,10 @@ import {
   Param,
   UseGuards,
   Req,
+  BadRequestException,
+  Query,
 } from '@nestjs/common';
+import { Types } from 'mongoose';
 import { AdminService } from './admin.service';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { PermissionsGuard } from '../auth/guards/permissions.guard';
@@ -26,19 +29,48 @@ import {
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}
 
+  private validateObjectId(id: string, name: string) {
+    if (!Types.ObjectId.isValid(id)) {
+      throw new BadRequestException(`Invalid ${name} format`);
+    }
+  }
+
   @Get('applications')
-  @Permissions('users.view')
-  @ApiOperation({ summary: 'Get all pending onboarding applications' })
-  @ApiResponse({ status: 200, description: 'List of pending users.' })
-  getPendingApplications() {
-    return this.adminService.getPendingApplications();
+  @Permissions('users.approve')
+  @ApiOperation({ summary: 'Get onboarding applications with pagination, filtering, search, and KPI metrics' })
+  @ApiResponse({ status: 200, description: 'List of applications.' })
+  getPendingApplications(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('search') search?: string,
+    @Query('contractorType') contractorType?: string,
+    @Query('department') department?: string,
+    @Query('onboardingStatus') onboardingStatus?: string,
+    @Query('stale') stale?: string,
+    @Query('sortBy') sortBy?: string,
+    @Query('sortOrder') sortOrder?: 'asc' | 'desc',
+  ) {
+    const pageNum = parseInt(page || '1', 10);
+    const limitNum = parseInt(limit || '10', 10);
+    return this.adminService.getApplications({
+      page: pageNum,
+      limit: limitNum,
+      search,
+      contractorType,
+      department,
+      onboardingStatus,
+      stale: stale === 'true',
+      sortBy,
+      sortOrder,
+    });
   }
 
   @Get('applications/:id')
-  @Permissions('users.view')
+  @Permissions('users.approve')
   @ApiOperation({ summary: 'Get details of a specific application' })
   @ApiResponse({ status: 200, description: 'Detailed user application data.' })
   getApplicationDetails(@Param('id') id: string) {
+    this.validateObjectId(id, 'applicationId');
     return this.adminService.getApplicationDetails(id);
   }
 
@@ -55,6 +87,7 @@ export class AdminController {
     @Body()
     payload: { status: string; systemRoleId?: string; adminFeedback?: string },
   ) {
+    this.validateObjectId(id, 'applicationId');
     return this.adminService.evaluateApplication(
       id,
       req.user._id.toString(),
@@ -75,6 +108,7 @@ export class AdminController {
   @Permissions('users.update')
   @ApiOperation({ summary: 'Update a user manually' })
   updateUser(@Param('id') id: string, @Req() req: any, @Body() payload: any) {
+    this.validateObjectId(id, 'userId');
     return this.adminService.updateUser(req.user._id.toString(), id, payload);
   }
 
@@ -105,6 +139,7 @@ export class AdminController {
     @Req() req: any,
     @Body() payload: { permissions: string[] },
   ) {
+    this.validateObjectId(id, 'roleId');
     return this.adminService.updateRole(req.user._id.toString(), id, payload);
   }
 

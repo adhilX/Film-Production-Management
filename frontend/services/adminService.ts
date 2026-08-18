@@ -26,8 +26,20 @@ export const adminService = {
   },
 
   // Applications/Approvals
-  async getApplications(): Promise<any[]> {
-    const res = await axiosClient.get<any[]>('/admin/applications');
+  async getApplications(params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    contractorType?: string;
+    department?: string;
+    onboardingStatus?: string;
+    stale?: boolean;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
+  }): Promise<{ applications: any[]; total: number; page: number; pages: number; limit: number; metrics: any }> {
+    const res = await axiosClient.get<{ applications: any[]; total: number; page: number; pages: number; limit: number; metrics: any }>('/admin/applications', {
+      params
+    });
     return res.data;
   },
   async getApplication(id: string): Promise<any> {
