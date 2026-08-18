@@ -33,6 +33,13 @@ export const productionsService = {
   removeCastCrew: castCrewService.removeCastCrew.bind(castCrewService),
   getEligibleCast: castCrewService.getEligibleCast.bind(castCrewService),
   getEligibleCrew: castCrewService.getEligibleCrew.bind(castCrewService),
+
+  // Crew Stats
+  async getCrewDashboardStats(): Promise<any> {
+    const { apiClient } = await import('./api/api-client');
+    const res = await apiClient.get<any>('/users/me/dashboard-stats');
+    return res.data;
+  }
 };
 
 export default productionsService;

@@ -214,4 +214,28 @@ describe('Dashboard Stats (e2e)', () => {
       expect(res.body.sparklines.approvals.length).toBe(6);
     });
   });
+
+  describe('GET /users/me/dashboard-stats', () => {
+    it('should return 401 if token is missing', async () => {
+      await request(app.getHttpServer())
+        .get('/users/me/dashboard-stats')
+        .expect(401);
+    });
+
+    it('should return 200 with crew metrics for logged-in crew', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/users/me/dashboard-stats')
+        .set('Authorization', `Bearer ${crewToken}`)
+        .expect(200);
+
+      expect(res.body).toBeDefined();
+      expect(res.body.myProjectsCount).toBeDefined();
+      expect(res.body.myRolesCount).toBeDefined();
+      expect(res.body.upcomingCallsCount).toBeDefined();
+      expect(res.body.totalWorkDays).toBeDefined();
+      expect(res.body.completedTasks).toBeDefined();
+      expect(res.body.myRoleAssignments).toBeInstanceOf(Array);
+      expect(res.body.recentActivities).toBeInstanceOf(Array);
+    });
+  });
 });

@@ -117,6 +117,16 @@ export class UsersController {
     };
   }
 
+  @Get('me/dashboard-stats')
+  @ApiOperation({ summary: 'Get crew dashboard stats for current user' })
+  @ApiResponse({
+    status: 200,
+    description: 'Crew stats and assignments.',
+  })
+  getCrewDashboardStats(@Req() req: any) {
+    return this.usersService.getCrewDashboardStats(req.user._id.toString());
+  }
+
   @Patch('onboarding')
   @ApiOperation({ summary: 'Update progress step and onboarding profile data' })
   @ApiResponse({

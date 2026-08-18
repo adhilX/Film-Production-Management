@@ -146,22 +146,22 @@ export default function NavBar({ title: propTitle, subtitle: propSubtitle }: Nav
           {showUserDropdown && (
             <div className="absolute right-0 mt-2 w-48 bg-white border border-slate-200/90 rounded-2xl shadow-xl py-1.5 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
               {/* Profile Link */}
-              <Link
+              {/* <Link
                 href="/onboarding/details"
                 onClick={() => setShowUserDropdown(false)}
                 className="w-full px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2 font-semibold transition"
               >
                 <User className="w-3.5 h-3.5 text-slate-400" /> Profile
-              </Link>
+              </Link> */}
 
               {/* Account Settings Link */}
-              <Link
+              {/* <Link
                 href="/onboarding/details"
                 onClick={() => setShowUserDropdown(false)}
                 className="w-full px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2 font-semibold transition border-b border-slate-100 pb-2 mb-1"
               >
                 <Settings className="w-3.5 h-3.5 text-slate-400" /> Account Settings
-              </Link>
+              </Link> */}
 
               {/* Sign Out Button */}
               <div className="px-1.5 pt-0.5">
