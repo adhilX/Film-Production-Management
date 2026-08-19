@@ -1,24 +1,5 @@
 import { apiClient } from '@/services/api/api-client';
-import type { Production } from '@/app/types';
-
-export interface GetProductionsParams {
-  page?: number;
-  limit?: number;
-  search?: string;
-  status?: string;
-  genre?: string;
-  productionManager?: string;
-  sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
-}
-
-export interface GetProductionsResponse {
-  productions: Production[];
-  total: number;
-  page: number;
-  pages: number;
-  limit: number;
-}
+import type { Production, GetProductionsParams, GetProductionsResponse } from '@/features/projects/types';
 
 export const projectService = {
   async getProductions(params?: GetProductionsParams): Promise<any> {

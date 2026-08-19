@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { MoreVertical, Edit2, Trash2 } from 'lucide-react';
-import type { Location } from '@/app/types';
+import type { Location } from '@/features/locations/types';
 
 interface LocationsTableProps {
   locations: Location[];

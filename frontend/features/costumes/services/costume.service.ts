@@ -1,5 +1,5 @@
 import { apiClient } from '@/services/api/api-client';
-import type { Costume, CostumeAssignment } from '@/app/types';
+import type { Costume, CostumeAssignment } from '@/features/costumes/types';
 
 export const costumeService = {
   async getCostumes(

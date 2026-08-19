@@ -1,6 +1,6 @@
 import React from 'react';
 import { X } from 'lucide-react';
-import type { Character, CastCrew } from '@/app/types';
+import type { Character, CastCrew } from '@/features/cast-crew/types';
 
 interface EditAssignmentModalProps {
   isOpen: boolean;

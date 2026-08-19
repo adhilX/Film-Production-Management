@@ -1,6 +1,6 @@
 import React from 'react';
 import { X } from 'lucide-react';
-import type { Character } from '@/app/types';
+import type { Character } from '@/features/cast-crew/types';
 
 interface CharacterModalProps {
   isOpen: boolean;

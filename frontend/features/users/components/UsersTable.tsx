@@ -1,14 +1,16 @@
 import React from 'react';
 import { User as UserIcon, CheckCircle2, XCircle, Eye, Edit } from 'lucide-react';
 
+import type { User } from '@/features/users/types';
+
 interface UsersTableProps {
-  users: any[];
+  users: User[];
   loading: boolean;
   hasUpdatePerm: boolean;
   onSort: (field: string) => void;
   renderSortIcon: (field: string) => React.ReactNode;
   onViewDetails: (id: string) => void;
-  onEdit: (user: any) => void;
+  onEdit: (user: User) => void;
 }
 
 export const UsersTable: React.FC<UsersTableProps> = ({
@@ -65,108 +67,113 @@ export const UsersTable: React.FC<UsersTableProps> = ({
             </td>
           </tr>
         ) : (
-          users.map((user) => (
-            <tr key={user._id} className="hover:bg-slate-50/50 transition">
-              {/* Name & Email */}
-              <td className="px-6 py-4 font-semibold">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-slate-105 border border-slate-200 flex items-center justify-center overflow-hidden shrink-0">
-                    {user.profile?.photoUrl ? (
-                      <img src={user.profile.photoUrl} alt={user.name} className="w-full h-full object-cover" />
+          users.map((user) => {
+            const roleName = user.systemRoleId && typeof user.systemRoleId === 'object' && 'name' in user.systemRoleId
+              ? (user.systemRoleId as { name: string }).name
+              : '';
+            return (
+              <tr key={user._id} className="hover:bg-slate-50/50 transition">
+                {/* Name & Email */}
+                <td className="px-6 py-4 font-semibold">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-full bg-slate-105 border border-slate-200 flex items-center justify-center overflow-hidden shrink-0">
+                      {user.profile?.photoUrl ? (
+                        <img src={user.profile.photoUrl} alt={user.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <UserIcon className="w-4 h-4 text-slate-400" />
+                      )}
+                    </div>
+                    <div>
+                      <div
+                        className="font-bold text-slate-800 text-sm hover:text-indigo-650 cursor-pointer"
+                        onClick={() => onViewDetails(user._id || '')}
+                      >
+                        {user.name || 'Unnamed User'}
+                      </div>
+                      <div className="text-slate-400 font-semibold text-[11px] mt-0.5">{user.email}</div>
+                    </div>
+                  </div>
+                </td>
+
+                {/* Contractor Type */}
+                <td className="px-6 py-4">
+                  <span className="px-2 py-0.5 bg-slate-100 text-slate-655 rounded-lg text-[10px] border border-slate-200/60 font-bold uppercase tracking-wider">
+                    {user.contractorType || 'None'}
+                  </span>
+                </td>
+
+                {/* Department */}
+                <td className="px-6 py-4 font-semibold text-slate-600">
+                  {user.profile?.department || 'None'}
+                </td>
+
+                {/* System Role */}
+                <td className="px-6 py-4">
+                  <div className="flex items-center gap-2">
+                    {roleName === 'Super Admin' || roleName === 'Production Admin' ? (
+                      <span className="w-2 h-2 rounded-full bg-red-500" />
+                    ) : ['Production Manager', 'Finance Manager', 'Location Manager', 'Costume Manager'].includes(
+                        roleName || ''
+                      ) ? (
+                      <span className="w-2 h-2 rounded-full bg-indigo-500" />
+                    ) : roleName === 'Cast' || roleName === 'Crew' ? (
+                      <span className="w-2 h-2 rounded-full bg-purple-500" />
                     ) : (
-                      <UserIcon className="w-4 h-4 text-slate-400" />
+                      <span className="w-2 h-2 rounded-full bg-slate-400" />
+                    )}
+                    <span className="font-bold text-slate-705">{roleName || 'Pending'}</span>
+                  </div>
+                </td>
+
+                {/* Status */}
+                <td className="px-6 py-4 font-bold text-slate-750">
+                  <div className="space-y-1">
+                    <span className="block">{user.status}</span>
+                    <span className="block text-[9px] text-slate-400 lowercase font-medium">
+                      {user.onboardingStatus}
+                    </span>
+                  </div>
+                </td>
+
+                {/* Active State */}
+                <td className="px-6 py-4">
+                  {user.isActive ? (
+                    <div className="flex items-center gap-1.5 text-emerald-600 font-bold">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      Active
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1.5 text-slate-400 font-bold">
+                      <XCircle className="w-3.5 h-3.5" />
+                      Inactive
+                    </div>
+                  )}
+                </td>
+
+                {/* Actions */}
+                <td className="px-6 py-4 text-right">
+                  <div className="flex justify-end items-center gap-2">
+                    <button
+                      onClick={() => onViewDetails(user._id || '')}
+                      className="inline-flex items-center justify-center p-1.5 text-slate-450 hover:text-indigo-650 hover:bg-slate-50 rounded-xl transition cursor-pointer"
+                      title="View Details"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </button>
+                    {hasUpdatePerm && (
+                      <button
+                        onClick={() => onEdit(user)}
+                        className="inline-flex items-center justify-center p-1.5 text-slate-450 hover:text-indigo-650 hover:bg-slate-50 rounded-xl transition cursor-pointer"
+                        title="Edit User"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
                     )}
                   </div>
-                  <div>
-                    <div
-                      className="font-bold text-slate-800 text-sm hover:text-indigo-650 cursor-pointer"
-                      onClick={() => onViewDetails(user._id)}
-                    >
-                      {user.name || 'Unnamed User'}
-                    </div>
-                    <div className="text-slate-400 font-semibold text-[11px] mt-0.5">{user.email}</div>
-                  </div>
-                </div>
-              </td>
-
-              {/* Contractor Type */}
-              <td className="px-6 py-4">
-                <span className="px-2 py-0.5 bg-slate-100 text-slate-655 rounded-lg text-[10px] border border-slate-200/60 font-bold uppercase tracking-wider">
-                  {user.contractorType || 'None'}
-                </span>
-              </td>
-
-              {/* Department */}
-              <td className="px-6 py-4 font-semibold text-slate-600">
-                {user.profile?.department || 'None'}
-              </td>
-
-              {/* System Role */}
-              <td className="px-6 py-4">
-                <div className="flex items-center gap-2">
-                  {user.systemRoleId?.name === 'Super Admin' || user.systemRoleId?.name === 'Production Admin' ? (
-                    <span className="w-2 h-2 rounded-full bg-red-500" />
-                  ) : ['Production Manager', 'Finance Manager', 'Location Manager', 'Costume Manager'].includes(
-                      user.systemRoleId?.name || ''
-                    ) ? (
-                    <span className="w-2 h-2 rounded-full bg-indigo-500" />
-                  ) : user.systemRoleId?.name === 'Cast' || user.systemRoleId?.name === 'Crew' ? (
-                    <span className="w-2 h-2 rounded-full bg-purple-500" />
-                  ) : (
-                    <span className="w-2 h-2 rounded-full bg-slate-400" />
-                  )}
-                  <span className="font-bold text-slate-705">{user.systemRoleId?.name || 'Pending'}</span>
-                </div>
-              </td>
-
-              {/* Status */}
-              <td className="px-6 py-4 font-bold text-slate-750">
-                <div className="space-y-1">
-                  <span className="block">{user.status}</span>
-                  <span className="block text-[9px] text-slate-400 lowercase font-medium">
-                    {user.onboardingStatus}
-                  </span>
-                </div>
-              </td>
-
-              {/* Active State */}
-              <td className="px-6 py-4">
-                {user.isActive ? (
-                  <div className="flex items-center gap-1.5 text-emerald-600 font-bold">
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    Active
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-1.5 text-slate-400 font-bold">
-                    <XCircle className="w-3.5 h-3.5" />
-                    Inactive
-                  </div>
-                )}
-              </td>
-
-              {/* Actions */}
-              <td className="px-6 py-4 text-right">
-                <div className="flex justify-end items-center gap-2">
-                  <button
-                    onClick={() => onViewDetails(user._id)}
-                    className="inline-flex items-center justify-center p-1.5 text-slate-450 hover:text-indigo-650 hover:bg-slate-50 rounded-xl transition cursor-pointer"
-                    title="View Details"
-                  >
-                    <Eye className="w-4 h-4" />
-                  </button>
-                  {hasUpdatePerm && (
-                    <button
-                      onClick={() => onEdit(user)}
-                      className="inline-flex items-center justify-center p-1.5 text-slate-450 hover:text-indigo-650 hover:bg-slate-50 rounded-xl transition cursor-pointer"
-                      title="Edit User"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </button>
-                  )}
-                </div>
-              </td>
-            </tr>
-          ))
+                </td>
+              </tr>
+            );
+          })
         )}
       </tbody>
     </table>

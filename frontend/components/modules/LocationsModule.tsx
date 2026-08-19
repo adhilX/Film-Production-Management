@@ -29,7 +29,7 @@ import { LocationAddBookingModal } from '@/features/locations/components/Locatio
 import { LocationRejectModal } from '@/features/locations/components/LocationRejectModal';
 import { LocationImportModal } from '@/features/locations/components/LocationImportModal';
 import { LocationEditModal } from '@/features/locations/components/LocationEditModal';
-import type { Location } from '@/app/types';
+import type { Location } from '@/features/locations/types';
 
 // Load Leaflet Map only on client-side
 const LeafletMap = dynamic(() => import('../LeafletMap'), {

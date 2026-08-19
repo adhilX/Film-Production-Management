@@ -1,5 +1,5 @@
 import { apiClient } from '@/services/api/api-client';
-import type { Budget, FundRequest } from '@/app/types';
+import type { Budget, FundRequest } from '@/features/funds/types';
 
 export const fundsService = {
   async getBudget(productionId: string): Promise<Budget> {

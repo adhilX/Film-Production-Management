@@ -1,6 +1,6 @@
 import React from 'react';
 import { X } from 'lucide-react';
-import type { Location } from '@/app/types';
+import type { Location } from '@/features/locations/types';
 
 interface LocationAddBookingModalProps {
   isOpen: boolean;

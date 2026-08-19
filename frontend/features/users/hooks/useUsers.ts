@@ -7,14 +7,17 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { PERMISSIONS } from '@/constants/permissions';
 import { formatError } from '@/utils/format-error';
 
+import type { User } from '@/features/users/types';
+import type { Role } from '@/features/roles/types';
+
 export function useUsers() {
   const currentUser = useAuthStore((state) => state.user);
   const { hasPermission } = usePermissions();
   const hasUpdatePerm = hasPermission(PERMISSIONS.USERS_UPDATE);
   const hasCreatePerm = hasPermission(PERMISSIONS.USERS_CREATE);
 
-  const [users, setUsers] = useState<any[]>([]);
-  const [roles, setRoles] = useState<any[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [roles, setRoles] = useState<Role[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -41,7 +44,7 @@ export function useUsers() {
 
   // Modal & Drawer State
   const [isEditOpen, setIsEditOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<any | null>(null);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
   
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [detailsUserId, setDetailsUserId] = useState<string | null>(null);
@@ -118,7 +121,7 @@ export function useUsers() {
     fetchRoles();
   }, []);
 
-  const handleEdit = (user: any) => {
+  const handleEdit = (user: User) => {
     setSelectedUser(user);
     setIsEditOpen(true);
   };

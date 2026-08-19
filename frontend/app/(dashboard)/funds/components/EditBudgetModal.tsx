@@ -5,7 +5,7 @@ import { z } from 'zod';
 import toast from 'react-hot-toast';
 import { useProductionStore } from '@/store/useProductionStore';
 import fundsService from '@/services/fundsService';
-import { Budget } from '@/app/types';
+import type { Budget } from '@/features/funds/types';
 import { formatError } from '@/utils/format-error';
 import { getBudgetSchema, type BudgetFormValues } from '@/features/funds/validations/budget.validation';
 

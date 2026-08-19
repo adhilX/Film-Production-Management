@@ -1,6 +1,6 @@
 import React from 'react';
 import { IndianRupee, CheckCircle, Info, Clock, Pencil } from 'lucide-react';
-import type { Budget } from '@/app/types';
+import type { Budget } from '@/features/funds/types';
 
 interface BudgetStatsProps {
   budget: Budget | null;

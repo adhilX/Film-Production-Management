@@ -1,17 +1,12 @@
 import { axiosClient } from '@/lib/axios';
-import type { LoginResponse, SignupResponse, RefreshResponse, UserProfile } from '@/types/auth';
-
-export interface LoginPayload {
-  email: string;
-  password: string;
-}
-
-export interface SignupPayload {
-  email: string;
-  password: string;
-  name: string;
-  contractorType: string;
-}
+import type { 
+  LoginResponse, 
+  SignupResponse, 
+  RefreshResponse, 
+  UserProfile,
+  LoginPayload,
+  SignupPayload 
+} from '@/features/users/types';
 
 export const authService = {
   /**

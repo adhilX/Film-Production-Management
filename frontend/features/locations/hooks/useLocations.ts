@@ -7,7 +7,7 @@ import { formatError } from '@/utils/format-error';
 import { usePermissions } from '@/hooks/usePermissions';
 import { PERMISSIONS } from '@/constants/permissions';
 import { bookingSchema } from '../validations/booking.validation';
-import type { Location, LocationBooking } from '@/app/types';
+import type { Location, LocationBooking } from '@/features/locations/types';
 
 export function useLocations() {
   const { user } = useAuthStore();

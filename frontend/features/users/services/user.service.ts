@@ -1,27 +1,5 @@
 import { apiClient } from '@/services/api/api-client';
-import type { User } from '@/app/types';
-
-export interface GetUsersParams {
-  page?: number;
-  limit?: number;
-  search?: string;
-  contractorType?: string;
-  systemRoleId?: string;
-  status?: string;
-  onboardingStatus?: string;
-  isActive?: boolean;
-  department?: string;
-  sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
-}
-
-export interface GetUsersResponse {
-  users: User[];
-  total: number;
-  page: number;
-  pages: number;
-  limit: number;
-}
+import type { User, GetUsersParams, GetUsersResponse } from '@/features/users/types';
 
 export const userService = {
   async getUsers(

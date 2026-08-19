@@ -1,13 +1,14 @@
 import React from 'react';
 import { X, Info } from 'lucide-react';
-import type { Character } from '@/app/types';
+import type { Character } from '@/features/cast-crew/types';
+import type { User } from '@/features/users/types';
 
 interface AssignCastModalProps {
   isOpen: boolean;
   onClose: () => void;
   castForm: { userId: string; roleInProduction: string; characterId: string };
   setCastForm: React.Dispatch<React.SetStateAction<{ userId: string; roleInProduction: string; characterId: string }>>;
-  eligibleCast: any[];
+  eligibleCast: User[];
   characters: Character[];
   onSubmit: (e: React.FormEvent) => void;
   castCrewErrors?: Record<string, string>;

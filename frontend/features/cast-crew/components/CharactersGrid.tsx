@@ -1,6 +1,6 @@
 import React from 'react';
 import { Edit, Trash2, Info } from 'lucide-react';
-import type { Character } from '@/app/types';
+import type { Character } from '@/features/cast-crew/types';
 
 interface CharactersGridProps {
   characters: Character[];

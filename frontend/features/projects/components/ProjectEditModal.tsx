@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { Film, AlertCircle, Loader2, ImageIcon, Trash2 } from 'lucide-react';
-import type { Production } from '@/app/types';
+import type { Production } from '@/features/projects/types';
 
 interface ProjectEditModalProps {
   isOpen: boolean;

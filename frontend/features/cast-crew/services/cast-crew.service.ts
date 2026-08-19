@@ -1,5 +1,6 @@
 import { apiClient } from '@/services/api/api-client';
-import type { Character, CastCrew } from '@/app/types';
+import type { Character, CastCrew } from '@/features/cast-crew/types';
+import type { User } from '@/features/users/types';
 
 export const castCrewService = {
   // Characters
@@ -49,13 +50,13 @@ export const castCrewService = {
     await apiClient.delete(`/productions/${productionId}/cast-crew/${castCrewId}`);
   },
 
-  async getEligibleCast(productionId: string): Promise<any[]> {
-    const res = await apiClient.get<any[]>(`/productions/${productionId}/eligible-cast`);
+  async getEligibleCast(productionId: string): Promise<User[]> {
+    const res = await apiClient.get<User[]>(`/productions/${productionId}/eligible-cast`);
     return res.data;
   },
 
-  async getEligibleCrew(productionId: string): Promise<any[]> {
-    const res = await apiClient.get<any[]>(`/productions/${productionId}/eligible-crew`);
+  async getEligibleCrew(productionId: string): Promise<User[]> {
+    const res = await apiClient.get<User[]>(`/productions/${productionId}/eligible-crew`);
     return res.data;
   },
 };

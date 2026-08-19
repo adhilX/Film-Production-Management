@@ -1,6 +1,6 @@
 import React from 'react';
 import { Film, Clock, AlertCircle, Check } from 'lucide-react';
-import type { Production } from '@/app/types';
+import type { Production } from '@/features/projects/types';
 
 interface ProjectsStatsProps {
   productions: Production[];

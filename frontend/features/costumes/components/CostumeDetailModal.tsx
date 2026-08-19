@@ -1,6 +1,6 @@
 import React from 'react';
 import { X, Shirt, Calendar } from 'lucide-react';
-import type { Costume, CostumeAssignment } from '@/app/types';
+import type { Costume, CostumeAssignment } from '@/features/costumes/types';
 
 interface CostumeDetailModalProps {
   isOpen: boolean;

@@ -10,7 +10,8 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { PERMISSIONS } from '@/constants/permissions';
 import { costumeSchema } from '../validations/costume.validation';
 import { assignmentSchema } from '../validations/assignment.validation';
-import type { Costume, CostumeAssignment, Character, CastCrew } from '@/app/types';
+import type { Costume, CostumeAssignment } from '@/features/costumes/types';
+import type { Character, CastCrew } from '@/features/cast-crew/types';
 
 export function useCostumes() {
   const { user } = useAuthStore();

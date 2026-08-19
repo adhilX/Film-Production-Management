@@ -1,6 +1,6 @@
 import React from 'react';
 import { Shirt, Sparkles, User } from 'lucide-react';
-import type { CostumeAssignment } from '@/app/types';
+import type { CostumeAssignment } from '@/features/costumes/types';
 
 interface CostumesAssignmentsTableProps {
   assignments: CostumeAssignment[];

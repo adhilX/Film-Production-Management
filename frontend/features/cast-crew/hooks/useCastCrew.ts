@@ -5,7 +5,8 @@ import { useProductionStore } from '@/store/useProductionStore';
 import { castCrewService } from '../services/cast-crew.service';
 import { usePermissions } from '@/hooks/usePermissions';
 import { PERMISSIONS } from '@/constants/permissions';
-import type { Character, CastCrew } from '@/app/types';
+import type { Character, CastCrew } from '@/features/cast-crew/types';
+import type { User } from '@/features/users/types';
 import { formatError } from '@/utils/format-error';
 import { characterSchema } from '../validations/character.validation';
 import { castCrewSchema, updateCastCrewSchema } from '../validations/cast-crew.validation';
@@ -20,8 +21,8 @@ export function useCastCrew() {
   const [castCrewList, setCastCrewList] = useState<CastCrew[]>([]);
 
   // Eligible lists for assigning
-  const [eligibleCast, setEligibleCast] = useState<any[]>([]);
-  const [eligibleCrew, setEligibleCrew] = useState<any[]>([]);
+  const [eligibleCast, setEligibleCast] = useState<User[]>([]);
+  const [eligibleCrew, setEligibleCrew] = useState<User[]>([]);
 
   // UI state
   const [activeTab, setActiveTab] = useState<'characters' | 'cast' | 'crew'>('characters');

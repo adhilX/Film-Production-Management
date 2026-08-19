@@ -1,5 +1,5 @@
 import React from 'react';
-import { FundRequest } from '@/app/types';
+import type { FundRequest } from '@/features/funds/types';
 import { useAuthStore } from '@/store/useAuthStore';
 import { usePermissions } from '@/hooks/usePermissions';
 import { PERMISSIONS } from '@/constants/permissions';

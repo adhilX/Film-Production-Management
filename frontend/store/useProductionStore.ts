@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Production } from '@/app/types';
+import { Production } from '@/features/projects/types';
 
 
 interface ProductionState {

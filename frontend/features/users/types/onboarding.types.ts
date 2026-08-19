@@ -1,18 +1,13 @@
-export interface UserProfile {
-  id: string;
+export interface LoginPayload {
   email: string;
+  password: string;
+}
+
+export interface SignupPayload {
+  email: string;
+  password: string;
   name: string;
   contractorType: string;
-  systemRoleId?: {
-    _id: string;
-    name: string;
-  };
-  status: string;
-  permissions: string[];
-  onboardingStatus?: string;
-  currentStep?: number;
-  adminFeedback?: string;
-  isActive?: boolean;
 }
 
 export interface LoginResponse {

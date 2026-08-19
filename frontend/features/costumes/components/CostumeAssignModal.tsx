@@ -1,6 +1,7 @@
 import React from 'react';
 import { X } from 'lucide-react';
-import type { Costume, Character, CastCrew } from '@/app/types';
+import type { Costume } from '@/features/costumes/types';
+import type { Character, CastCrew } from '@/features/cast-crew/types';
 
 interface CostumeAssignModalProps {
   isOpen: boolean;

@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 import { locationService } from '../services/location.service';
 import { locationSchema } from '../validations/location.validation';
 import { formatError } from '@/utils/format-error';
-import type { Location } from '@/app/types';
+import type { Location } from '@/features/locations/types';
 
 // Load Leaflet Map only on client-side
 const LeafletMap = dynamic(() => import('@/components/LeafletMap'), {

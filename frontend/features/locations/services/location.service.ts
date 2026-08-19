@@ -1,5 +1,5 @@
 import { apiClient } from '@/services/api/api-client';
-import type { Location, LocationBooking } from '@/app/types';
+import type { Location, LocationBooking } from '@/features/locations/types';
 
 export const locationService = {
   // Physical Locations CRUD

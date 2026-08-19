@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MoreVertical, Check, Edit2, Film } from 'lucide-react';
-import type { Production } from '@/app/types';
+import type { Production } from '@/features/projects/types';
 
 interface ProjectsTableProps {
   currentProjects: Production[];

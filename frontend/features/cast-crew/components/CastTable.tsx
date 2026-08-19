@@ -1,6 +1,6 @@
 import React from 'react';
 import { Edit, Trash2, Info } from 'lucide-react';
-import type { CastCrew } from '@/app/types';
+import type { CastCrew } from '@/features/cast-crew/types';
 
 interface CastTableProps {
   cast: CastCrew[];

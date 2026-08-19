@@ -1,6 +1,6 @@
 import React from 'react';
 import { Shirt, Edit, Trash2 } from 'lucide-react';
-import type { Costume } from '@/app/types';
+import type { Costume } from '@/features/costumes/types';
 
 interface CostumesGridProps {
   costumes: Costume[];

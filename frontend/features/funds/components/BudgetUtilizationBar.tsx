@@ -1,5 +1,5 @@
 import React from 'react';
-import type { Budget } from '@/app/types';
+import type { Budget } from '@/features/funds/types';
 
 interface BudgetUtilizationBarProps {
   budget: Budget | null;

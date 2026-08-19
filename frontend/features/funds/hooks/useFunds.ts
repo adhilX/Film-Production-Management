@@ -5,8 +5,8 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { fundsService } from '../services/funds.service';
 import { usePermissions } from '@/hooks/usePermissions';
 import { PERMISSIONS } from '@/constants/permissions';
-import type { Budget, FundRequest } from '@/app/types';
-import type { UserProfile } from '@/types/auth';
+import type { Budget, FundRequest } from '@/features/funds/types';
+import type { UserProfile } from '@/features/users/types';
 import { formatError } from '@/utils/format-error';
 
 export function useFunds() {

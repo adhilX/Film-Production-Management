@@ -1,20 +1,5 @@
 import { apiClient } from '@/services/api/api-client';
-import type { Role } from '@/app/types';
-
-export interface CreateRolePayload {
-  name: string;
-  permissions: string[];
-}
-
-export interface UpdateRolePayload {
-  permissions: string[];
-}
-
-export interface CreatePermissionPayload {
-  name: string;
-  description?: string;
-  group: string;
-}
+import type { Role, CreateRolePayload, UpdateRolePayload, CreatePermissionPayload } from '@/features/roles/types';
 
 export const roleService = {
   async getRoles(): Promise<Role[]> {

@@ -1,12 +1,14 @@
 import React from 'react';
 import { X, Info } from 'lucide-react';
 
+import type { User } from '@/features/users/types';
+
 interface AssignCrewModalProps {
   isOpen: boolean;
   onClose: () => void;
   crewForm: { userId: string; roleInProduction: string };
   setCrewForm: React.Dispatch<React.SetStateAction<{ userId: string; roleInProduction: string }>>;
-  eligibleCrew: any[];
+  eligibleCrew: User[];
   onSubmit: (e: React.FormEvent) => void;
   castCrewErrors?: Record<string, string>;
 }

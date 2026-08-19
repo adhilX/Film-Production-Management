@@ -1,7 +1,7 @@
 import React from 'react';
 import { Calendar, AlertTriangle } from 'lucide-react';
 import { PermissionGuard } from '@/app/components/permission-guard';
-import type { LocationBooking } from '@/app/types';
+import type { LocationBooking } from '@/features/locations/types';
 
 interface LocationsBookingsTableProps {
   bookings: LocationBooking[];

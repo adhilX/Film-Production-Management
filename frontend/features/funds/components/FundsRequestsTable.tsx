@@ -1,6 +1,6 @@
 import React from 'react';
-import type { FundRequest, Budget } from '@/app/types';
-import type { UserProfile } from '@/types/auth';
+import type { FundRequest, Budget } from '@/features/funds/types';
+import type { UserProfile } from '@/features/users/types';
 
 interface FundsRequestsTableProps {
   requests: FundRequest[];

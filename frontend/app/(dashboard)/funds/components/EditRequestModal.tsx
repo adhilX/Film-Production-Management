@@ -5,7 +5,7 @@ import { z } from 'zod';
 import toast from 'react-hot-toast';
 import { useProductionStore } from '@/store/useProductionStore';
 import fundsService from '@/services/fundsService';
-import { FundRequest } from '@/app/types';
+import type { FundRequest } from '@/features/funds/types';
 import { formatError } from '@/utils/format-error';
 
 import { requestSchema, type RequestFormValues } from '@/features/funds/validations/fund-request.validation';

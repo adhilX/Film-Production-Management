@@ -1,6 +1,6 @@
 import React from 'react';
 import { X, Upload, RefreshCw } from 'lucide-react';
-import type { Costume } from '@/app/types';
+import type { Costume } from '@/features/costumes/types';
 
 interface CostumeEditModalProps {
   isOpen: boolean;

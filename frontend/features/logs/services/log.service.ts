@@ -1,25 +1,5 @@
 import { apiClient } from '@/services/api/api-client';
-import type { AuditLog } from '@/app/types';
-
-export interface GetAuditLogsParams {
-  page?: number;
-  limit?: number;
-  search?: string;
-  module?: string;
-  action?: string;
-  productionId?: string;
-  sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
-}
-
-export interface GetAuditLogsResponse {
-  logs: AuditLog[];
-  total: number;
-  page: number;
-  pages: number;
-  limit: number;
-  metrics?: any;
-}
+import type { AuditLog, GetAuditLogsParams, GetAuditLogsResponse } from '@/features/logs/types';
 
 export const logService = {
   async getAuditLogs(params?: GetAuditLogsParams): Promise<GetAuditLogsResponse> {

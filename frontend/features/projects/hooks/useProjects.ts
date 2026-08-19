@@ -8,7 +8,7 @@ import { projectSchema } from '../validations/project.validation';
 import { formatError } from '@/utils/format-error';
 import { usePermissions } from '@/hooks/usePermissions';
 import { PERMISSIONS } from '@/constants/permissions';
-import type { Production } from '@/app/types';
+import type { Production } from '@/features/projects/types';
 
 export function useProjects() {
   const user = useAuthStore((state) => state.user);
