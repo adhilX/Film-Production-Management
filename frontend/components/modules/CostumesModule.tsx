@@ -45,6 +45,8 @@ export default function CostumesModule() {
     setCostumeForm,
     costumeErrors,
     setCostumeErrors,
+    assignErrors,
+    setAssignErrors,
     assignModalOpen,
     setAssignModalOpen,
     assignForm,
@@ -264,6 +266,7 @@ export default function CostumesModule() {
         castCrewList={castCrewList}
         isSubmitting={isSubmitting}
         onSubmit={handleAssignCostume}
+        assignErrors={assignErrors}
       />
 
       {/* --- RETURN COSTUME MODAL --- */}

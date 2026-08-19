@@ -37,6 +37,8 @@ export default function CastCrewModule() {
     selectedCharacter,
     characterForm,
     setCharacterForm,
+    characterErrors,
+    castCrewErrors,
     assignCastModalOpen,
     setAssignCastModalOpen,
     castForm,
@@ -249,6 +251,7 @@ export default function CastCrewModule() {
         characterForm={characterForm}
         setCharacterForm={setCharacterForm}
         onSubmit={handleSaveCharacter}
+        characterErrors={characterErrors}
       />
 
       {/* --- MODAL 2: Assign Cast --- */}
@@ -260,6 +263,7 @@ export default function CastCrewModule() {
         eligibleCast={eligibleCast}
         characters={characters}
         onSubmit={handleAssignCast}
+        castCrewErrors={castCrewErrors}
       />
 
       {/* --- MODAL 3: Assign Crew --- */}
@@ -270,6 +274,7 @@ export default function CastCrewModule() {
         setCrewForm={setCrewForm}
         eligibleCrew={eligibleCrew}
         onSubmit={handleAssignCrew}
+        castCrewErrors={castCrewErrors}
       />
 
       {/* --- MODAL 4: Edit Assignment (Cast or Crew) --- */}
@@ -281,6 +286,7 @@ export default function CastCrewModule() {
         setEditForm={setEditForm}
         characters={characters}
         onSubmit={handleEditAssignment}
+        castCrewErrors={castCrewErrors}
       />
 
     </div>

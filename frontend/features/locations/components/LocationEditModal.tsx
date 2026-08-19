@@ -3,6 +3,7 @@ import dynamic from 'next/dynamic';
 import { X, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { locationService } from '../services/location.service';
+import { locationSchema } from '../validations/location.validation';
 import { formatError } from '@/utils/format-error';
 import type { Location } from '@/app/types';
 
@@ -46,6 +47,7 @@ export const LocationEditModal: React.FC<LocationEditModalProps> = ({
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [isSearchingAddress, setIsSearchingAddress] = useState(false);
   const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (isOpen && location) {
@@ -60,6 +62,7 @@ export const LocationEditModal: React.FC<LocationEditModalProps> = ({
       setSearchQuery('');
       setSuggestions([]);
       setError('');
+      setFieldErrors({});
     }
   }, [isOpen, location]);
 
@@ -105,6 +108,31 @@ export const LocationEditModal: React.FC<LocationEditModalProps> = ({
     e.preventDefault();
     if (!location) return;
     setError('');
+    setFieldErrors({});
+
+    const parseResult = locationSchema.safeParse({
+      name: locName,
+      address: locAddress,
+      description: locDescription || undefined,
+      latitude: (locLat === undefined || isNaN(locLat as any)) ? undefined : locLat,
+      longitude: (locLng === undefined || isNaN(locLng as any)) ? undefined : locLng,
+      locationType: locType || undefined,
+      contactInfo: locContact || undefined,
+      imageUrl: locImage || undefined,
+    });
+
+    if (!parseResult.success) {
+      const errors: Record<string, string> = {};
+      parseResult.error.issues.forEach((issue) => {
+        if (issue.path[0]) {
+          errors[String(issue.path[0])] = issue.message;
+        }
+      });
+      setFieldErrors(errors);
+      setError('Please fix the validation errors before submitting.');
+      return;
+    }
+
     try {
       await locationService.updateLocation(productionId, location._id, {
         name: locName,
@@ -154,8 +182,13 @@ export const LocationEditModal: React.FC<LocationEditModalProps> = ({
                 placeholder="e.g. Sound Stage A"
                 value={locName}
                 onChange={(e) => setLocName(e.target.value)}
-                className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900 font-semibold"
+                className={`w-full bg-white border rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900 font-semibold ${
+                  fieldErrors.name ? 'border-red-500 focus:border-red-500' : 'border-slate-250'
+                }`}
               />
+              {fieldErrors.name && (
+                <p className="text-[10px] text-red-500 font-bold mt-1">{fieldErrors.name}</p>
+              )}
             </div>
 
             <div className="space-y-1">
@@ -182,7 +215,9 @@ export const LocationEditModal: React.FC<LocationEditModalProps> = ({
                   setSearchQuery(e.target.value);
                   setLocAddress(e.target.value);
                 }}
-                className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900 pr-8 font-semibold"
+                className={`w-full bg-white border rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900 pr-8 font-semibold ${
+                  fieldErrors.address ? 'border-red-500 focus:border-red-500' : 'border-slate-250'
+                }`}
               />
               {isSearchingAddress && (
                 <div className="absolute right-2.5 top-2.5">
@@ -190,6 +225,9 @@ export const LocationEditModal: React.FC<LocationEditModalProps> = ({
                 </div>
               )}
             </div>
+            {fieldErrors.address && (
+              <p className="text-[10px] text-red-500 font-bold mt-1">{fieldErrors.address}</p>
+            )}
 
             {suggestions.length > 0 && (
               <div className="absolute z-50 left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-lg mt-1 divide-y divide-slate-100 max-h-48 overflow-y-auto">
@@ -236,6 +274,9 @@ export const LocationEditModal: React.FC<LocationEditModalProps> = ({
                 className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-xs focus:outline-none text-slate-500 font-semibold"
               />
             </div>
+            {fieldErrors.latitude && (
+              <p className="text-[10px] text-red-500 font-bold col-span-2">{fieldErrors.latitude}</p>
+            )}
           </div>
 
           {/* Pin Map inside Edit Modal */}
@@ -253,18 +294,23 @@ export const LocationEditModal: React.FC<LocationEditModalProps> = ({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1">
-              <label className="block text-[10px] font-bold text-slate-450 uppercase tracking-wider">Contact Info</label>
+              <label className="block text-[10px] font-bold text-slate-455 uppercase tracking-wider">Contact Info</label>
               <input
                 type="text"
                 placeholder="Manager contact, phone, notes"
                 value={locContact}
                 onChange={(e) => setLocContact(e.target.value)}
-                className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900 font-semibold"
+                className={`w-full bg-white border rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900 font-semibold ${
+                  fieldErrors.contactInfo ? 'border-red-500 focus:border-red-500' : 'border-slate-250'
+                }`}
               />
+              {fieldErrors.contactInfo && (
+                <p className="text-[10px] text-red-500 font-bold mt-1">{fieldErrors.contactInfo}</p>
+              )}
             </div>
 
             <div className="space-y-1">
-              <label className="block text-[10px] font-bold text-slate-450 uppercase tracking-wider">Image URL</label>
+              <label className="block text-[10px] font-bold text-slate-455 uppercase tracking-wider">Image URL</label>
               <input
                 type="text"
                 placeholder="https://example.com/image.jpg"
@@ -276,14 +322,19 @@ export const LocationEditModal: React.FC<LocationEditModalProps> = ({
           </div>
 
           <div className="space-y-1">
-            <label className="block text-[10px] font-bold text-slate-450 uppercase tracking-wider">Description</label>
+            <label className="block text-[10px] font-bold text-slate-455 uppercase tracking-wider">Description</label>
             <textarea
               placeholder="Additional physical description..."
               value={locDescription}
               onChange={(e) => setLocDescription(e.target.value)}
               rows={2}
-              className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900 font-semibold"
+              className={`w-full bg-white border rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900 font-semibold ${
+                fieldErrors.description ? 'border-red-500 focus:border-red-500' : 'border-slate-250'
+              }`}
             />
+            {fieldErrors.description && (
+              <p className="text-[10px] text-red-500 font-bold mt-1">{fieldErrors.description}</p>
+            )}
           </div>
 
           <div className="flex justify-end gap-2 border-t border-slate-100 pt-4">

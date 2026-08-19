@@ -9,6 +9,7 @@ interface CharacterModalProps {
   characterForm: { name: string; description: string };
   setCharacterForm: React.Dispatch<React.SetStateAction<{ name: string; description: string }>>;
   onSubmit: (e: React.FormEvent) => void;
+  characterErrors?: Record<string, string>;
 }
 
 export const CharacterModal: React.FC<CharacterModalProps> = ({
@@ -18,6 +19,7 @@ export const CharacterModal: React.FC<CharacterModalProps> = ({
   characterForm,
   setCharacterForm,
   onSubmit,
+  characterErrors = {},
 }) => {
   if (!isOpen) return null;
 
@@ -44,8 +46,13 @@ export const CharacterModal: React.FC<CharacterModalProps> = ({
               placeholder="e.g. Juliet Capulet"
               value={characterForm.name}
               onChange={(e) => setCharacterForm({ ...characterForm, name: e.target.value })}
-              className="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 transition text-slate-900"
+              className={`w-full bg-slate-50/50 border rounded-xl px-3 py-2.5 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 transition text-slate-900 ${
+                characterErrors.name ? 'border-red-500 focus:border-red-500' : 'border-slate-200'
+              }`}
             />
+            {characterErrors.name && (
+              <p className="text-[10px] text-red-500 font-bold mt-1">{characterErrors.name}</p>
+            )}
           </div>
 
           <div className="space-y-1">
@@ -57,8 +64,13 @@ export const CharacterModal: React.FC<CharacterModalProps> = ({
               placeholder="Describe the script details, key attributes, or costume requirements..."
               value={characterForm.description}
               onChange={(e) => setCharacterForm({ ...characterForm, description: e.target.value })}
-              className="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 transition text-slate-900 resize-none"
+              className={`w-full bg-slate-50/50 border rounded-xl px-3 py-2.5 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 transition text-slate-900 resize-none ${
+                characterErrors.description ? 'border-red-500 focus:border-red-500' : 'border-slate-200'
+              }`}
             />
+            {characterErrors.description && (
+              <p className="text-[10px] text-red-500 font-bold mt-1">{characterErrors.description}</p>
+            )}
           </div>
 
           <div className="flex items-center justify-end gap-3 pt-2">

@@ -13,6 +13,7 @@ interface LocationAddBookingModalProps {
   bookingEnd: string;
   setBookingEnd: (val: string) => void;
   onSubmit: (e: React.FormEvent) => void;
+  bookingFieldErrors?: Record<string, string>;
 }
 
 export const LocationAddBookingModal: React.FC<LocationAddBookingModalProps> = ({
@@ -26,6 +27,7 @@ export const LocationAddBookingModal: React.FC<LocationAddBookingModalProps> = (
   bookingEnd,
   setBookingEnd,
   onSubmit,
+  bookingFieldErrors = {},
 }) => {
   if (!isOpen) return null;
 
@@ -45,7 +47,9 @@ export const LocationAddBookingModal: React.FC<LocationAddBookingModalProps> = (
             <select
               value={bookingLocationId}
               onChange={(e) => setBookingLocationId(e.target.value)}
-              className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900 cursor-pointer font-semibold"
+              className={`w-full bg-white border rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900 cursor-pointer font-semibold ${
+                bookingFieldErrors.locationId ? 'border-red-500 focus:border-red-500' : 'border-slate-250'
+              }`}
             >
               <option value="">-- Choose Location --</option>
               {locations.map((l) => (
@@ -54,6 +58,9 @@ export const LocationAddBookingModal: React.FC<LocationAddBookingModalProps> = (
                 </option>
               ))}
             </select>
+            {bookingFieldErrors.locationId && (
+              <p className="text-[10px] text-red-500 font-bold mt-1">{bookingFieldErrors.locationId}</p>
+            )}
           </div>
 
           <div className="space-y-1">
@@ -63,8 +70,13 @@ export const LocationAddBookingModal: React.FC<LocationAddBookingModalProps> = (
               required
               value={bookingStart}
               onChange={(e) => setBookingStart(e.target.value)}
-              className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-700 cursor-pointer font-semibold"
+              className={`w-full bg-white border rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-700 cursor-pointer font-semibold ${
+                bookingFieldErrors.startDate ? 'border-red-500 focus:border-red-500' : 'border-slate-250'
+              }`}
             />
+            {bookingFieldErrors.startDate && (
+              <p className="text-[10px] text-red-500 font-bold mt-1">{bookingFieldErrors.startDate}</p>
+            )}
           </div>
 
           <div className="space-y-1">
@@ -74,8 +86,13 @@ export const LocationAddBookingModal: React.FC<LocationAddBookingModalProps> = (
               required
               value={bookingEnd}
               onChange={(e) => setBookingEnd(e.target.value)}
-              className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-700 cursor-pointer font-semibold"
+              className={`w-full bg-white border rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-700 cursor-pointer font-semibold ${
+                bookingFieldErrors.endDate ? 'border-red-500 focus:border-red-500' : 'border-slate-250'
+              }`}
             />
+            {bookingFieldErrors.endDate && (
+              <p className="text-[10px] text-red-500 font-bold mt-1">{bookingFieldErrors.endDate}</p>
+            )}
           </div>
 
           <div className="flex justify-end gap-2 border-t border-slate-100 pt-4">

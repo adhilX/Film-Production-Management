@@ -10,6 +10,7 @@ interface AssignCastModalProps {
   eligibleCast: any[];
   characters: Character[];
   onSubmit: (e: React.FormEvent) => void;
+  castCrewErrors?: Record<string, string>;
 }
 
 export const AssignCastModal: React.FC<AssignCastModalProps> = ({
@@ -20,6 +21,7 @@ export const AssignCastModal: React.FC<AssignCastModalProps> = ({
   eligibleCast,
   characters,
   onSubmit,
+  castCrewErrors = {},
 }) => {
   if (!isOpen) return null;
 
@@ -35,14 +37,16 @@ export const AssignCastModal: React.FC<AssignCastModalProps> = ({
 
         <form onSubmit={onSubmit} className="p-6 space-y-4">
           <div className="space-y-1">
-            <label className="text-[10px] font-bold text-slate-550 uppercase tracking-wider block font-mono">
+            <label className="text-[10px] font-bold text-slate-555 uppercase tracking-wider block font-mono">
               Select Actor / User
             </label>
             <select
               required
               value={castForm.userId}
               onChange={(e) => setCastForm({ ...castForm, userId: e.target.value })}
-              className="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 transition cursor-pointer font-bold text-slate-700"
+              className={`w-full bg-slate-50/50 border rounded-xl px-3 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 transition cursor-pointer font-bold text-slate-700 ${
+                castCrewErrors.userId ? 'border-red-500 focus:border-red-500' : 'border-slate-200'
+              }`}
             >
               <option value="">-- Choose registered actor --</option>
               {eligibleCast.map((u) => (
@@ -51,13 +55,17 @@ export const AssignCastModal: React.FC<AssignCastModalProps> = ({
                 </option>
               ))}
             </select>
-            <p className="text-[10px] text-slate-450 italic mt-1 font-semibold flex items-center gap-1">
-              <Info size={10} /> Showing active approved users not yet assigned a character.
-            </p>
+            {castCrewErrors.userId ? (
+              <p className="text-[10px] text-red-500 font-bold mt-1">{castCrewErrors.userId}</p>
+            ) : (
+              <p className="text-[10px] text-slate-450 italic mt-1 font-semibold flex items-center gap-1">
+                <Info size={10} /> Showing active approved users not yet assigned a character.
+              </p>
+            )}
           </div>
 
           <div className="space-y-1">
-            <label className="text-[10px] font-bold text-slate-550 uppercase tracking-wider block font-mono">
+            <label className="text-[10px] font-bold text-slate-555 uppercase tracking-wider block font-mono">
               Role in Production
             </label>
             <input
@@ -66,8 +74,13 @@ export const AssignCastModal: React.FC<AssignCastModalProps> = ({
               placeholder="e.g. Lead / Supporting / Stunt Double"
               value={castForm.roleInProduction}
               onChange={(e) => setCastForm({ ...castForm, roleInProduction: e.target.value })}
-              className="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 transition text-slate-900"
+              className={`w-full bg-slate-50/50 border rounded-xl px-3 py-2.5 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 transition text-slate-900 ${
+                castCrewErrors.roleInProduction ? 'border-red-500 focus:border-red-500' : 'border-slate-200'
+              }`}
             />
+            {castCrewErrors.roleInProduction && (
+              <p className="text-[10px] text-red-500 font-bold mt-1">{castCrewErrors.roleInProduction}</p>
+            )}
           </div>
 
           <div className="space-y-1">
@@ -77,7 +90,9 @@ export const AssignCastModal: React.FC<AssignCastModalProps> = ({
             <select
               value={castForm.characterId}
               onChange={(e) => setCastForm({ ...castForm, characterId: e.target.value })}
-              className="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 transition cursor-pointer font-bold text-slate-705"
+              className={`w-full bg-slate-50/50 border rounded-xl px-3 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 transition cursor-pointer font-bold text-slate-705 ${
+                castCrewErrors.characterId ? 'border-red-500 focus:border-red-500' : 'border-slate-200'
+              }`}
             >
               <option value="">-- Select Character --</option>
               {characters
@@ -88,6 +103,9 @@ export const AssignCastModal: React.FC<AssignCastModalProps> = ({
                   </option>
                 ))}
             </select>
+            {castCrewErrors.characterId && (
+              <p className="text-[10px] text-red-500 font-bold mt-1">{castCrewErrors.characterId}</p>
+            )}
           </div>
 
           <div className="flex items-center justify-end gap-3 pt-2">

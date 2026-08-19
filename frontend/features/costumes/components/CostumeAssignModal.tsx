@@ -26,6 +26,7 @@ interface CostumeAssignModalProps {
   castCrewList: CastCrew[];
   isSubmitting: boolean;
   onSubmit: (e: React.FormEvent) => void;
+  assignErrors?: Record<string, string>;
 }
 
 export const CostumeAssignModal: React.FC<CostumeAssignModalProps> = ({
@@ -38,6 +39,7 @@ export const CostumeAssignModal: React.FC<CostumeAssignModalProps> = ({
   castCrewList,
   isSubmitting,
   onSubmit,
+  assignErrors = {},
 }) => {
   if (!isOpen || !selectedCostume) return null;
 
@@ -89,7 +91,9 @@ export const CostumeAssignModal: React.FC<CostumeAssignModalProps> = ({
               <select
                 value={assignForm.characterId}
                 onChange={(e) => setAssignForm((prev) => ({ ...prev, characterId: e.target.value }))}
-                className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-900 cursor-pointer"
+                className={`w-full bg-white border rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-900 cursor-pointer ${
+                  assignErrors.characterId ? 'border-red-500 focus:border-red-500' : 'border-slate-250'
+                }`}
               >
                 <option value="">Select Character</option>
                 {characters.map((char) => (
@@ -98,6 +102,9 @@ export const CostumeAssignModal: React.FC<CostumeAssignModalProps> = ({
                   </option>
                 ))}
               </select>
+              {assignErrors.characterId && (
+                <p className="text-[10px] text-red-500 font-bold mt-1">{assignErrors.characterId}</p>
+              )}
             </div>
           ) : (
             /* Target user select */
@@ -106,7 +113,9 @@ export const CostumeAssignModal: React.FC<CostumeAssignModalProps> = ({
               <select
                 value={assignForm.userId}
                 onChange={(e) => setAssignForm((prev) => ({ ...prev, userId: e.target.value }))}
-                className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-900 cursor-pointer"
+                className={`w-full bg-white border rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-900 cursor-pointer ${
+                  assignErrors.userId ? 'border-red-500 focus:border-red-500' : 'border-slate-250'
+                }`}
               >
                 <option value="">Select Member</option>
                 {castCrewList
@@ -117,6 +126,9 @@ export const CostumeAssignModal: React.FC<CostumeAssignModalProps> = ({
                     </option>
                   ))}
               </select>
+              {assignErrors.userId && (
+                <p className="text-[10px] text-red-500 font-bold mt-1">{assignErrors.userId}</p>
+              )}
             </div>
           )}
 
@@ -128,11 +140,15 @@ export const CostumeAssignModal: React.FC<CostumeAssignModalProps> = ({
                 type="number"
                 required
                 min={1}
-                max={selectedCostume.availableQuantity}
                 value={assignForm.quantity}
                 onChange={(e) => setAssignForm((prev) => ({ ...prev, quantity: Number(e.target.value) }))}
-                className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900"
+                className={`w-full bg-white border rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-900 cursor-pointer ${
+                  assignErrors.quantity ? 'border-red-500 focus:border-red-500' : 'border-slate-250'
+                }`}
               />
+              {assignErrors.quantity && (
+                <p className="text-[10px] text-red-500 font-bold mt-1 col-span-2">{assignErrors.quantity}</p>
+              )}
             </div>
 
             <div className="space-y-1">
@@ -140,13 +156,18 @@ export const CostumeAssignModal: React.FC<CostumeAssignModalProps> = ({
               <select
                 value={assignForm.conditionAtAssignment}
                 onChange={(e) => setAssignForm((prev) => ({ ...prev, conditionAtAssignment: e.target.value }))}
-                className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900 cursor-pointer"
+                className={`w-full bg-white border rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-900 cursor-pointer ${
+                  assignErrors.conditionAtAssignment ? 'border-red-500 focus:border-red-500' : 'border-slate-250'
+                }`}
               >
                 <option value="New">New</option>
                 <option value="Good">Good</option>
                 <option value="Fair">Fair</option>
                 <option value="Damaged">Damaged</option>
               </select>
+              {assignErrors.conditionAtAssignment && (
+                <p className="text-[10px] text-red-500 font-bold mt-1 col-span-2">{assignErrors.conditionAtAssignment}</p>
+              )}
             </div>
           </div>
 
@@ -158,8 +179,13 @@ export const CostumeAssignModal: React.FC<CostumeAssignModalProps> = ({
               value={assignForm.notes}
               onChange={(e) => setAssignForm((prev) => ({ ...prev, notes: e.target.value }))}
               rows={2}
-              className="w-full bg-white border border-slate-250 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-600 text-slate-900 resize-none"
+              className={`w-full bg-white border rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-indigo-650 text-slate-900 cursor-pointer resize-none ${
+                assignErrors.notes ? 'border-red-500 focus:border-red-500' : 'border-slate-250'
+              }`}
             />
+            {assignErrors.notes && (
+              <p className="text-[10px] text-red-500 font-bold mt-1">{assignErrors.notes}</p>
+            )}
           </div>
 
           <div className="pt-4 flex justify-end gap-3 border-t border-slate-100">

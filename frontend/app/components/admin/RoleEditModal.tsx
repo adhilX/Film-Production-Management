@@ -8,6 +8,7 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { usePermissions } from '@/hooks/usePermissions';
 import { PERMISSIONS } from '@/constants/permissions';
 import { formatError } from '@/utils/format-error';
+import { roleSchema } from '@/features/roles/validations/role.validation';
 
 interface RoleEditModalProps {
   isOpen: boolean;
@@ -22,6 +23,7 @@ export default function RoleEditModal({ isOpen, onClose, role, onSave }: RoleEdi
   const [permissionGroups, setPermissionGroups] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const user = useAuthStore((state) => state.user);
   const { hasPermission } = usePermissions();
@@ -36,6 +38,7 @@ export default function RoleEditModal({ isOpen, onClose, role, onSave }: RoleEdi
   useEffect(() => {
     if (isOpen) {
       setError(null);
+      setFieldErrors({});
       if (role) {
         setName(role.name || '');
         const initialPerms = (role.permissions || []).map((p: any) => typeof p === 'object' ? (p._id || p.id) : p);
@@ -96,6 +99,22 @@ export default function RoleEditModal({ isOpen, onClose, role, onSave }: RoleEdi
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isEditingDisabled || !canManage) return;
+
+    setError(null);
+    setFieldErrors({});
+
+    const parseResult = roleSchema.safeParse({ name, permissions: selectedPermissions });
+    if (!parseResult.success) {
+      const errors: Record<string, string> = {};
+      parseResult.error.issues.forEach((issue) => {
+        if (issue.path[0]) {
+          errors[String(issue.path[0])] = issue.message;
+        }
+      });
+      setFieldErrors(errors);
+      setError('Please resolve all validation errors before submitting.');
+      return;
+    }
 
     // High-impact permission change check (if any administrative permission is modified)
     const adminPermissions = ['roles.manage', 'users.approve', 'audit_logs.view', 'logs.view', 'funds.approve', 'productions.update'];
@@ -177,12 +196,26 @@ export default function RoleEditModal({ isOpen, onClose, role, onSave }: RoleEdi
               <input
                 type="text"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e) => {
+                  setName(e.target.value);
+                  if (fieldErrors.name) {
+                    setFieldErrors(prev => {
+                      const updated = { ...prev };
+                      delete updated.name;
+                      return updated;
+                    });
+                  }
+                }}
                 disabled={!!role} // Prevent renaming existing roles for safety
                 required
-                className="w-full bg-white border border-slate-250 rounded-xl px-4 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-indigo-600 transition disabled:opacity-50"
+                className={`w-full bg-white border rounded-xl px-4 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-indigo-600 transition disabled:opacity-50 ${
+                  fieldErrors.name ? 'border-red-500 focus:border-red-500' : 'border-slate-250'
+                }`}
                 placeholder="e.g. Guest Contractor"
               />
+              {fieldErrors.name && (
+                <p className="text-[10px] text-red-500 font-bold mt-1">{fieldErrors.name}</p>
+              )}
               {role && <p className="text-[11px] text-slate-450 mt-1.5 font-medium">Role names cannot be changed after creation to maintain RBAC integrity.</p>}
             </div>
 

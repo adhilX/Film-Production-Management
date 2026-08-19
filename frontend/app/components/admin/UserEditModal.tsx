@@ -6,6 +6,8 @@ import { authService } from '@/services/authService';
 import { useAuthStore } from '@/store/useAuthStore';
 import { formatError } from '@/utils/format-error';
 
+import { userSchema } from '@/features/users/validations/user.validation';
+
 interface UserEditModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -30,27 +32,18 @@ export default function UserEditModal({ isOpen, onClose, user, onSave }: UserEdi
 
   // Validation function
   const validateForm = (): boolean => {
-    const errors: Record<string, string> = {};
+    setError(null);
+    setFieldErrors({});
 
-    // Name Validation
-    if (!formData.name.trim()) {
-      errors.name = 'Name is required.';
-    } else if (formData.name.trim().length < 2) {
-      errors.name = 'Name must be at least 2 characters.';
-    } else if (formData.name.length > 100) {
-      errors.name = 'Name cannot exceed 100 characters.';
-    }
-
-    // Email Validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!formData.email.trim()) {
-      errors.email = 'Email is required.';
-    } else if (!emailRegex.test(formData.email.trim())) {
-      errors.email = 'Please enter a valid email address.';
-    }
-
-    setFieldErrors(errors);
-    if (Object.keys(errors).length > 0) {
+    const parseResult = userSchema.safeParse(formData);
+    if (!parseResult.success) {
+      const errors: Record<string, string> = {};
+      parseResult.error.issues.forEach((issue) => {
+        if (issue.path[0]) {
+          errors[String(issue.path[0])] = issue.message;
+        }
+      });
+      setFieldErrors(errors);
       setError('Please resolve all validation errors before submitting.');
       return false;
     }

@@ -129,11 +129,11 @@ export function useRoles() {
     if (!selectedRole) return;
     
     if (CORE_ROLES.includes(selectedRole.name)) {
-      alert(`Core system role "${selectedRole.name}" is protected and cannot be deleted.`);
+      toast.error(`Core system role "${selectedRole.name}" is protected and cannot be deleted.`);
       return;
     }
 
-    alert('For security and audit trail integrity, system roles cannot be hard-deleted. You can modify their permissions to revoke access.');
+    toast.error('For security and audit trail integrity, system roles cannot be hard-deleted. You can modify their permissions to revoke access.');
   };
 
   const handleToggleMatrixPermission = async (role: any, permId: string) => {

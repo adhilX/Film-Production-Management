@@ -9,6 +9,7 @@ import { adminService } from '@/services/adminService';
 import { useAuthStore } from '@/store/useAuthStore';
 import { usePermissions } from '@/hooks/usePermissions';
 import { PERMISSIONS } from '@/constants/permissions';
+import { permissionSchema } from '@/features/roles/validations/role.validation';
 
 interface PermissionsTabProps {
   permissions: any[];
@@ -42,28 +43,30 @@ export default function PermissionsTab({
     e.preventDefault();
     if (!canManage) return;
 
-    const trimmedName = newPermName.trim().toLowerCase();
-    if (!trimmedName) {
-      setFormError('Permission name cannot be empty.');
-      return;
-    }
+    setFormError(null);
+    setFormSuccess(null);
 
-    // Basic frontend format check (e.g. check for letters/dots/underscores/dashes)
-    const validFormat = /^[a-z0-9_.-]+$/.test(trimmedName);
-    if (!validFormat) {
-      setFormError('Permission name must only contain lowercase letters, numbers, dots, dashes, or underscores.');
+    const trimmedName = newPermName.trim().toLowerCase();
+    const payload = {
+      name: trimmedName,
+      description: newPermDesc.trim(),
+      group: newPermGroup,
+    };
+
+    const parseResult = permissionSchema.safeParse(payload);
+    if (!parseResult.success) {
+      const errMsg = parseResult.error.issues[0]?.message || 'Please resolve validation errors.';
+      setFormError(errMsg);
       return;
     }
 
     setIsSubmittingPerm(true);
-    setFormError(null);
-    setFormSuccess(null);
 
     try {
       await adminService.createPermission({
         name: trimmedName,
-        description: newPermDesc.trim() || undefined,
-        group: newPermGroup,
+        description: payload.description || undefined,
+        group: payload.group,
       });
 
       setNewPermName('');

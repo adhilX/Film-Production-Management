@@ -6,6 +6,7 @@ import { locationService } from '../services/location.service';
 import { formatError } from '@/utils/format-error';
 import { usePermissions } from '@/hooks/usePermissions';
 import { PERMISSIONS } from '@/constants/permissions';
+import { bookingSchema } from '../validations/booking.validation';
 import type { Location, LocationBooking } from '@/app/types';
 
 export function useLocations() {
@@ -40,6 +41,7 @@ export function useLocations() {
   const [bookingLocationId, setBookingLocationId] = useState('');
   const [bookingStart, setBookingStart] = useState('');
   const [bookingEnd, setBookingEnd] = useState('');
+  const [bookingFieldErrors, setBookingFieldErrors] = useState<Record<string, string>>({});
 
   // Rejection logic
   const [rejectingBookingId, setRejectingBookingId] = useState<string | null>(null);
@@ -141,14 +143,27 @@ export function useLocations() {
     if (!selectedProduction) return;
     setError('');
     setSuccess('');
-    try {
-      const start = new Date(bookingStart);
-      const end = new Date(bookingEnd);
-      if (start >= end) {
-        setError('Start date must be before end date.');
-        return;
-      }
+    setBookingFieldErrors({});
 
+    const parseResult = bookingSchema.safeParse({
+      locationId: bookingLocationId,
+      startDate: bookingStart,
+      endDate: bookingEnd,
+    });
+
+    if (!parseResult.success) {
+      const errors: Record<string, string> = {};
+      parseResult.error.issues.forEach((issue) => {
+        if (issue.path[0]) {
+          errors[String(issue.path[0])] = issue.message;
+        }
+      });
+      setBookingFieldErrors(errors);
+      setError('Please fix the validation errors before submitting.');
+      return;
+    }
+
+    try {
       await locationService.createBooking(selectedProduction._id, {
         locationId: bookingLocationId,
         startDate: bookingStart,
@@ -333,6 +348,7 @@ export function useLocations() {
     setBookingLocationId('');
     setBookingStart('');
     setBookingEnd('');
+    setBookingFieldErrors({});
   };
 
   const canCancelBooking = (booking: LocationBooking) => {
@@ -385,6 +401,7 @@ export function useLocations() {
     setBookingStart,
     bookingEnd,
     setBookingEnd,
+    bookingFieldErrors,
     rejectingBookingId,
     rejectionReason,
     setRejectionReason,

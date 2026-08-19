@@ -8,6 +8,7 @@ interface AssignCrewModalProps {
   setCrewForm: React.Dispatch<React.SetStateAction<{ userId: string; roleInProduction: string }>>;
   eligibleCrew: any[];
   onSubmit: (e: React.FormEvent) => void;
+  castCrewErrors?: Record<string, string>;
 }
 
 export const AssignCrewModal: React.FC<AssignCrewModalProps> = ({
@@ -17,6 +18,7 @@ export const AssignCrewModal: React.FC<AssignCrewModalProps> = ({
   setCrewForm,
   eligibleCrew,
   onSubmit,
+  castCrewErrors = {},
 }) => {
   if (!isOpen) return null;
 
@@ -32,14 +34,16 @@ export const AssignCrewModal: React.FC<AssignCrewModalProps> = ({
 
         <form onSubmit={onSubmit} className="p-6 space-y-4">
           <div className="space-y-1">
-            <label className="text-[10px] font-bold text-slate-550 uppercase tracking-wider block font-mono">
+            <label className="text-[10px] font-bold text-slate-555 uppercase tracking-wider block font-mono">
               Select Crew / User
             </label>
             <select
               required
               value={crewForm.userId}
               onChange={(e) => setCrewForm({ ...crewForm, userId: e.target.value })}
-              className="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 transition cursor-pointer font-bold text-slate-700"
+              className={`w-full bg-slate-50/50 border rounded-xl px-3 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 transition cursor-pointer font-bold text-slate-700 ${
+                castCrewErrors.userId ? 'border-red-500 focus:border-red-500' : 'border-slate-200'
+              }`}
             >
               <option value="">-- Choose registered crew --</option>
               {eligibleCrew.map((u) => (
@@ -48,13 +52,17 @@ export const AssignCrewModal: React.FC<AssignCrewModalProps> = ({
                 </option>
               ))}
             </select>
-            <p className="text-[10px] text-slate-450 italic mt-1 font-semibold flex items-center gap-1">
-              <Info size={10} /> Showing active approved users not yet assigned to the crew.
-            </p>
+            {castCrewErrors.userId ? (
+              <p className="text-[10px] text-red-500 font-bold mt-1">{castCrewErrors.userId}</p>
+            ) : (
+              <p className="text-[10px] text-slate-450 italic mt-1 font-semibold flex items-center gap-1">
+                <Info size={10} /> Showing active approved users not yet assigned to the crew.
+              </p>
+            )}
           </div>
 
           <div className="space-y-1">
-            <label className="text-[10px] font-bold text-slate-550 uppercase tracking-wider block font-mono">
+            <label className="text-[10px] font-bold text-slate-555 uppercase tracking-wider block font-mono">
               Position / Role
             </label>
             <input
@@ -63,8 +71,13 @@ export const AssignCrewModal: React.FC<AssignCrewModalProps> = ({
               placeholder="e.g. Director of Photography / Camera Assistant"
               value={crewForm.roleInProduction}
               onChange={(e) => setCrewForm({ ...crewForm, roleInProduction: e.target.value })}
-              className="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 transition text-slate-900"
+              className={`w-full bg-slate-50/50 border rounded-xl px-3 py-2.5 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 transition text-slate-900 ${
+                castCrewErrors.roleInProduction ? 'border-red-500 focus:border-red-500' : 'border-slate-200'
+              }`}
             />
+            {castCrewErrors.roleInProduction && (
+              <p className="text-[10px] text-red-500 font-bold mt-1">{castCrewErrors.roleInProduction}</p>
+            )}
           </div>
 
           <div className="flex items-center justify-end gap-3 pt-2">

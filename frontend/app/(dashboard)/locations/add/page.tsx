@@ -31,6 +31,7 @@ import { PERMISSIONS } from '@/constants/permissions';
 import locationsService from '@/services/locationsService';
 import { authService } from '@/services/authService';
 import { formatError } from '@/utils/format-error';
+import { locationSchema } from '@/features/locations/validations/location.validation';
 
 // Dynamically import LeafletMap to avoid SSR/window undefined issues
 const LeafletMap = dynamic(() => import('@/components/LeafletMap'), { ssr: false });
@@ -64,59 +65,36 @@ export default function AddLocationPage() {
 
   // Form Validation Logic
   const validateForm = (): boolean => {
-    const errors: Record<string, string> = {};
-
     if (!selectedProduction) {
       setError('Please select a project before creating a location.');
       return false;
     }
 
-    // Name Validation
-    if (!locName.trim()) {
-      errors.name = 'Location name is required.';
-    } else if (locName.trim().length < 2) {
-      errors.name = 'Location name must be at least 2 characters.';
-    } else if (locName.length > 100) {
-      errors.name = 'Location name cannot exceed 100 characters.';
-    }
+    const parseResult = locationSchema.safeParse({
+      name: locName,
+      address: locAddress,
+      description: locDescription || undefined,
+      latitude: (locLat === undefined || isNaN(locLat as any)) ? undefined : locLat,
+      longitude: (locLng === undefined || isNaN(locLng as any)) ? undefined : locLng,
+      locationType: locType || undefined,
+      contactInfo: locContact || undefined,
+      imageUrl: locImage || undefined,
+    });
 
-    // Address Validation
-    if (!locAddress.trim()) {
-      errors.address = 'Location address is required.';
-    } else if (locAddress.trim().length < 5) {
-      errors.address = 'Address must be a valid, descriptive address (at least 5 characters).';
-    }
-
-    // Coordinates Validation
-    if (locLat !== undefined || locLng !== undefined) {
-      if (locLat === undefined || isNaN(locLat)) {
-        errors.latitude = 'Latitude is required if longitude is specified.';
-      } else if (locLat < -90 || locLat > 90) {
-        errors.latitude = 'Latitude must be between -90 and 90 degrees.';
-      }
-
-      if (locLng === undefined || isNaN(locLng)) {
-        errors.longitude = 'Longitude is required if latitude is specified.';
-      } else if (locLng < -180 || locLng > 180) {
-        errors.longitude = 'Longitude must be between -180 and 180 degrees.';
-      }
-    }
-
-    // Contact Validation
-    if (locContact && locContact.length > 150) {
-      errors.contactInfo = 'Contact info cannot exceed 150 characters.';
-    }
-
-    // Description Validation
-    if (locDescription && locDescription.length > 500) {
-      errors.description = 'Description cannot exceed 500 characters.';
-    }
-
-    setFieldErrors(errors);
-    if (Object.keys(errors).length > 0) {
+    if (!parseResult.success) {
+      const errors: Record<string, string> = {};
+      parseResult.error.issues.forEach((issue) => {
+        if (issue.path[0]) {
+          errors[String(issue.path[0])] = issue.message;
+        }
+      });
+      setFieldErrors(errors);
       setError('Please fix the validation errors before submitting.');
       return false;
     }
+
+    setFieldErrors({});
+    setError('');
     return true;
   };
 

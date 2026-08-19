@@ -33,6 +33,7 @@ import {
 import Link from 'next/link';
 import { PermissionGuard } from '@/app/components/permission-guard';
 import { UnauthorizedFallback } from '@/components/common/UnauthorizedFallback';
+import { evaluationSchema } from '@/features/approvals/validations/approval.validation';
 
 
 export default function ApprovalDetails() {
@@ -94,8 +95,20 @@ function ApprovalDetailsContent() {
   }, [id]);
 
   const handleDecision = async (status: 'approved' | 'changes-requested') => {
-    setSubmitting(true);
     setSubmitError(null);
+    const parseResult = evaluationSchema.safeParse({
+      status,
+      feedback,
+      roleOverride,
+    });
+    if (!parseResult.success) {
+      const errMsg = parseResult.error.issues[0]?.message || 'Please resolve validation errors.';
+      setSubmitError(errMsg);
+      toast.error(errMsg);
+      return;
+    }
+
+    setSubmitting(true);
     try {
       await adminService.evaluateApplication(id as string, {
         status,

@@ -8,6 +8,8 @@ import { authService } from '@/services/authService';
 import { formatError } from '@/utils/format-error';
 import { usePermissions } from '@/hooks/usePermissions';
 import { PERMISSIONS } from '@/constants/permissions';
+import { costumeSchema } from '../validations/costume.validation';
+import { assignmentSchema } from '../validations/assignment.validation';
 import type { Costume, CostumeAssignment, Character, CastCrew } from '@/app/types';
 
 export function useCostumes() {
@@ -72,6 +74,7 @@ export function useCostumes() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [costumeErrors, setCostumeErrors] = useState<Record<string, string>>({});
+  const [assignErrors, setAssignErrors] = useState<Record<string, string>>({});
 
   // Costume Form Validation Logic
   const validateCostumeForm = (): boolean => {
@@ -82,42 +85,20 @@ export function useCostumes() {
       return false;
     }
 
-    // Name Validation
-    if (!costumeForm.name.trim()) {
-      errors.name = 'Costume name is required.';
-    } else if (costumeForm.name.trim().length < 2) {
-      errors.name = 'Costume name must be at least 2 characters.';
-    } else if (costumeForm.name.length > 100) {
-      errors.name = 'Costume name cannot exceed 100 characters.';
+    const parseResult = costumeSchema.safeParse(costumeForm);
+
+    if (!parseResult.success) {
+      parseResult.error.issues.forEach((issue) => {
+        if (issue.path[0]) {
+          errors[String(issue.path[0])] = issue.message;
+        }
+      });
     }
 
-    // Category Validation
-    if (!costumeForm.category.trim()) {
-      errors.category = 'Category is required.';
-    } else if (costumeForm.category.trim().length < 2) {
-      errors.category = 'Category must be at least 2 characters.';
-    } else if (costumeForm.category.length > 50) {
-      errors.category = 'Category cannot exceed 50 characters.';
-    }
-
-    // Size Validation
-    if (costumeForm.size && costumeForm.size.length > 20) {
-      errors.size = 'Size cannot exceed 20 characters.';
-    }
-
-    // Description Validation
-    if (costumeForm.description && costumeForm.description.length > 500) {
-      errors.description = 'Description cannot exceed 500 characters.';
-    }
-
-    // Quantity Validation
-    if (costumeForm.quantity === undefined || costumeForm.quantity === null || isNaN(costumeForm.quantity)) {
-      errors.quantity = 'Quantity is required.';
-    } else if (costumeForm.quantity < 1) {
-      errors.quantity = 'Quantity must be at least 1.';
-    } else if (selectedCostume) {
+    // Additional dynamic business logic validation:
+    if (selectedCostume && parseResult.success) {
       const assignedCount = selectedCostume.quantity - selectedCostume.availableQuantity;
-      if (costumeForm.quantity < assignedCount) {
+      if (parseResult.data.quantity < assignedCount) {
         errors.quantity = `Quantity cannot be less than currently assigned items (${assignedCount}).`;
       }
     }
@@ -305,12 +286,38 @@ export function useCostumes() {
       conditionAtAssignment: c.condition,
       notes: '',
     });
+    setAssignErrors({});
     setAssignModalOpen(true);
   };
 
   const handleAssignCostume = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedProduction || !selectedCostume) return;
+    setErrorMsg(null);
+    setAssignErrors({});
+
+    const parseResult = assignmentSchema.safeParse(assignForm);
+    const errors: Record<string, string> = {};
+
+    if (!parseResult.success) {
+      parseResult.error.issues.forEach((issue) => {
+        if (issue.path[0]) {
+          errors[String(issue.path[0])] = issue.message;
+        }
+      });
+    }
+
+    if (parseResult.success) {
+      if (parseResult.data.quantity > selectedCostume.availableQuantity) {
+        errors.quantity = `Cannot assign quantity greater than available stock (${selectedCostume.availableQuantity}).`;
+      }
+    }
+
+    setAssignErrors(errors);
+    if (Object.keys(errors).length > 0) {
+      setErrorMsg('Please fix the validation errors before submitting.');
+      return;
+    }
 
     const payload: any = {
       quantity: Number(assignForm.quantity),
@@ -319,22 +326,9 @@ export function useCostumes() {
     };
 
     if (assignForm.targetType === 'character') {
-      if (!assignForm.characterId) {
-        setErrorMsg('Please select a character.');
-        return;
-      }
       payload.characterId = assignForm.characterId;
     } else {
-      if (!assignForm.userId) {
-        setErrorMsg('Please select a cast/crew member.');
-        return;
-      }
       payload.userId = assignForm.userId;
-    }
-
-    if (payload.quantity > selectedCostume.availableQuantity) {
-      setErrorMsg(`Cannot assign quantity greater than available stock (${selectedCostume.availableQuantity}).`);
-      return;
     }
 
     setIsSubmitting(true);
@@ -449,6 +443,8 @@ export function useCostumes() {
     setCostumeForm,
     costumeErrors,
     setCostumeErrors,
+    assignErrors,
+    setAssignErrors,
     assignModalOpen,
     setAssignModalOpen,
     assignForm,

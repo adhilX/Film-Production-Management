@@ -7,6 +7,7 @@ import { useProductionStore } from '@/store/useProductionStore';
 import fundsService from '@/services/fundsService';
 import { Budget } from '@/app/types';
 import { formatError } from '@/utils/format-error';
+import { getBudgetSchema, type BudgetFormValues } from '@/features/funds/validations/budget.validation';
 
 interface EditBudgetModalProps {
   budget: Budget;
@@ -24,22 +25,12 @@ export default function EditBudgetModal({
 
   const minBudgetAllowedRupees = budget.allocatedAmount / 100;
 
-  const budgetSchema = z.object({
-    totalBudget: z.number()
-      .min(0)
-      .finite()
-      .min(minBudgetAllowedRupees, `Total budget cannot be less than allocated amount (${minBudgetAllowedRupees})`),
-    currency: z.string().min(1).max(10),
-  });
-
-  type BudgetFormValues = z.infer<typeof budgetSchema>;
-
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<BudgetFormValues>({
-    resolver: zodResolver(budgetSchema),
+    resolver: zodResolver(getBudgetSchema(minBudgetAllowedRupees)),
     defaultValues: {
       totalBudget: budget.totalBudget / 100,
       currency: budget.currency || 'INR',

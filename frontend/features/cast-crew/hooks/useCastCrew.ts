@@ -7,6 +7,8 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { PERMISSIONS } from '@/constants/permissions';
 import type { Character, CastCrew } from '@/app/types';
 import { formatError } from '@/utils/format-error';
+import { characterSchema } from '../validations/character.validation';
+import { castCrewSchema, updateCastCrewSchema } from '../validations/cast-crew.validation';
 
 export function useCastCrew() {
   const user = useAuthStore(state => state.user);
@@ -28,6 +30,8 @@ export function useCastCrew() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [characterErrors, setCharacterErrors] = useState<Record<string, string>>({});
+  const [castCrewErrors, setCastCrewErrors] = useState<Record<string, string>>({});
 
   // Modals
   const [characterModalOpen, setCharacterModalOpen] = useState(false);
@@ -100,18 +104,36 @@ export function useCastCrew() {
   const openCreateCharacter = () => {
     setSelectedCharacter(null);
     setCharacterForm({ name: '', description: '' });
+    setCharacterErrors({});
     setCharacterModalOpen(true);
   };
 
   const openEditCharacter = (char: Character) => {
     setSelectedCharacter(char);
     setCharacterForm({ name: char.name, description: char.description || '' });
+    setCharacterErrors({});
     setCharacterModalOpen(true);
   };
 
   const handleSaveCharacter = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedProduction) return;
+    setErrorMsg(null);
+    setCharacterErrors({});
+
+    const parseResult = characterSchema.safeParse(characterForm);
+    if (!parseResult.success) {
+      const errors: Record<string, string> = {};
+      parseResult.error.issues.forEach((issue) => {
+        if (issue.path[0]) {
+          errors[String(issue.path[0])] = issue.message;
+        }
+      });
+      setCharacterErrors(errors);
+      setErrorMsg('Please fix the validation errors before submitting.');
+      return;
+    }
+
     try {
       if (selectedCharacter) {
         // Update character
@@ -148,6 +170,7 @@ export function useCastCrew() {
   // --- Cast Assignment Handlers ---
   const openAssignCast = async () => {
     setCastForm({ userId: '', roleInProduction: 'Actor', characterId: '' });
+    setCastCrewErrors({});
     await fetchEligibleData('cast');
     setAssignCastModalOpen(true);
   };
@@ -155,10 +178,22 @@ export function useCastCrew() {
   const handleAssignCast = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedProduction) return;
-    if (!castForm.userId) {
-      alert('Please select a cast member.');
+    setErrorMsg(null);
+    setCastCrewErrors({});
+
+    const parseResult = castCrewSchema.safeParse(castForm);
+    if (!parseResult.success) {
+      const errors: Record<string, string> = {};
+      parseResult.error.issues.forEach((issue) => {
+        if (issue.path[0]) {
+          errors[String(issue.path[0])] = issue.message;
+        }
+      });
+      setCastCrewErrors(errors);
+      setErrorMsg('Please fix the validation errors before submitting.');
       return;
     }
+
     try {
       await castCrewService.assignCastCrew(selectedProduction._id, {
         userId: castForm.userId,
@@ -178,6 +213,7 @@ export function useCastCrew() {
   // --- Crew Assignment Handlers ---
   const openAssignCrew = async () => {
     setCrewForm({ userId: '', roleInProduction: '' });
+    setCastCrewErrors({});
     await fetchEligibleData('crew');
     setAssignCrewModalOpen(true);
   };
@@ -185,10 +221,23 @@ export function useCastCrew() {
   const handleAssignCrew = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedProduction) return;
-    if (!crewForm.userId) {
-      alert('Please select a crew member.');
+    setErrorMsg(null);
+    setCastCrewErrors({});
+
+    // Validate using castCrewSchema, with fallback characterId = '' to satisfy validation
+    const parseResult = castCrewSchema.safeParse({ ...crewForm, characterId: '' });
+    if (!parseResult.success) {
+      const errors: Record<string, string> = {};
+      parseResult.error.issues.forEach((issue) => {
+        if (issue.path[0]) {
+          errors[String(issue.path[0])] = issue.message;
+        }
+      });
+      setCastCrewErrors(errors);
+      setErrorMsg('Please fix the validation errors before submitting.');
       return;
     }
+
     try {
       await castCrewService.assignCastCrew(selectedProduction._id, {
         userId: crewForm.userId,
@@ -211,12 +260,29 @@ export function useCastCrew() {
       roleInProduction: assignment.roleInProduction,
       characterId: assignment.characterId?._id || ''
     });
+    setCastCrewErrors({});
     setEditAssignmentModalOpen(true);
   };
 
   const handleEditAssignment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedProduction || !selectedAssignment) return;
+    setErrorMsg(null);
+    setCastCrewErrors({});
+
+    const parseResult = updateCastCrewSchema.safeParse(editForm);
+    if (!parseResult.success) {
+      const errors: Record<string, string> = {};
+      parseResult.error.issues.forEach((issue) => {
+        if (issue.path[0]) {
+          errors[String(issue.path[0])] = issue.message;
+        }
+      });
+      setCastCrewErrors(errors);
+      setErrorMsg('Please fix the validation errors before submitting.');
+      return;
+    }
+
     try {
       await castCrewService.updateCastCrew(selectedProduction._id, selectedAssignment._id, {
         roleInProduction: editForm.roleInProduction,
@@ -297,6 +363,8 @@ export function useCastCrew() {
     setSelectedCharacter,
     characterForm,
     setCharacterForm,
+    characterErrors,
+    castCrewErrors,
     assignCastModalOpen,
     setAssignCastModalOpen,
     castForm,

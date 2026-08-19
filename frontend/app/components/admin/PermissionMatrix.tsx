@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Search, ShieldAlert } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { adminService } from '@/services/adminService';
 import { useAuthStore } from '@/store/useAuthStore';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -75,7 +76,7 @@ export default function PermissionMatrix({
       // Revert to original roles state
       setOptimisticRoles(originalRoles);
       const errMsg = err.response?.data?.message || err.message || 'Unknown error occurred';
-      alert(`Failed to update permissions: ${errMsg}`);
+      toast.error(`Failed to update permissions: ${errMsg}`);
     } finally {
       setUpdatingCell(null);
     }

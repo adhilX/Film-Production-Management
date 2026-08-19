@@ -76,6 +76,7 @@ export default function LocationsModule() {
     setBookingStart,
     bookingEnd,
     setBookingEnd,
+    bookingFieldErrors,
     rejectionReason,
     setRejectionReason,
     fetchData,
@@ -426,6 +427,7 @@ export default function LocationsModule() {
         bookingEnd={bookingEnd}
         setBookingEnd={setBookingEnd}
         onSubmit={handleRequestBooking}
+        bookingFieldErrors={bookingFieldErrors}
       />
 
       {/* Modal - Rejection Reason */}

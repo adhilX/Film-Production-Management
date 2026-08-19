@@ -8,17 +8,7 @@ import fundsService from '@/services/fundsService';
 import { FundRequest } from '@/app/types';
 import { formatError } from '@/utils/format-error';
 
-const requestSchema = z.object({
-  title: z.string().min(3, 'Title must be at least 3 characters').max(100, 'Title must not exceed 100 characters'),
-  description: z.string().min(10, 'Description must be at least 10 characters').max(1000, 'Description must not exceed 1000 characters'),
-  category: z.string().min(1, 'Category is required').max(50),
-  requestedAmount: z.number()
-    .positive('Amount must be positive')
-    .finite()
-    .min(0.01, 'Minimum request amount is 0.01'),
-});
-
-type RequestFormValues = z.infer<typeof requestSchema>;
+import { requestSchema, type RequestFormValues } from '@/features/funds/validations/fund-request.validation';
 
 interface EditRequestModalProps {
   request: FundRequest;
